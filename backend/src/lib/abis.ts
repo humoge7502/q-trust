@@ -8537,6 +8537,31 @@ export const SchemaRegistryAbi = [
     },
     {
       type: "event",
+      name: "SchemaDeactivated",
+      inputs: [
+            {
+                  name: "schemaId",
+                  type: "string",
+                  indexed: true,
+                  internalType: "string",
+                },
+            {
+                  name: "version",
+                  type: "uint256",
+                  indexed: true,
+                  internalType: "uint256",
+                },
+            {
+                  name: "timestamp",
+                  type: "uint256",
+                  indexed: false,
+                  internalType: "uint256",
+                },
+          ],
+      anonymous: false,
+    },
+    {
+      type: "event",
       name: "SchemaEquivalenceAdded",
       inputs: [
             {

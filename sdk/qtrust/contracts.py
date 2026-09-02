@@ -8537,6 +8537,31 @@ SCHEMA_REGISTRY_ABI = [
   },
   {
     "type": "event",
+    "name": "SchemaDeactivated",
+    "inputs": [
+      {
+        "name": "schemaId",
+        "type": "string",
+        "indexed": True,
+        "internalType": "string"
+      },
+      {
+        "name": "version",
+        "type": "uint256",
+        "indexed": True,
+        "internalType": "uint256"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": False,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": False
+  },
+  {
+    "type": "event",
     "name": "SchemaEquivalenceAdded",
     "inputs": [
       {

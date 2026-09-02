@@ -12,7 +12,7 @@ info:
       EIP-712 gasless relay (no wallet needed).
     - **Migrations**: record and track post-quantum migration progress.
     - **Trust Evaluation**: policy-based PQC readiness scoring.
-    - **Credentials**: placeholder VC issuance / verification (full Ed25519 VC stack in the Python SDK).
+    - **Credentials**: W3C VC v2.0 issuance and fail-closed cryptographic verification (Ed25519Signature2020), byte-compatible with the Python SDK.
     - **Revocation / Policy / Schema / Trust-Anchor**: on-chain contract queries.
     - **Webhooks**: Redis-backed event subscriptions.
     - **Legacy**: pre-v1 alias routes (deprecated, sunset 2026-12-31).

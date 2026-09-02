@@ -908,8 +908,6 @@ export interface components {
             schema_id?: string;
             /** @description DID of the credential subject */
             subject_did: string;
-            /** @description DID of the issuer */
-            issuer_did: string;
             /** @description Optional claims payload */
             claims?: {
                 [key: string]: unknown;
@@ -921,29 +919,42 @@ export interface components {
             expiration_date?: string;
         };
         CredentialIssued: {
+            /** @description The full signed W3C Verifiable Credential (Ed25519Signature2020 proof attached) */
+            credential?: Record<string, never>;
             /** @description URN:uuid credential identifier */
             credential_id?: string;
+            /** @description Backend issuer did:key */
             issuer_did?: string;
             subject_did?: string;
             schema_id?: string | null;
-            claims?: Record<string, never>;
-            expiration_date?: string | null;
             /** Format: date-time */
             issued_at?: string;
+            /** @description e.g. Ed25519Signature2020 */
+            proof_type?: string;
             note?: string;
         };
         VerifyCredentialRequest: {
-            /** @description Verifiable Presentation object */
+            /** @description Verifiable Credential object (with proof) to verify cryptographically */
             presentation: Record<string, never>;
-            /** @description Optional verifier DID */
+            /** @description Optional verifier DID (reserved) */
             verifier_did?: string;
         };
         CredentialVerification: {
             valid?: boolean;
+            reason?: string | null;
+            detail?: string | null;
             issuer_did?: string | null;
             subject_did?: string | null;
             schema_id?: string | null;
-            revoked?: boolean;
+            has_proof?: boolean | null;
+            expired?: boolean | null;
+            checked?: {
+                structure?: boolean;
+                expiration?: boolean;
+                signature?: boolean;
+            };
+            /** Format: date-time */
+            timestamp?: string;
             /** Format: date-time */
             verified_at?: string;
             note?: string;
