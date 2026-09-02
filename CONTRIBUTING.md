@@ -15,7 +15,8 @@ benchmark results, and feature ideas.
 git clone https://github.com/<your-username>/q-trust.git
 cd q-trust
 git remote add upstream https://github.com/humoge7502/q-trust.git
-cp .env.example .env   # fill in what your subsystem needs
+cp .env.example .env               # backend/planner env vars
+cp frontend/.env.example frontend/.env.local   # required by `next build`
 ```
 
 ### Prerequisites
@@ -81,6 +82,8 @@ Postgres, Redis, planner, Prometheus, Alertmanager, Grafana):
   [`.github/PULL_REQUEST_TEMPLATE.md`](https://github.com/humoge7502/q-trust/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
   (summary, changes, testing checklist, security considerations, breaking
   changes), and link issues with `Closes #N` / `Refs #N`.
+  Reviewers: work through
+  [`.github/REVIEW_CHECKLIST.md`](.github/REVIEW_CHECKLIST.md) before approving.
 
 ## Testing expectations
 

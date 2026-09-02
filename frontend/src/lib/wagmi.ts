@@ -16,6 +16,13 @@ import { base, baseSepolia } from "wagmi/chains";
  * Build-time guard (audit F-2): in production the env var must be set to a
  * real project ID — "demo" or missing is a deployment error and the build
  * must fail fast.
+ *
+ * FRESH CLONES: `next build` evaluates this module while prerendering static
+ * pages, so the guard below fires even for local non-deployment builds. Copy
+ * `frontend/.env.example` to `frontend/.env.local` (the placeholder value is
+ * fine for dev; real wallet connections need a project ID from
+ * https://cloud.walletconnect.com) — or pass any non-'demo' value as
+ * NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID on the build command.
  */
 const RAW_WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 
@@ -23,7 +30,9 @@ const RAW_WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJE
 if (!RAW_WALLETCONNECT_PROJECT_ID || RAW_WALLETCONNECT_PROJECT_ID === "demo") {
   const msg =
     "[Q-Trust] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set or is 'demo' — wallet connections will be rate-limited. " +
-    "Set a real project ID from https://cloud.walletconnect.com for production.";
+    "Set a real project ID from https://cloud.walletconnect.com for production. " +
+    "For a local (non-deployment) build, copy frontend/.env.example to " +
+    "frontend/.env.local.";
   if (process.env.NODE_ENV === "production") {
     throw new Error(msg);
   } else {

@@ -6,7 +6,7 @@ proxies deployed) → on-chain reads.
 
 ## k6 Stress Test
 
-- **Script:** [`ops/loadtest/k6-stress.js`](../ops/loadtest/k6-stress.js)
+- **Script:** [`ops/loadtest/k6-stress.js`](https://github.com/humoge7502/q-trust/blob/main/ops/loadtest/k6-stress.js)
   (10→100 VUs over 5 minutes; mixed workload — health checks, unknown-asset
   404 probes, paginated org queries)
 - **Date:** 2026-08-24

@@ -205,6 +205,8 @@ class VCIssuer:
 
     def _sign(self, vc: VerifiableCredential) -> VerifiableCredential:
         """Sign a VC with Ed25519."""
+        if self.private_key is None:
+            raise ValueError("a private key is required to sign a credential")
         # Create the data to sign (canonical JSON of VC without proof)
         data_to_sign = vc.model_dump(by_alias=True, exclude_none=True)
         data_to_sign.pop("proof", None)
@@ -280,8 +282,15 @@ class VCPresenter:
                 "domain": verifier_did,
             }
 
-        # Sign if private key available
+        # Sign if private key available. The proof container only exists when
+        # verifier_did was given; signing with nowhere to attach the proof was
+        # previously a bare TypeError — fail with an actionable error instead.
         if self.private_key:
+            if vp.proof is None:
+                raise ValueError(
+                    "cannot sign a presentation with no proof — pass verifier_did "
+                    "so a domain-bound proof can be created"
+                )
             data_to_sign = vp.model_dump(by_alias=True, exclude_none=True)
             data_to_sign.pop("proof", None)
             message = json.dumps(data_to_sign, sort_keys=True, separators=(",", ":")).encode()
@@ -372,6 +381,10 @@ class VCVerifier:
         failure reason (public_key_unavailable | invalid_signature).
         """
         message = self._signed_message(vc)
+        if vc.proof is None:
+            # Callers check for a proof before invoking this, but stay
+            # defensive: an unsigned credential fails closed.
+            return "invalid_signature"
         try:
             signature = bytes.fromhex(vc.proof["proofValue"])
         except (ValueError, TypeError, KeyError):

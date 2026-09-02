@@ -80,9 +80,9 @@ class ParallelScanner:
         #      (operator-controlled, works in containers).
         #   2. Packaged model: inspector/qtrust_inspector/models/model*.pt
         #      (future: `cp planner/model*.pt inspector/...` at build time).
-        #   3. Legacy repo sibling ``../../planner/model*.pt`` — kept as a
-        #      deprecated fallback with a warning, so dev checkouts keep working
-        #      without env vars.
+        #   3. Legacy repo sibling ``../../planner/model*.pt`` — supported dev
+        #      checkout fallback (logged, not deprecated) so tests work without
+        #      env vars.
         #
         # The GNN import is also lazy/optional: if ``qtrust_planner`` is not
         # installed (inspector's ``ml`` extra does not depend on planner),
@@ -92,7 +92,6 @@ class ParallelScanner:
         try:
             import logging
             import os
-            import warnings
             from pathlib import Path
 
             _log = logging.getLogger("qtrust_inspector.parallel_scanner")
@@ -124,17 +123,15 @@ class ParallelScanner:
                         f"no planner model found (searched {[str(p) for p in candidate_paths]}); "
                         "using heuristic risk scoring. Set QTRUST_PLANNER_MODEL to a .pt file to enable GNN scoring"
                     )
-                # Warn when the legacy cross-package path is the one that matched.
+                # Note (not warn) when the legacy cross-package path matched: the
+                # sibling fallback is a *supported* dev-checkout convenience per
+                # the resolution order above, not a deprecated behavior — no
+                # removal is planned and no packaged model ships yet. Operators
+                # who want package decoupling can still pin QTRUST_PLANNER_MODEL.
                 if model_path.parent.name == "planner" and model_path.parents[1].name != "qtrust_inspector":
-                    warnings.warn(
-                        f"ParallelScanner loaded model via legacy cross-package path {model_path} — "
-                        "set QTRUST_PLANNER_MODEL or vendor the model under "
-                        "inspector/qtrust_inspector/models/ to decouple packages",
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
-                    _log.warning(
-                        "using legacy planner sibling path %s — prefer QTRUST_PLANNER_MODEL env var",
+                    _log.info(
+                        "using planner sibling model %s — set QTRUST_PLANNER_MODEL or "
+                        "vendor the model under inspector/qtrust_inspector/models/ to decouple packages",
                         model_path,
                     )
 

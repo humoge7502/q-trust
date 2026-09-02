@@ -88,7 +88,9 @@ class DIDResolver:
     def _resolve_ips(self, domain: str) -> frozenset[str]:
         """Snapshot every address a domain currently resolves to."""
         try:
-            return frozenset(info[4][0] for info in socket.getaddrinfo(domain, None))
+            return frozenset(
+                str(info[4][0]) for info in socket.getaddrinfo(domain, None)
+            )
         except socket.gaierror:
             return frozenset()
 

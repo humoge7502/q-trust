@@ -56,7 +56,8 @@ class PinataClient:
             try:
                 response = requests.post(url, json=payload, headers=self.headers, timeout=30)
                 response.raise_for_status()
-                return response.json()["IpfsHash"]
+                cid: str = response.json()["IpfsHash"]
+                return cid
             except (requests.RequestException, KeyError) as exc:
                 last_exc = exc
                 if attempt < 2:
@@ -80,7 +81,8 @@ class PinataClient:
                         timeout=300,
                     )
                 response.raise_for_status()
-                return response.json()["IpfsHash"]
+                cid: str = response.json()["IpfsHash"]
+                return cid
             except (requests.RequestException, KeyError) as exc:
                 last_exc = exc
                 if attempt < 2:
@@ -159,7 +161,8 @@ class KuboProvider:
         files = {"file": (name or "payload.json", json_str)}
         response = requests.post(url, files=files, auth=self.auth, timeout=30)
         response.raise_for_status()
-        return response.json()["Hash"]
+        cid: str = response.json()["Hash"]
+        return cid
 
     def pin_file(self, file_path: str, name: str | None = None) -> str:
         """Pins a binary file via ``POST /api/v0/add?pin=true``. Returns the CID."""
@@ -170,7 +173,8 @@ class KuboProvider:
                 url, files={"file": (filename, f)}, auth=self.auth, timeout=300
             )
         response.raise_for_status()
-        return response.json()["Hash"]
+        cid: str = response.json()["Hash"]
+        return cid
 
 
 class Web3StorageProvider:
@@ -266,11 +270,11 @@ class MultiProviderClient:
         """Pins a binary file across providers. Returns the primary CID."""
         return self._pin_all("pin_file", (file_path, name))
 
-    def _invoke(self, provider: Any, method: str, args: tuple) -> str:
+    def _invoke(self, provider: Any, method: str, args: tuple[str, str | None]) -> str:
         fn: Callable[..., str] = getattr(provider, method)
         return fn(*args)
 
-    def _pin_all(self, method: str, args: tuple) -> str:
+    def _pin_all(self, method: str, args: tuple[str, str | None]) -> str:
         primary_name, primary = self.providers[0]
         rest = self.providers[1:]
 
@@ -290,7 +294,7 @@ class MultiProviderClient:
         return primary_cid
 
     def _run_concurrently(
-        self, providers: list[tuple[str, Any]], method: str, args: tuple
+        self, providers: list[tuple[str, Any]], method: str, args: tuple[str, str | None]
     ) -> list[tuple[str, str | None, Exception | None]]:
         results: list[tuple[str, str | None, Exception | None]] = []
 
@@ -310,7 +314,7 @@ class MultiProviderClient:
         self,
         providers: list[tuple[str, Any]],
         method: str,
-        args: tuple,
+        args: tuple[str, str | None],
         primary_name: str,
         primary_cid: str,
     ) -> None:
@@ -330,7 +334,7 @@ class MultiProviderClient:
         self,
         providers: list[tuple[str, Any]],
         method: str,
-        args: tuple,
+        args: tuple[str, str | None],
         primary_name: str,
         primary_exc: Exception,
     ) -> str:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -95,7 +96,7 @@ class CBOM(BaseModel):
     generated_at: int = Field(..., description="Unix timestamp of CBOM generation")
     scanner_version: str = Field(..., description="Version of the scanner that produced this CBOM")
     assets: list[CBOMEntry] = Field(default_factory=list)
-    summary: dict = Field(default_factory=dict, description="Summary stats")
+    summary: dict[str, Any] = Field(default_factory=dict, description="Summary stats")
 
 
 class AssetRecord(BaseModel):

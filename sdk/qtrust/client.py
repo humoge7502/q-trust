@@ -17,11 +17,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from typing import Any
 
 from eth_account import Account
 from eth_account.messages import encode_typed_data
 from web3 import Web3
+from web3.contract.contract import Contract
 from web3.middleware import ExtraDataToPOAMiddleware
+from eth_account.signers.local import LocalAccount
 
 from .contracts import (
     ASSET_REGISTRY_ABI,
@@ -53,7 +56,7 @@ class QTrustClient:
         ipfs_api_key: str | None = None,
         ipfs_api_secret: str | None = None,
         chain_id: int | None = None,
-    ):
+    ) -> None:
         self.private_key = private_key or os.environ.get("QTRUST_DEPLOYER_PRIVATE_KEY")
         self.rpc_url = rpc_url or os.environ.get("QTRUST_BASE_SEPOLIA_RPC", "http://127.0.0.1:8545")
         # Audit SDK-07 (re-confirmed as audit M-3): refuse cleartext RPC for
@@ -95,7 +98,9 @@ class QTrustClient:
         self.chain_id = chain_id or int(os.environ.get("QTRUST_CHAIN_ID", BASE_SEPOLIA_CHAIN_ID))
 
         # Read-only mode: no private key means verification/lookup calls only.
-        self.account = Account.from_key(self.private_key) if self.private_key else None
+        self.account: LocalAccount | None = (
+            Account.from_key(self.private_key) if self.private_key else None
+        )
 
         # Web3 setup
         self.w3 = Web3(Web3.HTTPProvider(self.rpc_url))
@@ -107,22 +112,64 @@ class QTrustClient:
         if chain_id != self.chain_id:
             raise ValueError(f"Expected chain ID {self.chain_id}, got {chain_id}")
 
-        def _contract(address: str, abi) -> any:
+        def _contract(address: str, abi: Any) -> Contract | None:
+            """Return a typed contract handle, or None when unset (properties raise on use)."""
             if not address:
                 return None
-            return self.w3.eth.contract(address=Web3.to_checksum_address(address), abi=abi)
+            c: Contract = self.w3.eth.contract(
+                address=Web3.to_checksum_address(address), abi=abi
+            )
+            return c
 
-        self.asset_registry = _contract(self.asset_registry_address, ASSET_REGISTRY_ABI)
-        self.vendor_registry = _contract(self.vendor_registry_address, VENDOR_REGISTRY_ABI)
-        self.migration_registry = _contract(self.migration_registry_address, MIGRATION_REGISTRY_ABI)
-        self.audit_registry = _contract(self.audit_registry_address, AUDIT_REGISTRY_ABI)
+        self._asset_registry: Contract | None = _contract(self.asset_registry_address, ASSET_REGISTRY_ABI)
+        self._vendor_registry: Contract | None = _contract(self.vendor_registry_address, VENDOR_REGISTRY_ABI)
+        self._migration_registry: Contract | None = _contract(self.migration_registry_address, MIGRATION_REGISTRY_ABI)
+        self._audit_registry: Contract | None = _contract(self.audit_registry_address, AUDIT_REGISTRY_ABI)
 
         # IPFS client (optional — only used when pin_to_ipfs=True)
-        self.ipfs = None
+        self.ipfs: PinataClient | None = None
         api_key = ipfs_api_key or os.environ.get("QTRUST_PINATA_API_KEY")
         api_secret = ipfs_api_secret or os.environ.get("QTRUST_PINATA_API_SECRET")
         if api_key and api_secret:
             self.ipfs = PinataClient(api_key=api_key, api_secret=api_secret)
+
+    # Typed accessors: a None handle means the registry address was never
+    # configured; fail with an actionable error instead of AttributeError.
+    @property
+    def asset_registry(self) -> Contract:
+        if self._asset_registry is None:
+            raise ValueError(
+                "AssetRegistry address not configured — pass asset_registry_address= "
+                "or set QTRUST_ASSET_REGISTRY_ADDRESS"
+            )
+        return self._asset_registry
+
+    @property
+    def vendor_registry(self) -> Contract:
+        if self._vendor_registry is None:
+            raise ValueError(
+                "VendorRegistry address not configured — pass vendor_registry_address= "
+                "or set QTRUST_VENDOR_REGISTRY_ADDRESS"
+            )
+        return self._vendor_registry
+
+    @property
+    def migration_registry(self) -> Contract:
+        if self._migration_registry is None:
+            raise ValueError(
+                "MigrationRegistry address not configured — pass migration_registry_address= "
+                "or set QTRUST_MIGRATION_REGISTRY_ADDRESS"
+            )
+        return self._migration_registry
+
+    @property
+    def audit_registry(self) -> Contract:
+        if self._audit_registry is None:
+            raise ValueError(
+                "AuditRegistry address not configured — pass audit_registry_address= "
+                "or set QTRUST_AUDIT_REGISTRY_ADDRESS"
+            )
+        return self._audit_registry
 
     # ------------------------------------------------------------------
     # Hashing helpers
@@ -152,7 +199,7 @@ class QTrustClient:
     # ------------------------------------------------------------------
     # Transaction helpers
     # ------------------------------------------------------------------
-    def _require_account(self):
+    def _require_account(self) -> LocalAccount:
         """Raise a clear error when a write method is used in read-only mode."""
         if self.account is None:
             raise ValueError(
@@ -162,8 +209,11 @@ class QTrustClient:
         return self.account
 
     def _send_transaction(
-        self, tx_builder, gas_limit: int = 250_000, max_nonce_retries: int = 3
-    ) -> dict:
+        self,
+        tx_builder: Any,
+        gas_limit: int = 250_000,
+        max_nonce_retries: int = 3,
+    ) -> dict[str, Any]:
         """Build, sign, send, and await a transaction.
 
         Audit SDK-08: concurrent submissions from one signer race on the same
@@ -200,7 +250,8 @@ class QTrustClient:
                     last_exc = RuntimeError(revert_reason)
                     continue
                 raise RuntimeError(revert_reason)
-            return dict(receipt)
+            receipt_dict: dict[str, Any] = dict(receipt)
+            return receipt_dict
         raise RuntimeError(
             f"Transaction failed after {max_nonce_retries} nonce retries"
         ) from last_exc
@@ -213,16 +264,19 @@ class QTrustClient:
         return any(m in text for m in markers)
 
     @staticmethod
-    def _event_args(receipt: dict, contract, event_name: str) -> dict | None:
+    def _event_args(receipt: dict[str, Any], contract: Contract | None, event_name: str) -> dict[str, Any] | None:
+        if contract is None:
+            raise ValueError("contract handle is None — registry address not configured")
         events = getattr(contract.events, event_name)().process_receipt(receipt)
         if not events:
             return None
-        return dict(events[0]["args"])
+        event_args: dict[str, Any] = dict(events[0]["args"])
+        return event_args
 
     # ------------------------------------------------------------------
     # AssetRegistry
     # ------------------------------------------------------------------
-    def register_cbom(self, cbom: CBOM, pin_to_ipfs: bool = True) -> tuple:
+    def register_cbom(self, cbom: CBOM, pin_to_ipfs: bool = True) -> tuple[str, str]:
         """Register a CBOM on-chain. Returns (asset_id, ipfs_cid_or_empty)."""
         cbom_hash = self.hash_cbom(cbom)
         metadata_uri = ""
@@ -245,7 +299,8 @@ class QTrustClient:
         args = self._event_args(receipt, self.asset_registry, "CBOMRegistered")
         if args is None:
             raise RuntimeError("CBOMRegistered event not found in receipt")
-        return "0x" + args["assetId"].hex(), metadata_uri.replace("ipfs://", "")
+        asset_id: str = "0x" + args["assetId"].hex()
+        return asset_id, metadata_uri.replace("ipfs://", "")
 
     def register_cbom_hash(self, cbom_hash: str, metadata_uri: str = "") -> str:
         """Register a pre-computed CBOM hash on-chain. Returns the asset ID."""
@@ -259,12 +314,13 @@ class QTrustClient:
         args = self._event_args(receipt, self.asset_registry, "CBOMRegistered")
         if args is None:
             raise RuntimeError("CBOMRegistered event not found in receipt")
-        return "0x" + args["assetId"].hex()
+        asset_id: str = "0x" + args["assetId"].hex()
+        return asset_id
 
     # ------------------------------------------------------------------
     # EIP-712 gasless CBOM registration
     # ------------------------------------------------------------------
-    def _eip712_asset_domain(self) -> dict:
+    def _eip712_asset_domain(self) -> dict[str, Any]:
         return {
             "name": "QTrustAssetRegistry",
             "version": "1",
@@ -274,17 +330,19 @@ class QTrustClient:
 
     def sign_cbom_registration(
         self, cbom_hash: str, metadata_uri: str = "", nonce: int | None = None,
-    ) -> tuple[dict, str]:
+    ) -> tuple[dict[str, Any], str]:
         """Sign a CBOM registration as EIP-712 typed data.
 
         Returns (typed_data, signature). The signature authorizes any relayer
         to submit the registration on the org's behalf (gasless).
         """
         self._require_account()
+        assert self.account is not None  # for mypy — _require_account guarantees this
         if nonce is None:
-            nonce = self.asset_registry.functions.nonces(
+            nonce_val: int = self.asset_registry.functions.nonces(
                 self.account.address
             ).call()
+            nonce = nonce_val
         typed_data = {
             "types": {
                 "EIP712Domain": [
@@ -308,7 +366,8 @@ class QTrustClient:
             },
         }
         signed = self.account.sign_typed_data(full_message=typed_data)
-        return typed_data, signed.signature.hex()
+        signature: str = signed.signature.hex()
+        return typed_data, signature
 
     def register_cbom_signed(
         self, cbom_hash: str, metadata_uri: str, nonce: int, signature: str,
@@ -330,16 +389,18 @@ class QTrustClient:
         args = self._event_args(receipt, self.asset_registry, "CBOMRegistered")
         if args is None:
             raise RuntimeError("CBOMRegistered event not found in receipt")
-        return "0x" + args["assetId"].hex()
+        asset_id: str = "0x" + args["assetId"].hex()
+        return asset_id
 
     def retire_asset(self, asset_id: str) -> str:
         """Retire a CBOM registration (owner or admin). Returns the tx hash."""
-        return self._send_transaction(
+        tx_hash: str = self._send_transaction(
             self.asset_registry.functions.retireAsset(
                 bytes.fromhex(asset_id[2:])
             ),
             gas_limit=150_000,
         )["transactionHash"].hex()
+        return tx_hash
 
     def get_asset(self, asset_id: str) -> AssetRecord:
         raw = self.asset_registry.functions.getAsset(bytes.fromhex(asset_id[2:])).call()
@@ -353,55 +414,63 @@ class QTrustClient:
             active=raw[5],
         )
 
-    def verify_asset(self, asset_id: str) -> tuple:
+    def verify_asset(self, asset_id: str) -> tuple[bool, bool, str]:
         """Verify an asset exists and is active. Returns (exists, active, org_did)."""
-        return self.asset_registry.functions.verifyAsset(bytes.fromhex(asset_id[2:])).call()
+        result: tuple[bool, bool, str] = self.asset_registry.functions.verifyAsset(
+            bytes.fromhex(asset_id[2:])
+        ).call()
+        return result
 
-    def get_assets_by_org(self, org_did: str) -> list:
+    def get_assets_by_org(self, org_did: str) -> list[str]:
         ids = self.asset_registry.functions.getAssetsByOrg(
             Web3.to_checksum_address(org_did)
         ).call()
         return ["0x" + i.hex() for i in ids]
 
     def asset_count(self) -> int:
-        return self.asset_registry.functions.assetCount().call()
+        count: int = self.asset_registry.functions.assetCount().call()
+        return count
 
     # ------------------------------------------------------------------
     # VendorRegistry
     # ------------------------------------------------------------------
     def register_vendor(self, vendor_address: str, name: str, metadata_uri: str = "") -> str:
-        return self._send_transaction(
+        tx_hash: str = self._send_transaction(
             self.vendor_registry.functions.registerVendor(
                 Web3.to_checksum_address(vendor_address), name, metadata_uri,
             ),
             gas_limit=200_000,
         )["transactionHash"].hex()
+        return tx_hash
 
     def deactivate_vendor(self, vendor_address: str) -> str:
         """Deactivate a vendor (admin only). Returns the tx hash."""
-        return self._send_transaction(
+        tx_hash: str = self._send_transaction(
             self.vendor_registry.functions.deactivateVendor(
                 Web3.to_checksum_address(vendor_address)
             ),
             gas_limit=150_000,
         )["transactionHash"].hex()
+        return tx_hash
 
     def is_vendor_active(self, vendor_address: str) -> bool:
         """Check whether a vendor is currently active."""
-        return self.vendor_registry.functions.isVendorActive(
+        active: bool = self.vendor_registry.functions.isVendorActive(
             Web3.to_checksum_address(vendor_address)
         ).call()
+        return active
 
     # ------------------------------------------------------------------
     # EIP-712 gasless attestations
     # ------------------------------------------------------------------
     def get_nonce(self, vendor_address: str) -> int:
         """Current EIP-712 nonce for a vendor."""
-        return self.vendor_registry.functions.nonces(
+        nonce: int = self.vendor_registry.functions.nonces(
             Web3.to_checksum_address(vendor_address)
         ).call()
+        return nonce
 
-    def _eip712_domain(self) -> dict:
+    def _eip712_domain(self) -> dict[str, Any]:
         return {
             "name": "QTrustVendorRegistry",
             "version": "1",
@@ -417,13 +486,14 @@ class QTrustClient:
         supported: bool,
         evidence_uri: str = "",
         nonce: int | None = None,
-    ) -> tuple[dict, str]:
+    ) -> tuple[dict[str, Any], str]:
         """Sign a product attestation as EIP-712 typed data.
 
         Returns (typed_data, signature). The signature authorizes any relayer
         to submit the attestation on the vendor's behalf (gasless).
         """
         self._require_account()
+        assert self.account is not None  # for mypy — _require_account guarantees this
         if nonce is None:
             nonce = self.get_nonce(self.account.address)
         typed_data = {
@@ -455,14 +525,16 @@ class QTrustClient:
             },
         }
         signed = self.account.sign_typed_data(full_message=typed_data)
-        return typed_data, signed.signature.hex()
+        signature = signed.signature.hex()
+        return typed_data, signature
 
     @staticmethod
-    def recover_attestation_signer(typed_data: dict, signature: str) -> str:
+    def recover_attestation_signer(typed_data: dict[str, Any], signature: str) -> str:
         """Recover the signer of an EIP-712 attestation (off-chain verification)."""
 
         encoded = encode_typed_data(full_message=typed_data)
-        return Account.recover_message(encoded, signature=signature)
+        recovered: str = Account.recover_message(encoded, signature=signature)
+        return recovered
 
     def attest_product_signed(
         self,
@@ -479,13 +551,14 @@ class QTrustClient:
         The on-chain attestation records the SIGNER as the vendor — the
         submitting account only pays gas.
         """
-        return self._send_transaction(
+        tx_hash: str = self._send_transaction(
             self.vendor_registry.functions.attestProductSigned(
                 product_id, version, algorithm, supported, evidence_uri,
                 nonce, bytes.fromhex(signature[2:] if signature.startswith("0x") else signature),
             ),
             gas_limit=500_000,
         )["transactionHash"].hex()
+        return tx_hash
 
     def attest_product(self, product_id: str, version: str, algorithm: str,
                        supported: bool, evidence_uri: str = "") -> str:
@@ -499,15 +572,17 @@ class QTrustClient:
         args = self._event_args(receipt, self.vendor_registry, "ProductAttested")
         if args is None:
             raise RuntimeError("ProductAttested event not found in receipt")
-        return "0x" + args["attestationId"].hex()
+        attestation_id: str = "0x" + args["attestationId"].hex()
+        return attestation_id
 
     def revoke_attestation(self, attestation_id: str) -> str:
-        return self._send_transaction(
+        tx_hash: str = self._send_transaction(
             self.vendor_registry.functions.revokeAttestation(
                 bytes.fromhex(attestation_id[2:])
             ),
             gas_limit=150_000,
         )["transactionHash"].hex()
+        return tx_hash
 
     def get_attestation(self, attestation_id: str) -> ProductAttestation:
         raw = self.vendor_registry.functions.getAttestation(
@@ -525,26 +600,27 @@ class QTrustClient:
             revoked=raw[7],
         )
 
-    def get_attestations_by_vendor(self, vendor_did: str) -> list:
+    def get_attestations_by_vendor(self, vendor_did: str) -> list[str]:
         ids = self.vendor_registry.functions.getAttestationsByVendor(
             Web3.to_checksum_address(vendor_did)
         ).call()
         return ["0x" + i.hex() for i in ids]
 
-    def get_attestations_by_product(self, product_id: str, version: str, algorithm: str) -> list:
+    def get_attestations_by_product(self, product_id: str, version: str, algorithm: str) -> list[str]:
         ids = self.vendor_registry.functions.getAttestationsByProduct(
             product_id, version, algorithm
         ).call()
         return ["0x" + i.hex() for i in ids]
 
-    def check_product_support(self, product_id: str, version: str, algorithm: str) -> tuple:
+    def check_product_support(self, product_id: str, version: str, algorithm: str) -> tuple[bool, str, str]:
         """Check if any vendor attests support. Returns (supported, vendor_did, attestation_id)."""
         supported, vendor_did, attestation_id = self.vendor_registry.functions.checkProductSupport(
             product_id, version, algorithm
         ).call()
         if isinstance(attestation_id, bytes):
             attestation_id = "0x" + attestation_id.hex()
-        return supported, vendor_did, attestation_id
+        result: tuple[bool, str, str] = (supported, vendor_did, attestation_id)
+        return result
 
     # ------------------------------------------------------------------
     # MigrationRegistry
@@ -552,7 +628,7 @@ class QTrustClient:
     def record_migration(self, migration_id: str, asset_id: str,
                          from_algorithm: str, to_algorithm: str,
                          evidence_hash: str, evidence_uri: str = "") -> str:
-        return self._send_transaction(
+        tx_hash: str = self._send_transaction(
             self.migration_registry.functions.recordMigration(
                 bytes.fromhex(migration_id[2:]),
                 bytes.fromhex(asset_id[2:]),
@@ -562,11 +638,12 @@ class QTrustClient:
             ),
             gas_limit=500_000,
         )["transactionHash"].hex()
+        return tx_hash
 
     # ------------------------------------------------------------------
     # EIP-712 gasless migration recording
     # ------------------------------------------------------------------
-    def _eip712_migration_domain(self) -> dict:
+    def _eip712_migration_domain(self) -> dict[str, Any]:
         return {
             "name": "QTrustMigrationRegistry",
             "version": "1",
@@ -583,17 +660,19 @@ class QTrustClient:
         evidence_hash: str,
         evidence_uri: str = "",
         nonce: int | None = None,
-    ) -> tuple[dict, str]:
+    ) -> tuple[dict[str, Any], str]:
         """Sign a migration recording as EIP-712 typed data.
 
         Returns (typed_data, signature). The signature authorizes any relayer
         to submit the migration on the org's behalf (gasless).
         """
         self._require_account()
+        assert self.account is not None  # for mypy — _require_account guarantees this
         if nonce is None:
-            nonce = self.migration_registry.functions.nonces(
+            nonce_val = self.migration_registry.functions.nonces(
                 self.account.address
             ).call()
+            nonce = nonce_val
         typed_data = {
             "types": {
                 "EIP712Domain": [
@@ -625,7 +704,8 @@ class QTrustClient:
             },
         }
         signed = self.account.sign_typed_data(full_message=typed_data)
-        return typed_data, signed.signature.hex()
+        signature = signed.signature.hex()
+        return typed_data, signature
 
     def record_migration_signed(
         self,
@@ -658,15 +738,17 @@ class QTrustClient:
         args = self._event_args(receipt, self.migration_registry, "MigrationRecorded")
         if args is None:
             raise RuntimeError("MigrationRecorded event not found in receipt")
-        return "0x" + args["migrationId"].hex()
+        recorded_id: str = "0x" + args["migrationId"].hex()
+        return recorded_id
 
     def verify_migration(self, migration_id: str) -> str:
-        return self._send_transaction(
+        tx_hash: str = self._send_transaction(
             self.migration_registry.functions.verifyMigration(
                 bytes.fromhex(migration_id[2:])
             ),
             gas_limit=150_000,
         )["transactionHash"].hex()
+        return tx_hash
 
     def get_migration(self, migration_id: str) -> MigrationRecord:
         raw = self.migration_registry.functions.getMigration(
@@ -684,18 +766,17 @@ class QTrustClient:
             verified=raw[7],
         )
 
-    def get_migrations_by_asset(self, asset_id: str) -> list:
+    def get_migrations_by_asset(self, asset_id: str) -> list[str]:
         ids = self.migration_registry.functions.getMigrationsByAsset(
             bytes.fromhex(asset_id[2:])
         ).call()
         return ["0x" + i.hex() for i in ids]
 
-    def get_migrations_by_org(self, org_did: str) -> list:
+    def get_migrations_by_org(self, org_did: str) -> list[str]:
         ids = self.migration_registry.functions.getMigrationsByOrg(
             Web3.to_checksum_address(org_did)
         ).call()
         return ["0x" + i.hex() for i in ids]
-
     # ------------------------------------------------------------------
     # AuditRegistry
     # ------------------------------------------------------------------
@@ -715,13 +796,14 @@ class QTrustClient:
         args = self._event_args(receipt, self.audit_registry, "AuditPosted")
         if args is None:
             raise RuntimeError("AuditPosted event not found in receipt")
-        return "0x" + args["auditId"].hex()
+        audit_id: str = "0x" + args["auditId"].hex()
+        return audit_id
 
-    def get_audit(self, audit_id: str) -> dict:
+    def get_audit(self, audit_id: str) -> dict[str, Any]:
         raw = self.audit_registry.functions.getAudit(
             bytes.fromhex(audit_id[2:])
         ).call()
-        return {
+        audit: dict[str, Any] = {
             "audit_id": audit_id,
             "org_did": raw[0],
             "auditor_did": raw[1],
@@ -732,21 +814,23 @@ class QTrustClient:
             "report_uri": raw[6],
             "timestamp": raw[7],
         }
+        return audit
 
-    def get_audits_by_org(self, org_did: str) -> list:
+    def get_audits_by_org(self, org_did: str) -> list[str]:
         ids = self.audit_registry.functions.getAuditsByOrg(
             Web3.to_checksum_address(org_did)
         ).call()
         return ["0x" + i.hex() for i in ids]
 
-    def get_audits_by_auditor(self, auditor_did: str) -> list:
+    def get_audits_by_auditor(self, auditor_did: str) -> list[str]:
         ids = self.audit_registry.functions.getAuditsByAuditor(
             Web3.to_checksum_address(auditor_did)
         ).call()
         return ["0x" + i.hex() for i in ids]
 
-    def get_latest_audit(self, org_did: str) -> tuple:
+    def get_latest_audit(self, org_did: str) -> tuple[bool, int, int]:
         """Returns (exists, result, timestamp) for the org's latest audit."""
-        return self.audit_registry.functions.getLatestAudit(
+        result: tuple[bool, int, int] = self.audit_registry.functions.getLatestAudit(
             Web3.to_checksum_address(org_did)
         ).call()
+        return result
