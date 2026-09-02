@@ -349,7 +349,7 @@ flowchart LR
 
 | Capability | Result | Source |
 |---|---|---|
-| Migration ranking | Kendall **τ 0.961** vs heuristic optimum (held-out) | [`planner/results/benchmark.json`](planner/results/benchmark.json) |
+| Migration ranking | Kendall **τ 0.9637** vs heuristic optimum (held-out, 3-seed mean ± 0.0002) | [`planner/results/benchmark.json`](planner/results/benchmark.json) |
 | GNN v3 @ scale (synthetic) | 100K graphs · BF16 · per-graph ListMLE — held-out **τ 0.975** | [`planner/results/benchmark_v3.json`](planner/results/benchmark_v3.json) |
 | **GNN v3 + real data (LOO)** | in-dist **τ 0.9710** · **out-of-sample 40-fold LOO** on host-disjoint real TLS CBOMs (280 hosts, re-run 2026-09-02 on the deterministic-kernel harness, 30-epoch fine-tune, folds sharded across **4 A100s**): **τ-b 0.7263** vs doctrine heuristic **0.7450** (Δ **−0.0188**) — **reproduces the doctrine on 38/40** held-out real CBOMs (0 wins / 38 ties / 2 losses, both small heavily-tied n≤8 graphs) · **+0.503 vs random** | [`planner/results/real_cbom_loo_40.json`](planner/results/real_cbom_loo_40.json) · in-sample suite [`benchmark_real_v3.json`](planner/results/benchmark_real_v3.json) |
 | RL migration agent | **100%** completion on 40 packed real-CBOM estates (risk labels derived from the real scan fields: RSA-1024 → critical, RSA-2048 → high, expired/near-expiry raise the class) · mean reward **140.34** ± 8.13 vs doctrine heuristic **140.62** (Δ **−0.28** — **statistical tie**) vs random **136.84** (+**3.50**, +**2.6%**) — learns real risk-priority and matches the doctrine on real estates ([bit-reproducible](docs/TRUTH_AUDIT.md): 2/40 wins · 27 ties · 11 losses) | [`planner/results/rl_benchmark_real_cbom.json`](planner/results/rl_benchmark_real_cbom.json) |
@@ -451,7 +451,7 @@ Dashboard at `http://localhost:3000` · API at `http://localhost:3001` · Grafan
 <br/>
 
 ```bash
-# Contracts (Foundry — 211 tests incl. invariant + fuzz + attack)
+# Contracts (Foundry — 213 tests incl. invariant + fuzz + attack)
 cd contracts && forge test
 
 # Planner (PyTorch Geometric)
@@ -601,9 +601,9 @@ gantt
     axisFormat %b %Y
 
     section Landed
-    11 registries + 211 tests        :done, 2025-11, 2026-02
+    11 registries + 213 tests        :done, 2025-11, 2026-02
     v2.0 scanner (10 modules)        :done, 2026-02, 2026-05
-    GNN planner (τ 0.961)            :done, 2026-03, 2026-06
+    GNN planner (τ 0.975)            :done, 2026-03, 2026-06
     7 CI pipelines + docs site       :done, 2026-05, 2026-07
 
     section In flight
@@ -619,7 +619,7 @@ gantt
 | Status | Milestone |
 |:---:|---|
 | ✅ | v2.0 — 10-module scanner, 7 compliance frameworks, CycloneDX 1.7 + SARIF 2.1 |
-| ✅ | GNN planner (τ 0.961) + RL migration agent |
+| ✅ | GNN planner (τ 0.975) + RL migration agent |
 | ✅ | Bank pilot end-to-end demo (`pilot/`) |
 | 🔄 | Base Sepolia deployment + public verification page |
 | 🔄 | Independent security audit |

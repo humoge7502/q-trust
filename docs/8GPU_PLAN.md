@@ -27,7 +27,10 @@ data parallelism without sharding (pdf §2).
 
 ## Why More Compute Made the Model Worse — Corrected Ladder
 
-Committed benchmarks (seed=999, same protocol):
+Historical ladder — as measured at the time, before the 2026-09-02
+retrain on the corrected synthetic pool (seed=999, same protocol). Current
+canonical values live in `planner/results/benchmark_v3.json` / `benchmark.json`
+and in the Updated note below):
 
 - v2 CPU 9,282 params, 1.2K graphs: **τ 0.9607**, top-5 0.673 (benchmark_v3.json:6)
 - v3 1×A100 237,070 params, 100K graphs, bf16: **τ 0.8982**, top-5 0.520 (benchmark_v3.json:14)
@@ -38,6 +41,16 @@ Committed benchmarks (seed=999, same protocol):
 > held-out **τ 0.9746** / top-5 0.700 on the same seed=999 suite
 > (`planner/results/benchmark_v3.json` v3 entry) — exceeding the previous
 > canonical τ 0.9718 and the pre-fix 0.8982.
+>
+> **Updated (2026-09-02):** the synthetic pool was corrected (ML-DSA draft
+> 441/659/877 → final FIPS 204 names 44/65/87 + hardened encoder), which
+> invalidated every pre-trained checkpoint, so **v2 and v3 were retrained
+> from scratch on the corrected pool** (deterministic, A100s). Fresh canonical
+> `planner/results/benchmark_v3.json` records **v2 τ 0.9703** (top-5 0.713)
+> and **v3 τ 0.9753** (top-5 0.673) — the CI promotion gate (v3 > v2) passes
+> honestly. `planner/results/benchmark.json` (3 seeds) re-measures gnn-listmle
+> at **τ 0.9637 ± 0.0002**. The 400K-graph DDP checkpoint was left unretrained
+> (τ 0.864, research artifact).
 
 Root causes (P0-1, P1-7, pdf §5): cross-graph ListMLE (train_gpu.py:32-46,176; train_ddp.py:146) mixed Plackett-Luce normalizer across 256 unrelated estates per batch; per-rank double-sharding. Fixed by `per_graph_listMLE_loss` with `batch_idx` masking (train_gpu.py, train_ddp.py) and single global dataset sharded once via `DistributedSampler` (pdf Appendix B P0 fix list).
 
@@ -84,7 +97,7 @@ CI smoke: fits 100 graphs end-to-end on CPU and asserts loss decreases; benchmar
 
 ## Success Metrics (90-day targets, pdf §22)
 
-- Planner τ ≥0.97 on synthetic synthetic suite (regression gate, beats v2 0.9607 after fix)
+- Planner τ ≥0.97 on synthetic suite (regression gate, beats canonical v2 0.9703 per the 2026-09-02 retrain)
 - Outcome regret ≥20% lower cost + deadline violations vs greedy heuristic (OOD)
 - SCA fewer traces than CPA on ≥2 parameter sets, coverage ≥10 sets + classical baselines
 - Discovery +10 F1 over regex, risk ECE ≤0.05, p95 ≤50ms, 9/9 checkpoints served

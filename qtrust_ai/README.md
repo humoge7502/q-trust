@@ -6,7 +6,7 @@ This package implements the 32-point transformation (user spec) to make Q-Trust 
 
 ## Why not just train the GNN more?
 
-Current GNN: `Graph → GNN → priority score` with τ 0.961 vs heuristic. It memorizes the rule that generated its labels (synthetic 40/30/20/10 mix missing). NIST lists discovery + risk + interoperability as core workstreams — not ranking alone.
+Current GNN: `Graph → GNN → priority score` with τ 0.975 vs heuristic. It memorizes the rule that generated its labels (synthetic 40/30/20/10 mix missing). NIST lists discovery + risk + interoperability as core workstreams — not ranking alone.
 
 ## The intelligence stack (32 points)
 

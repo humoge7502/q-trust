@@ -239,11 +239,12 @@ app.add_middleware(ApiKeyMiddleware)
 #   RESOLVED 2026-08-28 — v3 LayerNorm retrain (planner/model_gpu_v3.pt,
 #   256-dim, 4 layers, LayerNorm) is now the DEFAULT shipped model.
 #   Verified on the canonical seed=999 held-out split (same protocol as
-#   benchmark.py, scipy Kendall tau):
+#   benchmark.py, scipy Kendall tau). Re-verified 2026-09-02 after the
+#   corrected-pool retrain — fresh benchmark_v3.json:
 #
-#       v2 (model.pt, 64-dim, BatchNorm)  τ = 0.958-0.961
-#       v3 GPU (model_gpu_v3.pt, LayerNorm) τ = 0.972-0.973  ← beats v2
-#       v3 DDP (model_ddp_v3.pt, BatchNorm) τ = 0.906-0.910
+#       v2 (model.pt, 64-dim, BatchNorm)  τ = 0.970
+#       v3 GPU (model_gpu_v3.pt, LayerNorm) τ = 0.975  ← beats v2
+#       v3 DDP (model_ddp_v3.pt, BatchNorm) τ = 0.864 (research artifact)
 #
 #   History: the first v3 GPU checkpoint used BatchNorm, which leaks
 #   cross-graph statistics under PyG batching and scored τ=0.898 — BELOW
@@ -307,8 +308,8 @@ except FileNotFoundError:
 def _resolve_checkpoint_path() -> tuple[str | None, str]:
     """Resolve model path with fallback chain so DDP artifact has a consumer.
 
-    Priority (post LayerNorm retrain — v3 τ 0.972-0.973 beats v2 τ
-    0.958-0.961 on the canonical seed=999 split):
+    Priority (post LayerNorm retrain — v3 τ 0.975 beats v2 τ 0.970 on
+    the canonical seed=999 split):
         QTRUST_MODEL_PATH (explicit operator override) ->
         model_gpu_v3.pt (LayerNorm, best) -> model_ddp_v3.pt -> model.pt (v2)
     Also supports QTRUST_PLANNER_MODEL_REAL when it exists.

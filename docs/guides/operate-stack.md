@@ -22,7 +22,7 @@ docker compose logs -f api
 
 ```bash
 ./scripts/verify_all.sh
-# Checks: forge test (211) · sdk E2E (anvil) · inspector · planner benchmark · backend build · frontend build · notebooks · pilot
+# Checks: forge test (213) · sdk E2E (anvil) · inspector · planner benchmark · backend build · frontend build · notebooks · pilot
 ```
 
 ## Observability

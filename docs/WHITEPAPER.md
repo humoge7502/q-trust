@@ -204,15 +204,19 @@ protocol — see README "Trained checkpoints & measured results" and the
 CHANGELOG v2.1 notes; numbers refreshed 2026-08-26 after the ranking-metric
 protocol bug fix):
 
-- Kendall tau: **0.961** for GNN v2 on the canonical held-out set
-  (`planner/results/benchmark_v3.json` `v2` entry / `planner/results/benchmark.json`
-  3-seed mean 0.937±0.011; earlier revisions quoted τ=0.89 computed with the
-  pre-fix index-correlation protocol)
+- Kendall tau: **0.970** for GNN v2 on the canonical held-out set
+  (`planner/results/benchmark_v3.json` `v2` entry — refreshed 2026-09-02
+  after the retrain on the corrected synthetic pool;
+  `planner/results/benchmark.json` 3-seed mean **0.9637**±0.0002; earlier
+  revisions quoted τ=0.89 computed with the pre-fix
+  index-correlation protocol)
 - GNN v3 (GPU, 100K graphs, BF16, per-graph ListMLE): held-out **τ 0.975**, the
   default shipped model (`planner/model_gpu_v3.pt`)
-  (`planner/results/benchmark_v3.json` `v3` entry)
-- v3 DDP (2×A100 / larger scale): held-out τ 0.906 — a research artifact pending
-  the BatchNorm→LayerNorm DDP retrain (`planner/results/benchmark_ddp.json`)
+  (`planner/results/benchmark_v3.json` `v3` entry — refreshed 2026-09-02)
+- v3 DDP (2×A100 / larger scale, 400K graphs): held-out **τ 0.864** — a research
+  artifact not retrained on the corrected pool; do not cite for product claims
+  (`planner/results/benchmark_v3.json` `v3 DDP` entry; earlier 0.906 figures
+  predated the corrected pool)
 - Top-5 overlap: 0.94 (94% of top-5 targets match optimal set)
 - Node-rank accuracy: within ±2 of optimal rank for the large majority of nodes
 

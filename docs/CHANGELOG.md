@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Synthetic benchmark pool corrected — full honest v2/v3 retrain (2026-09-02)
+
+The synthetic ML-DSA parameter sets were renamed from the draft names
+(441/659/877) to the final FIPS 204 names (44/65/87) and the algorithm
+encoder was hardened, so every pre-existing checkpoint evaluated against
+current code drifted (v3 0.9746 → 0.9195, v2 0.9607 → 0.9199 on the
+seed=999 held-out suite). Both checkpoints were retrained from scratch on
+the corrected pool on A100s (deterministic, listmle; v3 at 100K graphs /
+200 epochs / LayerNorm / seed 42, best val τ 0.9729; v2 at 1.2K graphs /
+80 epochs). Fresh canonical `planner/results/benchmark_v3.json` (seed=999,
+1000 graphs):
+
+| Model | Kendall τ | Top-5 |
+| --- | --- | --- |
+| v3 (GPU, 100K graphs, 256-dim) | **0.9753** | 0.673 |
+| v2 (1.2K graphs, 64-dim) | **0.9703** | 0.713 |
+
+- The CI promotion gate (v3 must beat canonical v2) passes honestly;
+  `planner/results/benchmark.json` (3 seeds) re-measures gnn-listmle at
+  **τ 0.9637 ± 0.0002**.
+- `models.sha256` refreshed for the new binaries; README / WHITEPAPER /
+  showcase / docs numbers updated to the fresh measurements.
+- The 400K-graph DDP checkpoint was not retrained and is documented as a
+  research artifact (τ 0.864, batch-norm).
+
 ### Real-data training campaign + X.509 encoder fix + tie-aware metrics + strategic analysis (2026-08-29)
 
 **Real-data corpus expanded (web-collected, all public):**

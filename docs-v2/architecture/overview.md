@@ -79,7 +79,7 @@ deterministic content-addressed IDs so identical CBOMs hash identically
 
 ::: warning Honest limits
 The GNN planner is a research model: on the v3 held-out benchmark it reaches
-Kendall τ ≈ 0.961 against a rule-based upper bound (which scores 1.0 by
+Kendall τ ≈ 0.975 against a rule-based upper bound (which scores 1.0 by
 construction). It ranks migration priority; it does not certify correctness
 of any migration.
 :::

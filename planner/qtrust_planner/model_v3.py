@@ -41,7 +41,8 @@ AUDIT NOTE — BatchNorm correctness (planner/model_v3.py:67,105,116,121,126):
         for the retrain. Pass ``norm="layer"`` to train with LayerNorm
         (no batch dependence, works for single-node graphs) or ``norm="graph"``
         to train with PyG GraphNorm (per-graph statistics via ``batch``).
-      * Promotion gate: v2 (BatchNorm, τ=0.961 canonical) remains the default
+      * Promotion gate: v2 (BatchNorm, τ=0.970 canonical, refreshed
+        2026-09-02 after the corrected-pool retrain) remains the default
         in planner/server.py (QTRUST_MODEL_PATH → model.pt) until a LayerNorm/
         GraphNorm v3 retrain **beats v2 on the canonical held-out benchmark**
         (scipy Kendall tau, seed=999, same split as benchmark.py). See

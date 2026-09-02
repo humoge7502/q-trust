@@ -12,7 +12,7 @@ hide:
 
     ---
 
-    Scan → Risk → Compliance → Plan → Attest → Verify on **Base L2**. CBOM 1.7, SARIF 2.1, GNN/RL planning, EIP-712 gasless relay, W3C Verifiable Credentials — audited, 211 Foundry tests, τ 0.975.
+    Scan → Risk → Compliance → Plan → Attest → Verify on **Base L2**. CBOM 1.7, SARIF 2.1, GNN/RL planning, EIP-712 gasless relay, W3C Verifiable Credentials — audited, 213 Foundry tests, τ 0.975.
 
     :material-rocket-launch: [Quickstart](#quickstart){ .md-button .md-button--primary }
     :material-api: [API Reference](api.md){ .md-button }
@@ -22,7 +22,7 @@ hide:
 
 ### Trusted by the stack
 
-[![CI](https://img.shields.io/badge/CI-211%20tests%20passing-brightgreen)](https://github.com/humoge7502/q-trust/actions/workflows/ci.yml) [![Contracts Verified](https://img.shields.io/badge/contracts-verified%20on%20Basescan-0052FF?logo=ethereum)](https://sepolia.basescan.org/) [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blue)](https://humoge7502.github.io/q-trust) [![PyPI](https://img.shields.io/pypi/v/qtrust-sdk?label=PyPI%20qtrust--sdk&logo=pypi)](https://pypi.org/project/qtrust-sdk/) [![MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/humoge7502/q-trust/blob/main/LICENSE) [![Base Sepolia](https://img.shields.io/badge/network-Base%20Sepolia%2084532-0052FF?logo=coinbase)](https://sepolia.base.org)
+[![CI](https://img.shields.io/badge/CI-213%20tests%20passing-brightgreen)](https://github.com/humoge7502/q-trust/actions/workflows/ci.yml) [![Contracts Verified](https://img.shields.io/badge/contracts-verified%20on%20Basescan-0052FF?logo=ethereum)](https://sepolia.basescan.org/) [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blue)](https://humoge7502.github.io/q-trust) [![PyPI](https://img.shields.io/pypi/v/qtrust-sdk?label=PyPI%20qtrust--sdk&logo=pypi)](https://pypi.org/project/qtrust-sdk/) [![MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/humoge7502/q-trust/blob/main/LICENSE) [![Base Sepolia](https://img.shields.io/badge/network-Base%20Sepolia%2084532-0052FF?logo=coinbase)](https://sepolia.base.org)
 
 ---
 
@@ -231,7 +231,7 @@ docs/        MkDocs Material site — whitepaper, ADRs, runbooks, API reference
 === "Per-component"
 
     ```bash
-    # Contracts — 211 tests (invariant runs=1000, depth=100, fail_on_revert=true)
+    # Contracts — 213 tests (invariant runs=1000, depth=100, fail_on_revert=true)
     cd contracts && forge test -vvv           # forge coverage --report lcov --ir-minimum
 
     # Inspector

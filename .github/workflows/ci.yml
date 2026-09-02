@@ -227,8 +227,9 @@ jobs:
           print('benchmark provenance gate passed')
           "
       # Promotion gate — v3 (LayerNorm) must beat canonical v2 on the seed=999
-      # split. Enabled 2026-08-28: verified v3 τ 0.972-0.973 > v2 τ 0.958-0.961,
-      # and planner/server.py now defaults QTRUST_MODEL_PATH resolution to v3.
+      # split. Enabled 2026-08-28; re-verified 2026-09-02 after the
+      # corrected-pool retrain (v3 τ 0.975 > v2 τ 0.970), and planner/server.py
+      # now defaults QTRUST_MODEL_PATH resolution to v3.
       # The gate compares fresh v3 against the CANONICAL v2 recorded in
       # results/benchmark_v3.json (planner/model.pt is gitignored, so it is not
       # present in CI — do not point this at model.pt).

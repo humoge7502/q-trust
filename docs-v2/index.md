@@ -8,7 +8,7 @@ hero:
   tagline: |
     Scan TLS endpoints, source trees and binaries into CycloneDX 1.7 CBOMs,
     then plan, attest and verify migrations on Base L2.
-    10-module inspector · GNN planner (Kendall τ 0.961) · 11 UUPS registries ·
+    10-module inspector · GNN planner (Kendall τ 0.975) · 11 UUPS registries ·
     research pre-release.
   image:
     src: /hero.png
@@ -33,7 +33,7 @@ features:
     title: GNN Planner
     details: >
       PyTorch Geometric migration planner scoring per-asset priority, with
-      Kendall τ 0.961 against a rule-based upper bound on the held-out
+      Kendall τ 0.975 against a rule-based upper bound on the held-out
       benchmark split.
     link: /architecture/overview
   - icon: ⛓️
