@@ -86,7 +86,7 @@ targeting `DEFAULT_ADMIN_ROLE` are rejected by governance by design.
 
 ### 4. Coordinate disclosure
 
-Follow [`SECURITY.md`](../../SECURITY.md). Any public announcement must be
+Follow [SECURITY.md](https://github.com/humoge7502/q-trust/blob/main/SECURITY.md). Any public announcement must be
 approved by the escalation contacts below.
 
 ---
@@ -185,15 +185,18 @@ cast logs --address $QTRUST_AUDIT_REGISTRY_ADDRESS \
 
 ## Escalation contacts
 
-> Replace placeholders with real on-call rota entries before go-live.
+> Template: the operator fills in their own on-call roster before go-live
+> (the repo ships no real phone numbers or mailboxes). Security
+> disclosures follow [SECURITY.md](https://github.com/humoge7502/q-trust/blob/main/SECURITY.md)
+> (GitHub private vulnerability reporting).
 
-| Role | Name | Contact | Hours |
+| Role | Name (fill at deployment) | Contact (fill at deployment) | Hours |
 |---|---|---|---|
-| Incident commander | `incident@q-trust.io` | `incident@q-trust.io (phone/Signal)` | 24/7 |
-| Contracts lead (SEV1 owner) | `incident@q-trust.io` | `incident@q-trust.io` | 24/7 |
-| Backend/infra on-call | `incident@q-trust.io` | `incident@q-trust.io` | Business hours |
-| Security disclosures | see SECURITY.md | security@qtrust.dev `_REPLACE_` | 24/7 |
-| Comms/PR (SEV1 only) | `incident@q-trust.io` | `incident@q-trust.io` | Business hours |
+| Incident commander | — | — | 24/7 |
+| Contracts lead (SEV1 owner) | — | — | 24/7 |
+| Backend/infra on-call | — | — | Business hours |
+| Security disclosures | SECURITY.md | GitHub private vulnerability reporting | 24/7 |
+| Comms/PR (SEV1 only) | — | — | Business hours |
 
 Pager integration: point `QTRUST_ALERT_WEBHOOK` (Alertmanager receiver) at
 your paging provider and map `severity=critical` routes to SEV1/SEV2 paging.

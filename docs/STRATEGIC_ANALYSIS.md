@@ -3,7 +3,7 @@
 > **How I would take this project further if I were its developer.**
 > Every section ends with concrete, prioritized actions. Where a claim is
 > an inference rather than a verified fact, it is marked **inference**.
-> Design mockups referenced below are rendered images in [`docs/design/`](design/).
+> Design mockups referenced below are rendered images in [`docs/design/`](https://github.com/humoge7502/q-trust/tree/main/docs/design).
 
 ---
 
@@ -109,7 +109,7 @@ issue/verify (byte-compatible with the Python SDK).
 
 ### 2.3 Frontend / UX — score 70 → target 85
 
-**The mockups in [`docs/design/`](design/) show the target:**
+**The mockups in [`docs/design/`](https://github.com/humoge7502/q-trust/tree/main/docs/design) show the target:**
 
 - `dashboard_mockup.svg` — the **Quantum Security Control Center**: one
   readiness number, top-5 ML-ranked fixes with "why", environment breakdown,

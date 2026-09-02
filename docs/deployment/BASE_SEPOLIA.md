@@ -63,7 +63,7 @@ jq -r '.transactions[] | select(.transactionType=="CREATE") | .contractName + "=
 ```
 
 Keep only the **proxy** lines and export them in the CI format documented in
-[`contracts/verification/README.md`](../../contracts/verification/README.md)
+[`contracts/verification/README.md`](https://github.com/humoge7502/q-trust/blob/main/contracts/verification/README.md)
 (one `Name=0xAddress` pair per line — this exact value goes into the repo
 variable used by the CI verify job):
 
@@ -118,7 +118,7 @@ timelock delay (see the SEV1 playbook examples in
 
 ## 5. Configure backend env vars
 
-Fill `.env` (template: [`.env.example`](../../.env.example)):
+Fill `.env` (template: [`.env.example`](https://github.com/humoge7502/q-trust/blob/main/.env.example)):
 
 ```text
 QTRUST_USE_MAINNET=false

@@ -2,7 +2,7 @@
 
 > Nine specialist reviews of the live repository, each with **verified**
 > findings (code-checked) and prioritized actions. Claims not verified in
-> code are marked **inference**. Companion visuals: [`docs/design/`](design/).
+> code are marked **inference**. Companion visuals: [`docs/design/`](https://github.com/humoge7502/q-trust/tree/main/docs/design).
 
 **Headline:** the engineering is ahead of the market's *awareness*. The gap
 is no longer code quality — it is (1) independent verification, (2) public

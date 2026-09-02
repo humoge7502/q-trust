@@ -29,6 +29,8 @@ check() {
 }
 
 check '_PLACEHOLDER_' 'incident-response escalation'
+check '_REPLACE_' 'unreplaced template token'
+check 'incident@q-trust.io' 'fake on-call mailbox'
 check 'security@q-trust.example' 'SECURITY.md contact'
 
 if [ "$FAIL" -ne 0 ]; then
