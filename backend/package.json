@@ -37,7 +37,7 @@
     "fast-uri": "^4.1.4"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
+    "@types/node": "^26.4.0",
     "@types/pg": "^8.23.1",
     "@vitest/coverage-v8": "^4.1.11",
     "tsx": "^4.19.0",
