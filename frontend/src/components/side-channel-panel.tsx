@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 type Verdict = "SIDE_CHANNEL_VERIFIED" | "SIDE_CHANNEL_LOW_RISK" | "SIDE_CHANNEL_HIGH_RISK";
 
@@ -35,9 +36,7 @@ const VERDICT_CONFIG: Record<Verdict, { label: string; text: string; bg: string 
 async function analyze(
   body: Record<string, unknown>,
 ): Promise<SideChannelResponse> {
-  const base =
-    process.env.NEXT_PUBLIC_QTRUST_API_URL ?? "http://localhost:3001";
-  const res = await fetch(`${base}/v1/gpu/side-channel/analyze`, {
+  const res = await fetch(`${API_BASE_URL}/v1/gpu/side-channel/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

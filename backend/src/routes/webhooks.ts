@@ -7,11 +7,13 @@ import { isPublicHttpsUrl } from "../services/webhook.js"; // REG-19
 import { encryptSecret, decryptSecret } from "../services/secret-box.js";
 import { setSubscriberResolver } from "../services/webhook.js";
 import { isValidAddress } from "../config.js";
+import { WebhookSubscribeSchema, WebhookUnsubscribeSchema } from "../schemas/index.js";
 
 export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis | null): Promise<void> {
   app.post("/v1/webhooks/subscribe", {
     preHandler: requireApiKey,
     config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    schema: { body: WebhookSubscribeSchema },
   }, async (request, reply) => {
     const { address, url, secret, events } = request.body as { address: string; url: string; secret?: string; events?: string[] };
     if (!address || !url) {
@@ -42,6 +44,7 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
   app.post("/v1/webhooks/unsubscribe", {
     preHandler: requireApiKey,
     config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    schema: { body: WebhookUnsubscribeSchema },
   }, async (request, reply) => {
     const { address, url, events } = request.body as { address: string; url: string; events?: string[] };
     if (!redis) {

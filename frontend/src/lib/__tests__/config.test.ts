@@ -151,9 +151,11 @@ describe("parseAssetId / toBytes32", () => {
     expect(() => parseAssetId(`0x${"ab".repeat(64)}`)).toThrow(/64-char hex/);
   });
 
-  it("pads short hashes to bytes32", async () => {
+  it("pads short hashes and rejects invalid or oversized values", async () => {
     vi.resetModules();
     const { toBytes32 } = await import("@/lib/config");
     expect(toBytes32("0xdead")).toBe(`0x${"0".repeat(60)}dead`);
+    expect(() => toBytes32("0xzz")).toThrow(/0x-prefixed hexadecimal/);
+    expect(() => toBytes32(`0x${"ab".repeat(33)}`)).toThrow(/at most 32 bytes/);
   });
 });

@@ -11,10 +11,12 @@ help:
 	@echo "  docs   — mkdocs build --strict"
 test:
 	cd contracts && forge test
-	cd inspector && pytest -q
-	cd sdk && pytest -q
-	cd backend && npm test
-	cd frontend && npm test
+	python -m pytest inspector/tests/ -q
+	python -m pytest sdk/tests/ -q
+	python -m pytest planner/tests/ -q
+	python -m pytest qtrust_ai/tests/ -q
+	cd backend && npm run typecheck && npm run build && npm test
+	cd frontend && npm run lint && npx tsc --noEmit && npm test
 scan:
 	crypto-inspector scan ./src --cyclonedx cbom.json --risk
 up:

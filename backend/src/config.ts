@@ -64,9 +64,14 @@ export const CONTRACTS = {
   trustAnchorRegistry: (optionalEnv("QTRUST_TRUST_ANCHOR_REGISTRY_ADDRESS", "0x0")) as Address,
 } as const;
 
+/** Treat both the shorthand and full 20-byte zero address as unset. */
+export function isZeroAddress(address: string): boolean {
+  return address === "0x0" || /^0x0{40}$/i.test(address);
+}
+
 /** All contract addresses are configured (used to gate indexer/webhooks). */
 export function allContractsConfigured(): boolean {
-  return Object.values(CONTRACTS).every((a) => a !== "0x0");
+  return Object.values(CONTRACTS).every((address) => !isZeroAddress(address));
 }
 
 /** Thrown when required configuration is missing or invalid. */
@@ -120,20 +125,20 @@ export const INDEXER_FROM_BLOCK = Number(process.env.QTRUST_INDEXER_FROM_BLOCK ?
 
 /** Resolve a 0x-prefixed hex asset ID into a bytes32 for ABI calls. */
 export function parseAssetId(id: string): `0x${string}` {
-  if (!id.startsWith("0x")) {
-    throw new Error(`Asset ID must be 0x-prefixed hex, got: ${id}`);
-  }
-  if (id.length !== 66) {
-    throw new Error(`Asset ID must be 32 bytes (66 chars including 0x), got: ${id.length}`);
+  if (!/^0x[0-9a-fA-F]{64}$/.test(id)) {
+    throw new Error(`Asset ID must be a 0x-prefixed 64-character hexadecimal value`);
   }
   return id as `0x${string}`;
 }
 
-/** Pad a 0x-prefixed hex string to bytes32. */
+/** Pad a short 0x-prefixed hex string to bytes32 without truncation. */
 export function toBytes32(hash: string): `0x${string}` {
-  if (!hash.startsWith("0x")) {
-    throw new Error("Hash must start with 0x");
+  if (!/^0x[0-9a-fA-F]*$/.test(hash)) {
+    throw new Error("Hash must be a 0x-prefixed hexadecimal string");
   }
-  const hex = hash.slice(2).padStart(64, "0").slice(0, 64);
-  return `0x${hex}` as `0x${string}`;
+  const hex = hash.slice(2);
+  if (hex.length > 64) {
+    throw new Error("Hash must be at most 32 bytes (64 hex characters)");
+  }
+  return `0x${hex.padStart(64, "0")}` as `0x${string}`;
 }

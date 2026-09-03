@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface QuantumEstimate {
   rsa_key_size: number;
@@ -32,10 +33,8 @@ export default function QuantumThreatPanel() {
     setError(null);
     setResult(null);
     try {
-      const base =
-        process.env.NEXT_PUBLIC_QTRUST_API_URL ?? "http://localhost:3001";
       const res = await fetch(
-        `${base}/v1/gpu/quantum/estimate/${bits}`,
+        `${API_BASE_URL}/v1/gpu/quantum/estimate/${bits}`,
       );
       if (!res.ok) {
         let detail = "";

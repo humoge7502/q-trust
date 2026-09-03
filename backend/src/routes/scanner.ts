@@ -47,7 +47,7 @@ async function runInspector(args: string[]): Promise<any> {
 }
 
 /** Validate a scan directory against SSRF/path-traversal abuse. Throws on invalid input. */
-async function validateScanDirectory(rawDir: string): Promise<string> {
+export async function validateScanDirectory(rawDir: string): Promise<string> {
   if (!path.isAbsolute(rawDir)) {
     throw Object.assign(new Error("directory must be an absolute path"), { statusCode: 400 });
   }
@@ -72,14 +72,35 @@ async function validateScanDirectory(rawDir: string): Promise<string> {
     );
   }
   if (allowedRootsRaw) {
-    const roots = allowedRootsRaw
-      .split(",")
-      .map((r) => r.trim())
-      .filter(Boolean);
+    const roots = await Promise.all(
+      allowedRootsRaw
+        .split(",")
+        .map((r) => r.trim())
+        .filter(Boolean)
+        .map(async (root) => {
+          if (!path.isAbsolute(root)) {
+            throw Object.assign(
+              new Error("QTRUST_SCAN_ALLOWED_ROOTS must contain only absolute paths"),
+              { statusCode: 503 },
+            );
+          }
+          try {
+            const rootPath = await fsp.realpath(path.resolve(root));
+            const rootStat = await fsp.stat(rootPath);
+            if (!rootStat.isDirectory()) throw new Error("not a directory");
+            return rootPath;
+          } catch {
+            throw Object.assign(
+              new Error("QTRUST_SCAN_ALLOWED_ROOTS contains a missing or invalid directory"),
+              { statusCode: 503 },
+            );
+          }
+        }),
+    );
     const allowed = roots.some((root) => resolved === root || resolved.startsWith(root + path.sep));
     if (!allowed) {
       throw Object.assign(
-        new Error(`directory is outside allowed scan roots (${allowedRootsRaw})`),
+        new Error("directory is outside the configured scan roots"),
         { statusCode: 403 },
       );
     }
@@ -368,6 +389,11 @@ function hashTarget(resolvedPath: string): string {
   return createHash("sha256").update(resolvedPath).digest("hex").slice(0, 16);
 }
 
+/** Return a stable label without disclosing the host filesystem layout. */
+function publicScanTarget(resolvedPath: string): string {
+  return `scan-${hashTarget(resolvedPath)}`;
+}
+
 export async function registerScannerRoutes(app: FastifyInstance): Promise<void> {
   const scanHistory: any[] = [];
 
@@ -385,7 +411,8 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     try {
       resolvedDir = await validateScanDirectory(directory);
     } catch (err) {
-      reply.code((err as { statusCode?: number }).statusCode === 403 ? 403 : 400);
+      const statusCode = (err as { statusCode?: number }).statusCode;
+      reply.code(statusCode === 403 || statusCode === 503 ? statusCode : 400);
       return { error: (err as Error).message };
     }
     let result: { findings?: any[]; error?: string };
@@ -404,7 +431,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
     scanHistory.push({ targetHash: hashTarget(resolvedDir), type: "source", timestamp: new Date().toISOString(), count: findings.length });
-    return { directory: resolvedDir, findings, scanType: "source", timestamp: new Date().toISOString() };
+    return { directory: publicScanTarget(resolvedDir), findings, scanType: "source", timestamp: new Date().toISOString() };
   });
 
   app.post("/v1/scan/manifests", {
@@ -417,7 +444,8 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     try {
       resolvedDir = await validateScanDirectory(directory);
     } catch (err) {
-      reply.code((err as { statusCode?: number }).statusCode === 403 ? 403 : 400);
+      const statusCode = (err as { statusCode?: number }).statusCode;
+      reply.code(statusCode === 403 || statusCode === 503 ? statusCode : 400);
       return { error: (err as Error).message };
     }
     let result: { findings?: any[]; error?: string };
@@ -436,7 +464,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
     scanHistory.push({ targetHash: hashTarget(resolvedDir), type: "manifests", timestamp: new Date().toISOString(), count: findings.length });
-    return { directory: resolvedDir, findings, scanType: "manifests", timestamp: new Date().toISOString() };
+    return { directory: publicScanTarget(resolvedDir), findings, scanType: "manifests", timestamp: new Date().toISOString() };
   });
 
   app.post("/v1/scan/full", {
@@ -457,7 +485,8 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     try {
       resolvedTarget = await validateScanDirectory(target);
     } catch (err) {
-      reply.code((err as { statusCode?: number }).statusCode === 403 ? 403 : 400);
+      const statusCode = (err as { statusCode?: number }).statusCode;
+      reply.code(statusCode === 403 || statusCode === 503 ? statusCode : 400);
       return { error: (err as Error).message };
     }
     const scanType =
@@ -478,7 +507,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     }
     const allFindings = Array.isArray(result.findings) ? result.findings : [];
     scanHistory.push({ targetHash: hashTarget(resolvedTarget), type: "full", timestamp: new Date().toISOString(), count: allFindings.length });
-    return { target: resolvedTarget, findings: allFindings, scanType: "full", timestamp: new Date().toISOString() };
+    return { target: publicScanTarget(resolvedTarget), findings: allFindings, scanType: "full", timestamp: new Date().toISOString() };
   });
 
   app.post("/v1/risk/score", {

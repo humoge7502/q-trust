@@ -285,6 +285,7 @@ describe("POST /v1/gpu/rl/plan", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().method).toBe("rl_policy");
     expect(plannerFetch.mock.calls[0][0]).toContain("/rl/plan");
+    expect(JSON.parse(plannerFetch.mock.calls[0][1].body)).toEqual({ cbom: { assets: [] } });
     await app.close();
   });
 

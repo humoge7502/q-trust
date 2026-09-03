@@ -295,7 +295,7 @@ export async function registerGPURoutes(server: FastifyInstance): Promise<void> 
               ? { "x-api-key": process.env.QTRUST_PLANNER_API_KEY }
               : {}),
           },
-          body: JSON.stringify(request.body.cbom),
+          body: JSON.stringify(request.body),
           signal: AbortSignal.timeout(30_000),
         });
         if (!resp.ok) throw new Error(`planner returned ${resp.status}`);

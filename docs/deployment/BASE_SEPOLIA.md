@@ -155,7 +155,9 @@ curl -s localhost:3001/health   # {"status":"ok","chain_id":84532,"relayer":"0x.
 `frontend/.env.example` → `.env.local` equivalents:
 
 ```text
-NEXT_PUBLIC_QTRUST_API_URL=https://api.example.com      # or http://localhost:3001
+NEXT_PUBLIC_QTRUST_API_URL=https://api.example.com      # public origin for API docs links
+QTRUST_BACKEND_URL=https://api.example.com              # server-only origin used by the /api proxy
+QTRUST_API_KEY=<same key configured in QTRUST_API_KEYS> # server-only; never NEXT_PUBLIC_*
 NEXT_PUBLIC_QTRUST_CHAIN_ID=84532
 NEXT_PUBLIC_QTRUST_ASSET_REGISTRY_ADDRESS=0x...
 NEXT_PUBLIC_QTRUST_VENDOR_REGISTRY_ADDRESS=0x...

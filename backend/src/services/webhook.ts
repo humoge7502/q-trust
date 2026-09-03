@@ -110,12 +110,22 @@ const BLOCKED_IPV6_PREFIXES = [
   "fec0", // deprecated site-local
 ];
 
+function mappedIpv4FromIpv6(address: string): string | null {
+  const match = address.toLowerCase().match(/^::ffff:(?:([0-9a-f]{1,4}):([0-9a-f]{1,4})|(\d{1,3}(?:\.\d{1,3}){3}))$/);
+  if (!match) return null;
+  if (match[3]) return match[3];
+  const high = Number.parseInt(match[1], 16);
+  const low = Number.parseInt(match[2], 16);
+  return `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`;
+}
+
 export function isPrivateIp(address: string): boolean {
   if (address.includes(":")) {
     const lower = address.toLowerCase();
-    // IPv4-mapped IPv6 (::ffff:a.b.c.d) — check the embedded v4 address.
-    const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) return isPrivateIp(mapped[1]);
+    // IPv4-mapped IPv6, including the URL parser's compressed hexadecimal
+    // form (::ffff:7f00:1), must use IPv4 CIDR rules.
+    const mapped = mappedIpv4FromIpv6(lower);
+    if (mapped) return isPrivateIp(mapped);
     return BLOCKED_IPV6_PREFIXES.some((p) => lower === p || lower.startsWith(p));
   }
   if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(address)) return true; // unparseable → treat as unsafe

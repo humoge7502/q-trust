@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { isPrivateIp, isPublicHttpsUrl as implementationIsPublicHttpsUrl } from "../src/services/webhook.js";
 
 // We test the isPublicHttpsUrl logic by importing the compiled module.
 // Since the function is not exported, we test via the webhook delivery path.
@@ -39,6 +40,18 @@ function isPublicHttpsUrl(url: string): boolean {
     return false;
   }
 }
+
+describe("implemented SSRF filters", () => {
+  it("blocks IPv4-mapped IPv6 loopback in both textual forms", () => {
+    expect(isPrivateIp("::ffff:127.0.0.1")).toBe(true);
+    expect(isPrivateIp("::ffff:7f00:1")).toBe(true);
+  });
+
+  it("allows a public hostname and rejects non-HTTPS", () => {
+    expect(implementationIsPublicHttpsUrl("https://example.com/hook")).toBe(true);
+    expect(implementationIsPublicHttpsUrl("http://example.com/hook")).toBe(false);
+  });
+});
 
 describe("SSRF filter — isPublicHttpsUrl", () => {
   it("allows public HTTPS URLs", () => {

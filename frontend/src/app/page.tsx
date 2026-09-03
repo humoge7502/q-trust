@@ -1,496 +1,99 @@
-/**
- * Landing page — hero with live verify, 3-step how-it-works, public stats,
- * contract addresses with explorer links, docs links, and architecture visual.
- *
- * Production-grade: mobile-responsive, Tailwind 4, accessible (headings, landmarks,
- * focus rings, aria-live for validation, skip link, reduced-motion safe).
- *
- * Server component — interactive islands (VerifyBox, PublicStats, SiteHeader) are
- * client components imported below.
- */
-
 import Link from "next/link";
-import { CHAIN, CONTRACTS } from "@/lib/config";
-import { API_BASE_URL } from "@/lib/api";
+import { API_DOCS_URL } from "@/lib/api";
+import { CHAIN } from "@/lib/config";
 import {
-  ShieldCheckIcon,
   ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
-  ChartBarIcon,
-  DocumentCheckIcon,
   BeakerIcon,
+  ChartBarIcon,
+  CheckBadgeIcon,
   CpuChipIcon,
+  DocumentCheckIcon,
+  ShieldCheckIcon,
 } from "@/app/icons";
-import { VerifyBox } from "@/components/verify-box.client";
+import { ProductPreview } from "@/components/product-preview.client";
+import { Reveal, ScrollProgress } from "@/components/scroll-effects.client";
 import { SiteHeader } from "@/components/site-header.client";
+import { VerifyBox } from "@/components/verify-box.client";
 import { PublicStatsClient } from "@/components/stats-panel.client";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function explorerBase(): string {
-  const fromChain = (CHAIN.blockExplorers?.default?.url as string | undefined) ?? null;
-  if (fromChain) return fromChain.replace(/\/$/, "");
-  return CHAIN.id === 8453 ? "https://basescan.org" : "https://sepolia.basescan.org";
-}
-
-function isConfigured(addr: string): boolean {
-  return !!addr && addr !== "0x0" && /^0x[0-9a-fA-F]{40}$/.test(addr);
-}
-
-// ---------------------------------------------------------------------------
-// Sub-components (server)
-// ---------------------------------------------------------------------------
+const explorerUrl = CHAIN.blockExplorers?.default?.url ?? "https://sepolia.basescan.org";
 
 function SkipLink() {
-  return (
-    <a
-      href="#main-content"
-      className="skip-link sr-only z-[100] rounded bg-qtrust-600 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
-    >
-      Skip to content
-    </a>
-  );
+  return <a href="#main-content" className="skip-link sr-only z-[100] rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-white">Skip to content</a>;
 }
 
 function Hero() {
   return (
-    <section aria-labelledby="hero-heading" className="relative overflow-hidden border-b border-slate-200 bg-white">
-      {/* aurora gradient mesh */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="aurora-blob -top-32 -left-32 h-[520px] w-[640px] bg-gradient-to-br from-qtrust-500/25 via-teal-400/20 to-cyan-300/20 blur-3xl" style={{ background: "radial-gradient(40% 60% at 30% 30%, rgba(10,103,95,0.18), transparent 70%), radial-gradient(50% 50% at 70% 20%, rgba(45,212,191,0.14), transparent 60%)" }} />
-        <div className="aurora-blob -top-28 right-[-12%] h-[460px] w-[560px] bg-gradient-to-bl from-violet-400/14 via-sky-400/12 to-qtrust-500/16 blur-3xl" />
-        <div className="aurora-blob bottom-[-80px] left-1/2 h-72 w-[720px] -translate-x-1/2 bg-gradient-to-t from-slate-100 via-slate-50/60 to-transparent blur-2xl opacity-60" />
-        {/* soft grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,theme(colors.slate.200)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.slate.200)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.09] [mask-image:radial-gradient(ellipse_80%_65%_at_50%_0%,black_70%,transparent_110%)]" />
-        {/* top vignette */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white/60" />
-      </div>
-
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-12 lg:items-center lg:gap-10 lg:px-8 lg:py-16">
-        <div className="lg:col-span-7">
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm backdrop-blur">
-            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-            NIST FIPS 203/204/205 — OMB M-23-02 ready
-            <span aria-hidden="true" className="text-slate-300">·</span>
-            <span className="text-slate-500">Base Sepolia by default</span>
+    <section className="qtrust-hero relative overflow-hidden border-b border-white/10" aria-labelledby="hero-heading">
+      <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden="true" />
+      <div className="hero-orb hero-orb-one pointer-events-none absolute -left-40 top-0 h-[38rem] w-[38rem] rounded-full" aria-hidden="true" />
+      <div className="hero-orb hero-orb-two pointer-events-none absolute -right-48 top-24 h-[30rem] w-[30rem] rounded-full" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[88rem] px-5 pb-20 pt-16 sm:px-8 sm:pt-24 lg:px-12 lg:pb-28 lg:pt-28">
+        <div className="grid items-end gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(25rem,0.75fr)] lg:gap-20">
+          <div className="hero-enter">
+            <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300"><span className="h-px w-10 bg-cyan-300" aria-hidden="true" /> Q-Trust protocol / 02.0</div>
+            <h1 id="hero-heading" className="mt-8 max-w-5xl text-[clamp(3.5rem,8.6vw,8.8rem)] font-semibold leading-[0.86] tracking-[-0.075em] text-white">Make trust<br /><span className="text-cyan-300">verifiable.</span></h1>
+            <p className="mt-9 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">The cryptographic migration layer for teams that need evidence, not promises. Discover vulnerable algorithms, prioritize the move to PQC, and anchor every milestone on-chain.</p>
+            <div className="mt-9 flex flex-wrap items-center gap-3"><Link href="/dashboard" className="group inline-flex items-center gap-3 rounded-full bg-cyan-300 px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">Start a migration <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" /></Link><Link href="#why" className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200">See how it works</Link></div>
+            <div className="mt-12 flex flex-wrap items-center gap-x-7 gap-y-3 text-xs text-slate-400"><span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" /> Base L2 ready</span><span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300" aria-hidden="true" /> Hash-only on-chain</span><span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-violet-400" aria-hidden="true" /> Open verification</span></div>
           </div>
-
-          <h1 id="hero-heading" className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.6rem] lg:leading-[1.05]">
-            The verifiable protocol for <span className="bg-gradient-to-r from-qtrust-600 to-teal-600 bg-clip-text text-transparent">PQC migration</span>
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px] sm:leading-7">
-            Q-Trust coordinates the migration from classical cryptography (RSA, ECC) to post-quantum cryptography (ML-KEM, ML-DSA, SLH-DSA) — with every CBOM hash, vendor attestation, migration step, and audit anchored on <span className="font-medium text-slate-900">Base L2</span> and verifiable without trusting any single party.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-qtrust-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-qtrust-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-2"
-            >
-              Organization dashboard
-              <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-            <Link
-              href="/vendors"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-2"
-            >
-              Vendor portal
-            </Link>
-            <a
-              href="https://humoge7502.github.io/q-trust"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
-            >
-              Documentation
-              <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
-            </a>
-          </div>
-
-          <ul className="mt-6 flex flex-wrap gap-2 text-xs text-slate-500" aria-label="Trust signals">
-            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200 backdrop-blur">
-              <ShieldCheckIcon className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
-              Hash-only on-chain
-            </li>
-            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200 backdrop-blur">
-              <DocumentCheckIcon className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
-              EIP-712 gasless
-            </li>
-            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200 backdrop-blur">
-              <ChartBarIcon className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
-              GNN-ranked planning
-            </li>
-          </ul>
-
-          <p className="mt-4 text-xs text-slate-500">
-            Why now: NIST finalized PQC standards in 2024. U.S. federal agencies must inventory cryptography per OMB M-23-02. EU NIS2 and CISA impose similar obligations. Every regulated org must prove migration progress — Q-Trust makes that proof <em className="font-medium not-italic text-slate-700">verifiable</em>.
-          </p>
+          <div className="hero-enter hero-enter-delay lg:pb-3"><VerifyBox /><div className="mt-4 flex items-center justify-between px-1 text-[11px] uppercase tracking-[0.16em] text-slate-500"><span>Live verification surface</span><span>{CHAIN.name} / {CHAIN.id}</span></div></div>
         </div>
+        <div className="mt-20 grid gap-4 border-t border-white/15 pt-5 text-xs text-slate-400 sm:grid-cols-3 lg:mt-24"><div><span className="text-slate-600">01</span><span className="ml-4">Scan the estate</span></div><div><span className="text-slate-600">02</span><span className="ml-4">Score the exposure</span></div><div><span className="text-slate-600">03</span><span className="ml-4">Attest the progress</span></div></div>
+      </div>
+    </section>
+  );
+}
 
-        <div className="lg:col-span-5">
-          <VerifyBox />
-          <p className="mt-3 text-center text-[11px] text-slate-500">
-            No wallet needed to verify. Verification hits{" "}
-            <code className="rounded bg-white px-1 py-0.5 font-mono ring-1 ring-slate-200">{CHAIN.name}</code> directly.
-          </p>
+function SignalStrip() {
+  const signals = ["NIST FIPS 203 / 204 / 205", "CycloneDX CBOM", "EIP-712 gasless", "Base L2", "ML-KEM / ML-DSA / SLH-DSA", "Public verification"];
+  return <div className="overflow-hidden border-b border-white/10 bg-slate-900 py-4" aria-label="Q-Trust capabilities"><div className="signal-track flex min-w-max items-center gap-8 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">{[...signals, ...signals].map((signal, index) => <span key={`${signal}-${index}`} className="inline-flex items-center gap-8"><span className="text-cyan-300">✳</span>{signal}</span>)}</div></div>;
+}
+
+function WhySection() {
+  const reasons = [
+    { number: "01", title: "Inventory the invisible", copy: "Find cryptography wherever it hides: source code, packages, binaries, network endpoints, and configuration.", icon: BeakerIcon },
+    { number: "02", title: "Make risk actionable", copy: "Move beyond a scary report. Rank assets by algorithm, reachability, sensitivity, and migration impact.", icon: ChartBarIcon },
+    { number: "03", title: "Carry proof forward", copy: "Give security, vendors, procurement, and auditors the same record without exposing the underlying evidence.", icon: ShieldCheckIcon },
+  ];
+  return (
+    <section id="why" className="bg-[#f4f5f2] text-slate-950" aria-labelledby="why-heading">
+      <div className="mx-auto max-w-[88rem] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36">
+        <div className="grid gap-14 lg:grid-cols-[0.62fr_1.38fr] lg:gap-24">
+          <Reveal><div className="lg:sticky lg:top-28"><p className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-500">Why Q-Trust</p><h2 id="why-heading" className="mt-6 max-w-md text-4xl font-semibold leading-[0.93] tracking-[-0.06em] sm:text-6xl">The hard part isn’t quantum. It’s coordination.</h2><p className="mt-7 max-w-md text-sm leading-7 text-slate-600">A migration program is only as credible as the chain of evidence behind it. Q-Trust makes every handoff observable, comparable, and independently checkable.</p><Link href="/scanner" className="mt-9 inline-flex items-center gap-2 text-sm font-semibold underline decoration-slate-300 underline-offset-8 transition hover:decoration-slate-950">See the scanner <ArrowRightIcon className="h-4 w-4" aria-hidden="true" /></Link></div></Reveal>
+          <div className="grid gap-3 sm:grid-cols-3">{reasons.map((reason, index) => <Reveal key={reason.number} delay={index * 100}><article className="group flex min-h-[23rem] flex-col justify-between border-t border-slate-300 pt-5 transition hover:border-slate-950"><div><div className="flex items-center justify-between"><span className="text-xs font-semibold text-slate-400">{reason.number}</span><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-950 shadow-sm transition group-hover:-translate-y-1 group-hover:bg-slate-950 group-hover:text-cyan-300"><reason.icon className="h-5 w-5" aria-hidden="true" /></span></div><h3 className="mt-16 text-2xl font-semibold tracking-[-0.045em]">{reason.title}</h3><p className="mt-4 text-sm leading-6 text-slate-600">{reason.copy}</p></div><div><div className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 transition group-hover:text-slate-950">Outcome / visible by design</div><span className="block h-px w-10 bg-slate-300 transition-all duration-500 group-hover:w-full group-hover:bg-slate-950" aria-hidden="true" /></div></article></Reveal>)}</div>
         </div>
       </div>
     </section>
   );
 }
 
-function HowItWorks() {
+function ProductSection() {
+  return <section id="product" className="bg-[#f4f5f2] px-5 pb-20 sm:px-8 sm:pb-28 lg:px-12 lg:pb-36" aria-labelledby="product-heading"><div className="mx-auto max-w-[88rem]"><Reveal><div className="mb-10 flex flex-col justify-between gap-5 border-t border-slate-300 pt-6 sm:flex-row sm:items-end"><div><p className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-500">Inside the workspace</p><h2 id="product-heading" className="mt-5 max-w-xl text-4xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl">One system for the whole migration.</h2></div><p className="max-w-sm text-sm leading-6 text-slate-600">Explore the same surface your security team, engineering team, and auditors use to move from discovery to proof.</p></div></Reveal><Reveal delay={100}><ProductPreview /></Reveal></div></section>;
+}
+
+function WorkflowSection() {
   const steps = [
-    {
-      n: "01",
-      title: "Scan",
-      desc: "Discover quantum-vulnerable crypto across 12+ languages and 10+ manifest formats. Emit CycloneDX CBOM + SARIF.",
-      icon: BeakerIcon,
-      cta: { label: "Run scanner", href: "/dashboard" },
-      code: "crypto-inspector scan ./src --cyclonedx cbom.json --sarif results.sarif",
-    },
-    {
-      n: "02",
-      title: "Register & coordinate",
-      desc: "Pin CBOM to IPFS, anchor its SHA-256 on AssetRegistry (gasless via EIP-712). Vendors attest PQC readiness; planner ranks migrations.",
-      icon: CpuChipIcon,
-      cta: { label: "Plan migration", href: "/dashboard" },
-      code: "QTrustClient().register_cbom(cbom, pin_to_ipfs=True)",
-    },
-    {
-      n: "03",
-      title: "Verify",
-      desc: "Anyone verifies on-chain without trusting Q-Trust: public page, Basescan, or SDK — all read the same contract state.",
-      icon: ShieldCheckIcon,
-      cta: { label: "Verify now", href: "/v" },
-      code: "crypto-inspector verify 0x<asset-id>  # or /v/<asset-id>",
-    },
-  ] as const;
-
-  return (
-    <section aria-labelledby="how-heading" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 id="how-heading" className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          How it works
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          A 3-step loop from discovery to verifiable delivery. Built for the cross-organizational reality: orgs, vendors, auditors, and regulators coordinate on shared, tamper-proof state.
-        </p>
-      </div>
-
-      <ol className="mt-8 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3" role="list">
-        {steps.map((s) => (
-          <li key={s.n} className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-qtrust-600 focus-within:ring-offset-2">
-            <div className="flex items-center gap-3">
-              <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-xs font-bold tracking-widest text-white">
-                {s.n}
-              </span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-700 ring-1 ring-inset ring-slate-200">
-                <s.icon className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <h3 className="text-sm font-semibold text-slate-900">{s.title}</h3>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{s.desc}</p>
-            <pre className="mt-4 overflow-x-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-100">
-              <code>{s.code}</code>
-            </pre>
-            <Link href={s.cta.href} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-qtrust-600 hover:text-qtrust-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
-              {s.cta.label}
-              <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </li>
-        ))}
-      </ol>
-
-      <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <p className="text-xs leading-6 text-amber-900">
-          <strong className="font-semibold">Off-chain stays off-chain.</strong> Full CBOMs, evidence packages, and audit reports are pinned to IPFS or kept in customer storage. On-chain we store only 32-byte hashes, addresses, timestamps, and IPFS URIs — verifiable, gas-efficient, and privacy-preserving.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function ContractsSection() {
-  const base = explorerBase();
-  const contracts: Array<{ name: string; addr: string; role: string; desc: string }> = [
-    { name: "AssetRegistry", addr: CONTRACTS.assetRegistry, role: "CBOM hashes", desc: "Registers SHA-256 CBOM hashes + IPFS URIs; EIP-712 gasless." },
-    { name: "VendorRegistry", addr: CONTRACTS.vendorRegistry, role: "PQC attestations", desc: "Vendor product × version × algorithm support claims." },
-    { name: "MigrationRegistry", addr: CONTRACTS.migrationRegistry, role: "Migration steps", desc: "Records from-algo → to-algo steps, validated against AssetRegistry." },
-    { name: "AuditRegistry", addr: CONTRACTS.auditRegistry, role: "Audit results", desc: "Auditor results bound to on-chain migration count." },
+    { number: "01", label: "Scan", title: "See what you actually run.", copy: "Collect a cryptographic inventory from code, dependencies, endpoints, binaries, and configs. Export CycloneDX or SARIF for the tools you already use.", meta: "12+ source languages / 10+ manifest formats", icon: BeakerIcon },
+    { number: "02", label: "Plan", title: "Turn exposure into a sequence.", copy: "Score the estate against migration policy, compliance frameworks, and business context. Get an ordered plan instead of another undifferentiated list.", meta: "NIST / CNSA / GNN-ranked", icon: CpuChipIcon },
+    { number: "03", label: "Attest", title: "Make progress portable.", copy: "Anchor evidence hashes, migration steps, and vendor claims to Base. Anyone with the asset ID can independently verify the record.", meta: "EIP-712 / UUPS / hash-only", icon: ShieldCheckIcon },
   ];
-
-  return (
-    <section aria-labelledby="contracts-heading" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2 id="contracts-heading" className="text-xl font-bold tracking-tight text-slate-900">
-          Contracts on {CHAIN.name}
-        </h2>
-        <span className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-          Chain ID {CHAIN.id} ·{" "}
-          <a href={base} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-qtrust-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
-            {base.replace(/^https?:\/\//, "")}
-            <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" />
-          </a>
-        </span>
-      </div>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-        All addresses are public and verifiable on Basescan. Hash-only on-chain storage keeps gas at ~$0.01 per attestation. Replace demo addresses by setting{" "}
-        <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs">NEXT_PUBLIC_QTRUST_*_ADDRESS</code> at build time.
-      </p>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {contracts.map((c) => {
-          const configured = isConfigured(c.addr);
-          const href = configured ? `${base}/address/${c.addr}` : base;
-          return (
-            <div key={c.name} className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-slate-900">{c.name}</h3>
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset ${configured ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20" : "bg-amber-50 text-amber-800 ring-amber-600/20"}`}>
-                      {configured ? "configured" : "not configured"}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">{c.role}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">{c.desc}</p>
-                </div>
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`${c.name} on Basescan${configured ? ` (${c.addr})` : ""}`}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
-                >
-                  Explorer
-                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                </a>
-              </div>
-              <div className="mt-3 rounded-lg bg-slate-900 px-3 py-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <code className="min-w-0 break-all font-mono text-xs text-slate-100" aria-label={`${c.name} address`}>
-                    {c.addr}
-                  </code>
-                  {configured ? (
-                    <button
-                      type="button"
-                      onClick={() => navigator.clipboard.writeText(c.addr).catch(() => undefined)}
-                      className="shrink-0 rounded border border-white/15 bg-white/10 px-2 py-1 text-[11px] font-medium text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                      aria-label={`Copy ${c.name} address`}
-                    >
-                      Copy
-                    </button>
-                  ) : null}
-                </div>
-                {!configured ? (
-                  <p className="mt-2 text-[11px] leading-5 text-amber-200/90">Set the env var to wire this contract. Deploys are verified on Basescan via <code className="rounded bg-white/10 px-1">forge script</code>.</p>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <details className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">Environment variables</summary>
-        <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs leading-6 text-slate-700 ring-1 ring-inset ring-slate-200">
-          <code>{`NEXT_PUBLIC_QTRUST_ASSET_REGISTRY_ADDRESS=0x...
-NEXT_PUBLIC_QTRUST_VENDOR_REGISTRY_ADDRESS=0x...
-NEXT_PUBLIC_QTRUST_MIGRATION_REGISTRY_ADDRESS=0x...
-NEXT_PUBLIC_QTRUST_AUDIT_REGISTRY_ADDRESS=0x...
-NEXT_PUBLIC_QTRUST_API_URL=https://api.qtrust.dev
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=<from cloud.walletconnect.com>
-QTRUST_USE_MAINNET=false  # true → Base mainnet (8453)`}</code>
-        </pre>
-      </details>
-    </section>
-  );
+  return <section id="workflow" className="bg-slate-950 text-white" aria-labelledby="workflow-heading"><div className="mx-auto max-w-[88rem] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36"><Reveal><div className="max-w-2xl"><p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-300">The operating loop</p><h2 id="workflow-heading" className="mt-6 text-4xl font-semibold leading-[0.93] tracking-[-0.06em] sm:text-6xl">Less theatre.<br /><span className="text-slate-500">More traceability.</span></h2></div></Reveal><div className="relative mt-16"><div className="absolute left-[1.05rem] top-8 hidden h-[calc(100%-4rem)] w-px bg-gradient-to-b from-cyan-300 via-violet-300 to-emerald-300 opacity-50 lg:block" aria-hidden="true" />{steps.map((step, index) => <Reveal key={step.number} delay={index * 100}><article className="relative grid gap-7 border-t border-white/15 py-9 lg:grid-cols-[7rem_1fr_0.9fr] lg:gap-10 lg:py-12"><div className="flex items-start gap-5 lg:block"><div className="relative z-10 flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/50 bg-slate-950 text-[10px] font-bold text-cyan-300">{step.number}</div><div className="mt-1 hidden text-[10px] font-bold uppercase tracking-[0.2em] text-slate-600 lg:block">{step.label}</div></div><div><div className="flex items-center gap-3"><step.icon className="h-5 w-5 text-cyan-300" aria-hidden="true" /><h3 className="text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">{step.title}</h3></div><p className="mt-4 max-w-xl text-sm leading-7 text-slate-400">{step.copy}</p></div><div className="flex items-end justify-between gap-5 border-l border-white/10 pl-5 lg:flex-col lg:justify-center"><div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">{step.meta}</div><span className="text-xs font-semibold text-cyan-300">0{index + 1} / 03</span></div></article></Reveal>)}</div></div></section>;
 }
 
-function ArchitecturePlaceholder() {
-  return (
-    <section aria-labelledby="arch-heading" className="border-y border-slate-200 bg-slate-50">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <div className="flex flex-col gap-2">
-          <h2 id="arch-heading" className="text-xl font-bold tracking-tight text-slate-900">
-            Architecture
-          </h2>
-          <p className="max-w-3xl text-sm leading-6 text-slate-600">
-            5-layer separation: Inspector → Risk → Planning → On-Chain → Presentation. Inspector fans out to language-specific probes; findings flow through risk and compliance scoring into CycloneDX, SARIF, evidence, and roadmap outputs — then optionally on-chain via gasless EIP-712.
-          </p>
-        </div>
-
-        <figure className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 bg-slate-900 px-4 py-2.5">
-            <figcaption className="flex items-center gap-2 text-xs font-medium tracking-wide text-slate-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
-              Q-Trust dataflow · 5-layer architecture
-            </figcaption>
-          </div>
-          <div className="p-4 sm:p-6">
-            {/* The canonical diagram lives in docs/architecture.svg and is
-                mirrored to public/assets/architecture.svg — keep them in sync
-                when the architecture changes. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/architecture.svg"
-              alt="Q-Trust architecture: Inspector scans source, manifest, binary, and TLS sources; Risk and Compliance score them; CycloneDX, SARIF, Evidence, and Roadmap outputs are produced; SDK pins to IPFS and submits EIP-712 gasless transactions to the registries on Base; Frontend verifies on-chain and visualizes the pipeline."
-              width={960}
-              height={280}
-              className="h-auto w-full"
-            />
-          </div>
-        </figure>
-
-        <div className="mt-4 flex flex-wrap gap-2 text-xs">
-          <a href="/docs/ARCHITECTURE.md" className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
-            Read architecture doc →
-          </a>
-          <a href={`${API_BASE_URL.replace(/\/$/, "")}/docs`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
-            OpenAPI at /docs
-            <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" />
-          </a>
-        </div>
-      </div>
-    </section>
-  );
+function ProofSection() {
+  return <section className="bg-cyan-300 text-slate-950" aria-labelledby="proof-heading"><div className="mx-auto max-w-[88rem] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36"><div className="grid gap-12 lg:grid-cols-[1fr_0.8fr] lg:items-end"><Reveal><div><p className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-700">Proof, by design</p><h2 id="proof-heading" className="mt-6 max-w-3xl text-5xl font-semibold leading-[0.88] tracking-[-0.07em] sm:text-7xl">A migration record that can leave the room.</h2></div></Reveal><Reveal delay={100}><p className="max-w-md text-sm leading-7 text-slate-700">Full evidence stays private or on IPFS. Q-Trust anchors only the minimum required to establish integrity: hashes, timestamps, identities, and references.</p></Reveal></div><Reveal delay={150}><div className="mt-16 grid border-y border-slate-950/20 sm:grid-cols-3">{[{ label: "Registry contracts", value: "11", copy: "Shared state for assets, vendors, migrations, and audits." }, { label: "Scanner coverage", value: "12+", copy: "Source languages plus manifests, binaries, network, and config." }, { label: "Verification mode", value: "Open", copy: "No wallet or platform account needed to inspect a record." }].map((item, index) => <div key={item.label} className={`py-8 sm:px-6 lg:py-10 ${index > 0 ? "border-t border-slate-950/20 sm:border-l sm:border-t-0" : ""}`}><div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-600">{item.label}</div><div className="mt-5 text-5xl font-semibold tracking-[-0.06em]">{item.value}</div><p className="mt-4 max-w-xs text-sm leading-6 text-slate-700">{item.copy}</p></div>)}</div></Reveal><Reveal delay={200}><div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4 text-xs font-semibold text-slate-700"><span className="inline-flex items-center gap-2"><CheckBadgeIcon className="h-4 w-4" aria-hidden="true" /> EIP-712 gasless attestations</span><span className="inline-flex items-center gap-2"><CheckBadgeIcon className="h-4 w-4" aria-hidden="true" /> UUPS + timelock governance</span><span className="inline-flex items-center gap-2"><CheckBadgeIcon className="h-4 w-4" aria-hidden="true" /> CycloneDX + SARIF exports</span></div></Reveal></div></section>;
 }
 
-function DocsLinks() {
-  const docs = [
-    { title: "Whitepaper", href: "/docs/WHITEPAPER.md", desc: "Protocol spec + trust model + cryptographic choices." },
-    { title: "Architecture", href: "/docs/ARCHITECTURE.md", desc: "5-layer design, data placement, cross-registry integrity." },
-    { title: "API reference", href: `${API_BASE_URL.replace(/\/$/, "")}/docs`, desc: "OpenAPI + Swagger UI. 30+ routes, TypeBox validation.", external: true },
-    { title: "Scanner guide", href: "/docs/PHASE_3_SCANNER.md", desc: "10 probe modules + CycloneDX output." },
-    { title: "Contracts", href: "/docs/PHASE_1_CONTRACTS.md", desc: "UUPS · Pausable · EIP-712 · Timelock · 144 tests." },
-    { title: "Backend", href: "/docs/PHASE_6_BACKEND.md", desc: "Fastify 5 · Postgres indexer · Redis · Prometheus." },
-    { title: "GPU features", href: "/docs/GPU_FEATURES.md", desc: "GNN training, side-channel, quantum threat, VAE, RL." },
-    { title: "GitHub", href: "https://github.com/humoge7502/q-trust", desc: "Source, CI, releases, discussions.", external: true },
-  ];
-  return (
-    <section aria-labelledby="docs-heading" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-      <h2 id="docs-heading" className="text-xl font-bold tracking-tight text-slate-900">
-        Documentation
-      </h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Start with the whitepaper, then dive into the component that matches your role. All docs are versioned alongside the code.</p>
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {docs.map((d) => (
-          <a
-            key={d.title}
-            href={d.href}
-            target={d.external ? "_blank" : undefined}
-            rel={d.external ? "noreferrer" : undefined}
-            className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-2"
-          >
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-              {d.title}
-              {d.external ? <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600" aria-hidden="true" /> : <span aria-hidden="true" className="text-slate-300">→</span>}
-            </span>
-            <span className="mt-1 text-xs leading-5 text-slate-600">{d.desc}</span>
-          </a>
-        ))}
-      </div>
-
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h3 className="text-sm font-semibold text-slate-900">Quick start</h3>
-        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <div className="rounded-lg bg-slate-900 p-4">
-            <div className="text-[11px] font-medium uppercase tracking-widest text-slate-400">1 · Scan</div>
-            <pre className="mt-2 overflow-x-auto text-xs text-slate-100">
-              <code>{`pip install -e ./inspector
-crypto-inspector scan ./src --cyclonedx cbom.json`}</code>
-            </pre>
-          </div>
-          <div className="rounded-lg bg-slate-900 p-4">
-            <div className="text-[11px] font-medium uppercase tracking-widest text-slate-400">2 · Contracts</div>
-            <pre className="mt-2 overflow-x-auto text-xs text-slate-100">
-              <code>{`cd contracts && forge test
-forge script script/Deploy.s.sol --broadcast`}</code>
-            </pre>
-          </div>
-          <div className="rounded-lg bg-slate-900 p-4">
-            <div className="text-[11px] font-medium uppercase tracking-widest text-slate-400">3 · Verify</div>
-            <pre className="mt-2 overflow-x-auto text-xs text-slate-100">
-              <code>{`pip install -e ./sdk
-python -c "from qtrust import QTrustClient; print(QTrustClient().verify_asset('0x...'))"`}</code>
-            </pre>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+function ClosingSection() {
+  return <section className="bg-[#f4f5f2] text-slate-950" aria-labelledby="closing-heading"><div className="mx-auto max-w-[88rem] px-5 py-24 sm:px-8 sm:py-36 lg:px-12"><Reveal><div className="flex flex-col justify-between gap-10 border-t border-slate-300 pt-7 lg:flex-row lg:items-end"><div><p className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-500">Ready when you are</p><h2 id="closing-heading" className="mt-6 max-w-4xl text-5xl font-semibold leading-[0.88] tracking-[-0.07em] sm:text-8xl">Start with what<br /><span className="text-cyan-700">you can prove.</span></h2></div><div className="flex flex-wrap gap-3 lg:pb-2"><Link href="/dashboard" className="group inline-flex items-center gap-3 rounded-full bg-slate-950 px-6 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950">Launch Q-Trust <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" /></Link><Link href="/scanner" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:border-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950">Run a scan</Link></div></div></Reveal></div></section>;
 }
 
-function SiteFooter() {
-  return (
-    <footer className="border-t border-slate-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold tracking-widest text-white" aria-hidden="true">
-                QT
-              </span>
-              <span className="text-sm font-semibold text-slate-900">Q-Trust</span>
-              <span className="text-xs text-slate-500">© {new Date().getFullYear()} · MIT</span>
-            </div>
-            <p className="mt-2 max-w-md text-xs leading-5 text-slate-500">
-              PQC migration assurance on Base L2. Hash-only on-chain, verifiable by anyone. Not financial advice; not an audit. See{" "}
-              <Link href="/docs/WHITEPAPER.md" className="underline decoration-slate-300 underline-offset-4 hover:text-slate-700">
-                whitepaper
-              </Link>{" "}
-              and{" "}
-              <a href="https://humoge7502.github.io/q-trust" target="_blank" rel="noreferrer" className="underline decoration-slate-300 underline-offset-4 hover:text-slate-700">
-                docs site
-              </a>
-              .
-            </p>
-          </div>
-          <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-3 text-xs font-medium text-slate-600">
-            <Link href="/dashboard" className="hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">Dashboard</Link>
-            <Link href="/vendors" className="hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">Vendors</Link>
-            <Link href="/v" className="hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">Verify</Link>
-            <a href={`${API_BASE_URL.replace(/\/$/, "")}/docs`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
-              API
-              <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" />
-            </a>
-            <a href="https://github.com/humoge7502/q-trust" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
-              GitHub
-              <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" />
-            </a>
-            <a href="https://basescan.org" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
-              Basescan
-              <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" />
-            </a>
-          </nav>
-        </div>
-      </div>
-    </footer>
-  );
+function Footer() {
+  return <footer className="bg-slate-950 text-slate-400"><div className="mx-auto flex max-w-[88rem] flex-col gap-7 px-5 py-8 text-xs sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-12"><div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-300 text-[11px] font-bold tracking-widest text-slate-950">QT</span><span className="font-semibold text-white">Q-Trust</span><span className="text-slate-600">/</span><span>PQC migration assurance on Base L2</span></div><nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-3"><Link href="/scanner" className="transition hover:text-white">Scanner</Link><Link href="/dashboard" className="transition hover:text-white">Dashboard</Link><Link href="/vendors" className="transition hover:text-white">Vendors</Link><Link href="/v" className="transition hover:text-white">Verify</Link><a href={`${API_DOCS_URL.replace(/\/$/, "")}/docs`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 transition hover:text-white">API <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" /></a><a href={explorerUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 transition hover:text-white">Explorer <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" /></a></nav></div></footer>;
 }
-
-// ---------------------------------------------------------------------------
-// Page (server)
-// ---------------------------------------------------------------------------
 
 export default function HomePage() {
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased">
-      <SkipLink />
-      <SiteHeader />
-      <main id="main-content">
-        <Hero />
-        <HowItWorks />
-        <PublicStatsClient />
-        <ContractsSection />
-        <ArchitecturePlaceholder />
-        <DocsLinks />
-      </main>
-      <SiteFooter />
-    </div>
-  );
+  return <div className="min-h-screen bg-slate-950 text-white antialiased"><SkipLink /><ScrollProgress /><SiteHeader /><main id="main-content"><Hero /><SignalStrip /><WhySection /><ProductSection /><WorkflowSection /><ProofSection /><PublicStatsClient /><ClosingSection /></main><Footer /></div>;
 }

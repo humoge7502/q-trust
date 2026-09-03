@@ -12,7 +12,7 @@ import {
   getMigration,
   getOrgSummary,
 } from "../services/verify.js";
-import { isValidAddress, isValidBytes32, CONTRACTS, publicClient, PLANNER_URL, PLANNER_API_KEY } from "../config.js";
+import { isValidAddress, isValidBytes32, isZeroAddress, CONTRACTS, publicClient, PLANNER_URL, PLANNER_API_KEY } from "../config.js";
 import { requireApiKey } from "../middleware/auth.js"; // REG-18: prevent unauthenticated compute amplification
 import {
   RevocationAnchorAbi,
@@ -136,8 +136,8 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
         signal: AbortSignal.timeout(60_000),
       });
       if (!res.ok) {
-        const detail = await res.text();
-        return reply.status(res.status).send({ error: `Planner service error: ${detail}` });
+        request.log.warn({ status: res.status }, "Planner service rejected plan request");
+        return reply.status(res.status >= 500 ? 503 : 422).send({ error: "Planner service rejected the request" });
       }
       return res.json();
     } catch {
@@ -168,7 +168,7 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
     if (!issuer.startsWith("0x") || issuer.length !== 42) {
       return reply.status(400).send({ error: "Invalid issuer address" });
     }
-    if (CONTRACTS.revocationAnchor === "0x0") {
+    if (isZeroAddress(CONTRACTS.revocationAnchor)) {
       return { issuer, current_root: null, configured: false, note: "RevocationAnchor contract not configured" };
     }
     try {
@@ -186,7 +186,7 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/v1/policies/:policyId/versions/:version", async (request, reply) => {
     const { policyId, version } = request.params as { policyId: string; version: string };
-    if (CONTRACTS.policyCommitment === "0x0") {
+    if (isZeroAddress(CONTRACTS.policyCommitment)) {
       return { policy_id: policyId, version: Number(version), configured: false, note: "PolicyCommitment contract not configured" };
     }
     try {
@@ -213,7 +213,7 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/v1/schemas/:schemaId", async (request, reply) => {
     const schemaId = (request.params as { schemaId: string }).schemaId;
-    if (CONTRACTS.schemaRegistry === "0x0") {
+    if (isZeroAddress(CONTRACTS.schemaRegistry)) {
       return { schema_id: schemaId, configured: false, note: "SchemaRegistry contract not configured" };
     }
     try {
@@ -253,7 +253,7 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
     if (!issuer.startsWith("0x") || issuer.length !== 42) {
       return reply.status(400).send({ error: "Invalid issuer address" });
     }
-    if (CONTRACTS.trustAnchorRegistry === "0x0") {
+    if (isZeroAddress(CONTRACTS.trustAnchorRegistry)) {
       return { issuer, accredited: false, configured: false, note: "TrustAnchorRegistry contract not configured" };
     }
     try {

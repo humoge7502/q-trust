@@ -9,11 +9,10 @@
 # To run the webhook watcher instead of the API:
 #   docker run --env-file .env qtrust-backend node dist/services/webhook.js
 
-FROM oven/bun:1.1 AS base
+FROM node:20-bookworm-slim AS base
 WORKDIR /app
 
-# Install OpenSSL (needed by ioredis and some viem deps) and tini for signal handling.
-# bun:1.1 already ships most things, but we add curl for healthchecks.
+# Install tini and curl for signal handling and healthchecks.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl tini ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -23,21 +22,20 @@ RUN apt-get update \
 # production-only for the runtime image so dev-only binaries (tsx/esbuild,
 # vitest workers) are not shipped to production.
 FROM base AS deps
-COPY backend/package.json ./
-# Use bun for fast installs; falls back to npm if bun has any issue with a pkg.
-RUN bun install --frozen-lockfile --production=false 2>/dev/null || bun install
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
 
 # ---- prod-deps ----
 FROM base AS prod-deps
-COPY backend/package.json ./
-RUN bun install --frozen-lockfile --production 2>/dev/null || bun install --production
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci --omit=dev
 
 # ---- build ----
 FROM deps AS build
 COPY backend/tsconfig.json ./
 COPY backend/src/ ./src/
 # Type-check + emit JS to dist/ — fail hard on build errors
-RUN bun run build
+RUN npm run build
 
 # ---- runtime ----
 FROM base AS runtime
@@ -86,4 +84,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 # tini reaps zombies and forwards signals correctly to Node.
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["bun", "run", "dist/server.js"]
+CMD ["node", "dist/server.js"]

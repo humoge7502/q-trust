@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface MigrationStep {
   asset_id?: number | string;
@@ -48,9 +49,7 @@ export default function RLPlanViewer() {
       } catch {
         throw new Error("CBOM is not valid JSON");
       }
-      const base =
-        process.env.NEXT_PUBLIC_QTRUST_API_URL ?? "http://localhost:3001";
-      const res = await fetch(`${base}/v1/gpu/rl/plan`, {
+      const res = await fetch(`${API_BASE_URL}/v1/gpu/rl/plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cbom }),

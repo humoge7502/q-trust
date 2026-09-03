@@ -69,11 +69,14 @@ export function parseAssetId(id: string): `0x${string}` {
   return id as `0x${string}`;
 }
 
-/** Pad a 0x-prefixed hex string to bytes32. */
+/** Pad a short 0x-prefixed hex string to bytes32 without truncation. */
 export function toBytes32(hash: string): `0x${string}` {
-  if (!hash.startsWith("0x")) {
-    throw new Error("Hash must start with 0x");
+  if (!/^0x[0-9a-fA-F]*$/.test(hash)) {
+    throw new Error("Hash must be a 0x-prefixed hexadecimal string");
   }
-  const hex = hash.slice(2).padStart(64, "0").slice(0, 64);
-  return `0x${hex}` as `0x${string}`;
+  const hex = hash.slice(2);
+  if (hex.length > 64) {
+    throw new Error("Hash must be at most 32 bytes (64 hex characters)");
+  }
+  return `0x${hex.padStart(64, "0")}` as `0x${string}`;
 }

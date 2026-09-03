@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface AnomalousAsset {
   asset_index: number;
@@ -75,9 +76,7 @@ export default function AnomalyPanel() {
       } catch {
         throw new Error("CBOM is not valid JSON");
       }
-      const base =
-        process.env.NEXT_PUBLIC_QTRUST_API_URL ?? "http://localhost:3001";
-      const res = await fetch(`${base}/v1/gpu/anomaly/score`, {
+      const res = await fetch(`${API_BASE_URL}/v1/gpu/anomaly/score`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cbom }),

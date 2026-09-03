@@ -12,7 +12,7 @@
  */
 import pg from "pg";
 import { getContract, parseAbiItem, type AbiEvent, type Address, type Log } from "viem";
-import { CONTRACTS, PG_URL } from "../config.js";
+import { CONTRACTS, isZeroAddress, PG_URL } from "../config.js";
 import { getPublicClient } from "./rpc-pool.js";
 import { setIndexerLag } from "../plugins/metrics.js";
 import {
@@ -278,7 +278,7 @@ async function detectAndHandleReorg(spec: EventSpec): Promise<bigint | null> {
 async function backfill(spec: EventSpec): Promise<void> {
   if (!pool) return;
   const address = spec.contract();
-  if (address === "0x0") return;
+  if (isZeroAddress(address)) return;
 
   // Reorg check first: if previously indexed blocks are no longer canonical,
   // purge forked rows and resume from the fork point.
@@ -332,7 +332,7 @@ const unwatchers: Array<() => void> = [];
 
 async function watchLive(spec: EventSpec): Promise<void> {
   const address = spec.contract();
-  if (address === "0x0") return;
+  if (isZeroAddress(address)) return;
   // Audit H-6: the rpc-pool Proxy wraps every method call in a Promise,
   // including viem's synchronous watchEvent (which returns an unwatch
   // function). Without `await`, unwatchers collected Promise objects and

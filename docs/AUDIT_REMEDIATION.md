@@ -11,7 +11,7 @@ measured locally on this checkout, not estimated.
 | Contracts (unit + invariant + fuzz + attack) | `forge test` (contracts/) | **213/213 pass** |
 | Formal verification (Halmos) | `halmos --contract RegistrySymbolicTest --function check_ --loop 1` | **4/4 pass — was broken** (see §8) |
 | Backend typecheck | `npm run typecheck` (backend/) | pass |
-| Backend unit tests | `npm test` (backend/, vitest) | **72/72 pass** |
+| Backend unit tests | `npm test` (backend/, vitest) | **76/76 pass** |
 | Backend production build | `npm run build` (backend/, tsc emit) | pass |
 | Frontend unit tests | `npm test` (frontend/, vitest) | **55/55 pass** |
 | Frontend lint | `npm run lint` (frontend/) | **pass — was broken** (see §2) |
@@ -19,10 +19,10 @@ measured locally on this checkout, not estimated.
 | Frontend npm audit | `npm audit --audit-level=high` | **0 vulnerabilities** |
 | Backend npm audit | `npm audit --audit-level=high` | **0 vulnerabilities** |
 | SDK tests | `pytest sdk/tests/` | **64 pass, 1 skip — was collection-broken** (see §3) |
-| Inspector tests | `pytest inspector/tests/` | **202 pass, 1 skip — was 8 failed** (see §4) |
-| Planner tests | `pytest planner/tests/` | **52 pass** |
-| qtrust_ai tests | `pytest qtrust_ai/tests/` | **12 pass** |
-| Full Python suite | `pytest` (all four suites) | **330 pass, 2 skip** |
+| Inspector tests | `pytest inspector/tests/` | **202 pass, 1 skip (203 collected) — was 8 failed** (see §4) |
+| Planner tests | `pytest planner/tests/` | **57/57 pass** |
+| qtrust_ai tests | `pytest qtrust_ai/tests/` | **12/12 pass** |
+| Full Python suite | `pytest` (all four suites) | **337 collected; 335 pass, 2 skip** |
 | Python lint | `ruff check .` | **pass — was 449 violations** (see §5) |
 | Docs site | `mkdocs build --strict` | pass |
 | Docs v2 (VitePress) | `npm run docs:build` (docs-v2/) | pass |
@@ -85,7 +85,7 @@ this.
   interpreter, avoids the cached `torch.cuda.is_available()` result) and, when
   the device is unusable, hides it with `CUDA_VISIBLE_DEVICES=""` before any
   in-process torch import. Healthy GPU machines are untouched.
-- Result: 8 failures → 0; inspector 202 pass, 1 skip.
+- Result: 8 failures → 0; inspector 202 pass, 1 skip (203 collected).
 
 ## 5. `ruff check .` was red with 449 violations
 

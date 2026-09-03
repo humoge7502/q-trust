@@ -147,8 +147,10 @@ export async function registerRelayRoutes(app: FastifyInstance): Promise<void> {
       return { ...result, relayer: relayerAddress(), chain_id: CHAIN.id };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      const code = msg.includes("signature") || msg.includes("Nonce") || msg.includes("must be") ? 400 : 422;
-      return reply.status(code).send({ error: msg });
+      const clientError = /signature|Nonce|must be|invalid|address|reportHash/i.test(msg);
+      if (clientError) return reply.status(400).send({ error: msg });
+      request.log.error(err, "Relay audit failed");
+      return reply.status(422).send({ error: "Relay submission failed" });
     }
   });
 

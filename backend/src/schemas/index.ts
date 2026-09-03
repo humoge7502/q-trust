@@ -153,6 +153,21 @@ export const AnomalyScoreSchema = Type.Object({
   cbom: FreeformObject,
 });
 
+const WebhookEventName = Type.String({ pattern: "^[A-Za-z0-9_.:-]{1,128}$" });
+
+export const WebhookSubscribeSchema = Type.Object({
+  address: HexAddress,
+  url: Type.String({ minLength: 1, maxLength: 2048 }),
+  secret: Type.Optional(Type.String({ maxLength: 512 })),
+  events: Type.Optional(Type.Array(WebhookEventName, { maxItems: 32 })),
+});
+
+export const WebhookUnsubscribeSchema = Type.Object({
+  address: HexAddress,
+  url: Type.String({ minLength: 1, maxLength: 2048 }),
+  events: Type.Optional(Type.Array(WebhookEventName, { maxItems: 32 })),
+});
+
 export const RLPlanSchema = Type.Object({
   cbom: FreeformObject,
 });

@@ -18,7 +18,8 @@ services:
     ports:
       - "127.0.0.1:3001:3001"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -26,7 +27,11 @@ services:
       - QTRUST_REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}@redis:6379
       - QTRUST_PG_URL=postgres://${POSTGRES_USER:-qtrust}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/${POSTGRES_DB:-qtrust}
       - QTRUST_PLANNER_URL=http://planner:8000
+      - QTRUST_PLANNER_API_KEY=${QTRUST_PLANNER_API_KEY:?QTRUST_PLANNER_API_KEY must be set in .env}
+      - QTRUST_SCAN_ALLOWED_ROOTS=${QTRUST_SCAN_ALLOWED_ROOTS:?QTRUST_SCAN_ALLOWED_ROOTS must be set in .env}
       - QTRUST_BASE_SEPOLIA_RPC=${QTRUST_BASE_SEPOLIA_RPC:-http://host.docker.internal:8545}
+    volumes:
+      - ${QTRUST_SCAN_HOST_ROOT:-.}:${QTRUST_SCAN_CONTAINER_ROOT:-/workspace/projects}:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -41,9 +46,10 @@ services:
     image: qtrust-backend:0.1.0
     container_name: qtrust-webhook
     restart: unless-stopped
-    command: ["bun", "run", "dist/services/webhook.js"]
+    command: ["node", "dist/services/webhook.js"]
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       - NODE_ENV=production
       - QTRUST_REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}@redis:6379
@@ -92,7 +98,12 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8000:8000"
+    env_file:
+      - path: .env
+        required: false
     environment:
+      - QTRUST_PLANNER_API_KEY=${QTRUST_PLANNER_API_KEY:?QTRUST_PLANNER_API_KEY must be set in .env}
+      - QTRUST_REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}@redis:6379
       - QTRUST_MODEL_PATH=/app/model.pt
       - QTRUST_DEADLINES_PATH=/app/data/algorithms.json
       # GPU features (RL agent). Set to "auto" to use the A100 when present;

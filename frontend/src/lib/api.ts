@@ -1,11 +1,15 @@
 /**
  * Backend API client used by the frontend.
  *
- * All requests go to the Q-Trust Fastify backend (default: same origin in prod,
- * or http://localhost:3001 in dev). The base URL is configurable via the
- * NEXT_PUBLIC_QTRUST_API_URL env var.
+ * Browser requests go through the same-origin Next.js proxy. The proxy forwards
+ * to the Fastify backend using server-only configuration.
  */
-export const API_BASE_URL =
+// Browser API calls use the same-origin Next.js proxy. The proxy injects the
+// server-only QTRUST_API_KEY before forwarding to Fastify.
+export const API_BASE_URL = "/api";
+
+// Documentation is a public resource and can remain on the direct API origin.
+export const API_DOCS_URL =
   process.env.NEXT_PUBLIC_QTRUST_API_URL ?? "http://localhost:3001";
 
 export interface AssetInfo {
@@ -225,16 +229,9 @@ export async function relayAttestation(payload: {
   nonce: number;
   signature: string;
 }): Promise<{ txHash: string; vendorDid: string; attestationId: string }> {
-  // REG-06 FIX: browser relay must send X-Api-Key when backend is hardened.
-  // In dev (no QTRUST_API_KEYS) the backend stays open; in production the
-  // key is injected via NEXT_PUBLIC_QTRUST_API_KEY or via a backend proxy.
-  // If no key is configured, the request will 401 in hardened mode — surface
-  // a clear error instead of a generic “Relay failed”.
-  const apiKey =
-    (typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_QTRUST_API_KEY as string | undefined) : undefined) ??
-    (typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_QTRUST_API_KEYS as string | undefined)?.split(",")[0] : undefined);
+  // The same-origin proxy adds X-Api-Key on the server. Never read a public
+  // NEXT_PUBLIC_* API key here: anything in this module is browser-visible.
   const headers: Record<string, string> = { "content-type": "application/json" };
-  if (apiKey) headers["x-api-key"] = apiKey;
   const res = await fetch(`${API_BASE_URL}/v1/relay/attestation`, {
     method: "POST",
     headers,

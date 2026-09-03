@@ -46,6 +46,15 @@
 
 :root {
   color-scheme: light;
+  --scroll-progress: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 html, body {
@@ -70,7 +79,7 @@ html, body {
   box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--color-qtrust-600);
 }
 
-/* Aurora + glass helpers */
+/* Ambient visual helpers */
 .aurora-blob {
   position: absolute;
   border-radius: 9999px;
@@ -98,6 +107,92 @@ html, body {
   .aurora-blob {
     display: none;
   }
+}
+
+.scroll-progress {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 100;
+  height: 2px;
+  width: calc(var(--scroll-progress) * 100%);
+  background: linear-gradient(90deg, #67e8f9, #a78bfa 55%, #6ee7b7);
+  box-shadow: 0 0 18px rgba(103, 232, 249, 0.65);
+  pointer-events: none;
+  transform-origin: left;
+}
+
+.hero-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 85% 80% at 50% 25%, black 35%, transparent 85%);
+}
+
+.hero-orb {
+  filter: blur(2px);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+}
+
+.hero-orb-one {
+  background: radial-gradient(circle at 45% 45%, rgba(34, 211, 238, 0.2), transparent 62%);
+  animation: orb-drift-one 16s ease-in-out infinite alternate;
+}
+
+.hero-orb-two {
+  background: radial-gradient(circle at 45% 45%, rgba(167, 139, 250, 0.2), transparent 62%);
+  animation: orb-drift-two 19s ease-in-out infinite alternate;
+}
+
+.hero-enter {
+  animation: hero-enter 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-enter-delay {
+  animation-delay: 150ms;
+}
+
+.signal-track {
+  animation: signal-slide 32s linear infinite;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px) scale(0.985);
+  filter: blur(4px);
+  transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1), transform 800ms cubic-bezier(0.16, 1, 0.3, 1), filter 800ms ease;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+@keyframes hero-enter {
+  from { opacity: 0; transform: translateY(24px); filter: blur(8px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes orb-drift-one {
+  from { transform: translate3d(-2%, -1%, 0) scale(1); }
+  to { transform: translate3d(8%, 7%, 0) scale(1.08); }
+}
+
+@keyframes orb-drift-two {
+  from { transform: translate3d(3%, -3%, 0) scale(1); }
+  to { transform: translate3d(-8%, 8%, 0) scale(1.12); }
+}
+
+@keyframes signal-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-enter, .signal-track, .hero-orb-one, .hero-orb-two { animation: none; }
+  .reveal { opacity: 1; transform: none; filter: none; transition: none; }
 }
 
 /* Custom scrollbar for long lists */
