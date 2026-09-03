@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import subprocess
 import time
@@ -40,6 +41,8 @@ except ImportError:
     nn = None  # type: ignore
 
 from qtrust_inspector._device import resolve_device
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -154,8 +157,13 @@ def collect_timing_traces(
 
     Returns:
         Normalized timing traces as a numpy array of shape (n_traces,).
+        B-13 FIX: failed executions are dropped instead of recorded as 0 ns;
+        zero-duration outliers previously skewed the z-normalization that
+        feeds the leakage detector. Errors are logged via ``logging`` rather
+        than printed to stdout.
     """
-    traces = []
+    traces: list[int] = []
+    failed = 0
     rng = np.random.default_rng()
 
     for i in range(n_traces):
@@ -174,22 +182,32 @@ def collect_timing_traces(
             duration = end - start
             traces.append(duration)
         except subprocess.TimeoutExpired:
-            traces.append(int(timeout * 1e9))  # record as timeout
+            # A timed-out run says nothing about timing distribution; keeping
+            # the timeout duration itself would fabricate an outlier.
+            failed += 1
+            logger.warning("Trace %d timed out after %.1fs; dropped", i, timeout)
         except Exception as e:
-            print(f"Error on trace {i}: {e}")
-            traces.append(0)
+            failed += 1
+            logger.warning("Error collecting trace %d: %s; dropped", i, e)
 
         if (i + 1) % 1000 == 0:
-            print(f"  Collected {i+1}/{n_traces} traces...")
+            logger.info("Collected %d/%d traces (%d dropped)", len(traces), n_traces, failed)
+
+    if not traces:
+        raise RuntimeError(
+            f"No usable timing traces collected ({failed} of {n_traces} runs failed)"
+        )
+    if failed:
+        logger.warning("Dropped %d/%d failed runs before normalization", failed, n_traces)
 
     # Normalize traces (z-score normalization)
-    traces = np.array(traces, dtype=np.float32)
-    mean = traces.mean()
-    std = traces.std()
+    traces_arr = np.array(traces, dtype=np.float32)
+    mean = traces_arr.mean()
+    std = traces_arr.std()
     if std > 0:
-        traces = (traces - mean) / std
+        traces_arr = (traces_arr - mean) / std
 
-    return traces
+    return traces_arr
 
 
 def simulate_timing_traces(
@@ -336,7 +354,7 @@ class SideChannelAnalyzer:
         Returns:
             SideChannelResult with leakage probability and verdict.
         """
-        print(f"Collecting {n_traces} timing traces...")
+        logger.info("Collecting %d timing traces...", n_traces)
         traces = collect_timing_traces(implementation_cmd, n_traces=n_traces)
         return self._analyze(traces, implementation_cmd=str(implementation_cmd))
 
@@ -421,7 +439,7 @@ class SideChannelAnalyzer:
         split anchors the raw sigmoid output to a calibrated probability:
         clean-median -> 0.05, leak-median -> 0.95 (clipped to [0, 1]).
         """
-        print("Generating training data...")
+        logger.info("Generating training data... (%d clean / %d leaking)", n_clean, n_leaking)
         rng = np.random.default_rng(0)
         clean_feats = [
             traces_to_model_input(simulate_timing_traces(1000, 0.0, seed=i), self.trace_length)
@@ -473,7 +491,7 @@ class SideChannelAnalyzer:
                 n_batches += 1
 
             if (epoch + 1) % 10 == 0 or epoch == epochs - 1:
-                print(f"Epoch {epoch+1}/{epochs}: loss={total_loss / n_batches:.4f}")
+                logger.info("Epoch %d/%d: loss=%.4f", epoch + 1, epochs, total_loss / n_batches)
 
         # Calibration on held-out split
         self.model.eval()
@@ -496,7 +514,7 @@ class SideChannelAnalyzer:
         self._model_path_used = save_path
         self.model_trained = True
         self.model.eval()
-        print(f"Model saved to {save_path}")
+        logger.info("Model saved to %s", save_path)
 
 
 if __name__ == "__main__":

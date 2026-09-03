@@ -30,7 +30,7 @@ All paths below are relative to the base URL. Legacy alias routes (`/assets/{id}
 
 * **Header:** `X-Api-Key: <key>`
 * **Scheme:** `ApiKeyAuth` (`backend/openapi.yaml:1008`) — `in: header`, `name: X-Api-Key`.
-* **Required for:** `POST /v1/write/*`, `POST /v1/relay/*`, `POST /v1/credentials/issue`, `POST /v1/evidence/create`, `POST /v1/plans` (proxied planner key), `POST /v1/webhooks/*`. See `backend/src/middleware/auth.ts:requireApiKey` — fail-closed in production when `QTRUST_API_KEYS` is unset; dev without keys is unchanged.
+* **Required for:** `POST /v1/write/*`, `POST /v1/relay/*`, `POST /v1/credentials/issue`, `POST /v1/evidence/create`, `POST /v1/plans`, `POST /v1/webhooks/*`, and all `/v1/gpu/*` routes. See `backend/src/middleware/auth.ts:requireApiKey` — fail-closed in production when `QTRUST_API_KEYS` is unset; dev without keys is unchanged.
 * **Not required for:** `GET /health`, `GET /v1/assets/*`, `GET /v1/orgs/*`, `GET /v1/revocation/*`, `GET /v1/trust-anchors/*`, etc. (read paths).
 * **Relay pre-check:** `/v1/relay/*` pre-validates the signer's on-chain role before broadcasting, so a bad signature never costs relayer gas (audit H-3).
 
@@ -101,7 +101,7 @@ Rate limits are documented in [`PERFORMANCE.md`](PERFORMANCE.md) — 147.8 req/s
 | `GET` | `/health` | Server health, `chain_id`, `relayer` | — | `backend/openapi.yaml:72` |
 | `GET` | `/docs` | Swagger UI | — | `@fastify/swagger-ui` |
 | `GET` | `/docs/json` | Raw OpenAPI JSON | — | Proxied from `backend/openapi.yaml` |
-| `GET` | `/metrics` | Prometheus metrics | — | `prom-client` histogram + gauges |
+| `GET` | `/metrics` | Prometheus metrics | `X-Api-Key` in production | `prom-client` histogram + gauges |
 | `GET` | `/v1/stats` | Scan/asset counters (API-key gated) | `X-Api-Key` | `routes/scanner.ts` |
 
 ### Scan
@@ -110,9 +110,9 @@ CBOM/scan routes invoke the real `qtrust_inspector` engine end-to-end (not stubs
 
 | Method | Path | Description | Auth |
 |---|---|---|---|
-| `POST` | `/v1/scan/source` | Source-code crypto scan (`ast_scanner` + `source_scanner`) | — |
-| `POST` | `/v1/scan/manifests` | Manifest dependency scan (10+ formats) | — |
-| `POST` | `/v1/scan/full` | Full target scan (TLS + source + manifests + binaries + config + PCAP) | — |
+| `POST` | `/v1/scan/source` | Source-code crypto scan (`ast_scanner` + `source_scanner`) | `X-Api-Key` |
+| `POST` | `/v1/scan/manifests` | Manifest dependency scan (10+ formats) | `X-Api-Key` |
+| `POST` | `/v1/scan/full` | Full target scan (TLS + source + manifests + binaries + config + PCAP) | `X-Api-Key` |
 
 All three accept `ScanRequest` with `target`, `options` (detectors toggles) and return `ScanResult` serialized as CBOM JSON (`qtrust.cbom.v1`) plus optional risk/compliance enrichment.
 
@@ -149,7 +149,7 @@ Ledger is persisted as append-only JSONL at `/var/lib/qtrust` (Docker volume `qt
 |---|---|---|---|
 | `POST` | `/v1/roadmap/generate` | 5-phase migration plan + cost (`--daily-rate`) | — |
 | `POST` | `/v1/plans` | Create AI migration plan (proxied to planner) | `X-Api-Key` (planner) |
-| `GET` | `/v1/plans/{did}` | Get migration plan for an org (planner proxied) | — |
+| `GET` | `/v1/plans/{did}` | Get migration plan for an org (planner proxied) | `X-Api-Key` |
 
 Planner proxy requires `QTRUST_PLANNER_API_KEY` (audit HIGH-1); returns `503` when planner is down. See `GPU_FEATURES.md` for GNN/RL details and `PERFORMANCE.md` for benchmark τ 0.975.
 
@@ -185,8 +185,8 @@ Planner proxy requires `QTRUST_PLANNER_API_KEY` (audit HIGH-1); returns `503` wh
 | `POST` | `/v1/credentials/verify` | Verify VC cryptographically (fail-closed: structure + expiry + Ed25519 sig vs issuer DID) | — |
 | `GET` | `/v1/revocation/{issuer}` | Revocation root (duplicate listing for discoverability) | — |
 | `POST` | `/v1/webhooks/subscribe` | Subscribe to events (Redis, encrypted secrets) | `X-Api-Key` |
-| `POST` | `/v1/webhooks/unsubscribe` | Unsubscribe | — |
-| `GET` | `/v1/webhooks/subscribers` | List subscribers by event | — |
+| `POST` | `/v1/webhooks/unsubscribe` | Unsubscribe | `X-Api-Key` |
+| `GET` | `/v1/webhooks/subscribers` | List subscribers by event | `X-Api-Key` |
 
 Vendor attestation uniqueness is bounded by `MAX_ATTESTATIONS_PER_PRODUCT` (governor-settable [16,4096], default 256).
 
@@ -212,11 +212,11 @@ Gated by `QTRUST_GPU_ENABLED=true` per request (`services/gpu-service.ts`); payl
 
 | Method | Path | Description | Auth | Notes |
 |---|---|---|---|---|
-| `GET` | `/v1/gpu/status` | GPU availability, model paths, accelerator | — | Always available |
-| `POST` | `/v1/gpu/side-channel/analyze` | Timing side-channel CNN+LSTM analysis | `X-Api-Key` if enabled | Needs `QTRUST_SIDE_CHANNEL_MODEL`; 409 if untrained |
-| `POST` | `/v1/gpu/anomaly/score` | CBOM anomaly VAE scoring (per-CBOM threshold) | `X-Api-Key` if enabled | Needs `QTRUST_ANOMALY_MODEL`; 409 if untrained |
-| `GET` | `/v1/gpu/quantum/estimate/:bits` | Quantum threat estimate for RSA bits | — | `quantum_estimator.py` |
-| `POST` | `/v1/gpu/rl/plan` | RL migration agent plan (`rl_policy` vs `heuristic_fallback`) | `X-Api-Key` if enabled | Reads `planner/rl_agent.pt` |
+| `GET` | `/v1/gpu/status` | GPU availability, model paths, accelerator | `X-Api-Key` | Always available |
+| `POST` | `/v1/gpu/side-channel/analyze` | Timing side-channel CNN+LSTM analysis | `X-Api-Key` | Needs `QTRUST_SIDE_CHANNEL_MODEL`; 409 if untrained |
+| `POST` | `/v1/gpu/anomaly/score` | CBOM anomaly VAE scoring (per-CBOM threshold) | `X-Api-Key` | Needs `QTRUST_ANOMALY_MODEL`; 409 if untrained |
+| `GET` | `/v1/gpu/quantum/estimate/:bits` | Quantum threat estimate for RSA bits | `X-Api-Key` | `quantum_estimator.py` |
+| `POST` | `/v1/gpu/rl/plan` | RL migration agent plan (`rl_policy` vs `heuristic_fallback`) | `X-Api-Key` | Reads `planner/rl_agent.pt` |
 
 See `GPU_FEATURES.md` and `make -f Makefile.gpu help` for training.
 
@@ -224,9 +224,9 @@ See `GPU_FEATURES.md` and `make -f Makefile.gpu help` for training.
 
 ## OpenAPI source & Swagger
 
-* **File:** `backend/openapi.yaml` (3.0.3, 32 paths, 15 tags — `health`, `assets`, `orgs`, `vendors`, `products`, `plans`, `write`, `relay`, `evaluate`, `credentials`, `revocation`, `policies`, `schemas`, `trust-anchors`, `webhooks`, `legacy`).
-* **Live JSON:** `GET http://localhost:3001/docs/json`
-* **Swagger UI:** `GET http://localhost:3001/docs` — includes `X-Api-Key` authorizer, request/response examples, and `TxResult`/`RelayResult` schemas.
+* **File:** `backend/openapi.yaml` (OpenAPI 3.0.3, version 2.2.0, 52 paths, 18 tags — `health`, `scanner`, `gpu`, `assets`, `orgs`, `vendors`, `products`, `plans`, `write`, `relay`, `evaluate`, `credentials`, `revocation`, `policies`, `schemas`, `trust-anchors`, `webhooks`, `legacy`).
+* **Live JSON:** `GET http://localhost:3001/docs/json` (API-key protected in production)
+* **Swagger UI:** `GET http://localhost:3001/docs` (API-key protected in production) — includes the `X-Api-Key` authorizer, request/response examples, and `TxResult`/`RelayResult` schemas.
 
 To regenerate frontend types:
 

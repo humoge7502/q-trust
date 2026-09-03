@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.6
-# Q-Trust backend image — runs both the API server and the webhook watcher.
+# Q-Trust backend image — runs the API server, indexer, and webhook fan-out.
 #
 # IMPORTANT: build context must be the repository root (the image bundles the
 # Python inspector package):
 #   docker build -f backend/Dockerfile -t qtrust-backend .
 #   docker run -p 3001:3001 --env-file .env qtrust-backend
 #
-# To run the webhook watcher instead of the API:
-#   docker run --env-file .env qtrust-backend node dist/services/webhook.js
+# Webhook fan-out is owned by the API indexer process; there is no separate
+# webhook worker entrypoint in this image.
 
 FROM node:20-bookworm-slim AS base
 WORKDIR /app

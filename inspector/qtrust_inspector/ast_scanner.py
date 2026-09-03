@@ -973,10 +973,25 @@ def merge_findings_dedupe(
     base: list[AssetFinding],
     extra: list[AssetFinding],
 ) -> list[AssetFinding]:
+    """Merge findings, dropping duplicates across the regex and AST layers.
+
+    B-11 FIX: the dedupe key used ``metadata["line"]``, but regex-layer
+    findings carry ``lines`` (plural, a sorted list) instead. Their key line
+    component was therefore always ``None``, so the same call site found by
+    both layers survived as two findings. The key now normalizes both shapes:
+    an explicit ``line``, else the first entry of ``lines``, else None.
+    """
     merged: list[AssetFinding] = []
     seen: set[tuple[str, str | None, Any]] = set()
     for finding in [*base, *extra]:
-        line = finding.metadata.get("line")
+        metadata = finding.metadata or {}
+        line: Any = metadata.get("line")
+        if line is None:
+            lines = metadata.get("lines")
+            if isinstance(lines, (list, tuple)) and lines:
+                line = lines[0]
+            elif lines is not None:
+                line = lines
         key = (finding.location, finding.algorithm, line)
         if key in seen:
             continue

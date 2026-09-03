@@ -62,6 +62,7 @@ jobs:
         # Drafts release notes from merged PRs, grouped by label into the
         # categories defined in .github/release-drafter.yml. Maintainers
         # publish when ready — this step never publishes on its own.
-        uses: release-drafter/release-drafter@v6
+        # S-8 fix: pinned by commit SHA (v6.1.0); update by moving the SHA.
+        uses: release-drafter/release-drafter@6a93d829887aa2e0748befe2e808c66c0ec6e4c7 # v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

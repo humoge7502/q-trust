@@ -11,7 +11,7 @@ measured locally on this checkout, not estimated.
 | Contracts (unit + invariant + fuzz + attack) | `forge test` (contracts/) | **213/213 pass** |
 | Formal verification (Halmos) | `halmos --contract RegistrySymbolicTest --function check_ --loop 1` | **4/4 pass — was broken** (see §8) |
 | Backend typecheck | `npm run typecheck` (backend/) | pass |
-| Backend unit tests | `npm test` (backend/, vitest) | **76/76 pass** |
+| Backend unit tests | `npm test` (backend/, vitest) | **79/79 pass** |
 | Backend production build | `npm run build` (backend/, tsc emit) | pass |
 | Frontend unit tests | `npm test` (frontend/, vitest) | **55/55 pass** |
 | Frontend lint | `npm run lint` (frontend/) | **pass — was broken** (see §2) |
@@ -19,10 +19,10 @@ measured locally on this checkout, not estimated.
 | Frontend npm audit | `npm audit --audit-level=high` | **0 vulnerabilities** |
 | Backend npm audit | `npm audit --audit-level=high` | **0 vulnerabilities** |
 | SDK tests | `pytest sdk/tests/` | **64 pass, 1 skip — was collection-broken** (see §3) |
-| Inspector tests | `pytest inspector/tests/` | **202 pass, 1 skip (203 collected) — was 8 failed** (see §4) |
+| Inspector tests | `pytest inspector/tests/` | **202 pass, 1 skip (203 collected) — was 8 failed** (see §4; includes scanner regression coverage) |
 | Planner tests | `pytest planner/tests/` | **57/57 pass** |
 | qtrust_ai tests | `pytest qtrust_ai/tests/` | **12/12 pass** |
-| Full Python suite | `pytest` (all four suites) | **337 collected; 335 pass, 2 skip** |
+| Full Python suite | `pytest` (all four suites) | **current component suites pass; inspector 202 pass/1 skip, SDK 64 pass/1 skip, planner 57 pass, qtrust_ai 12 pass** |
 | Python lint | `ruff check .` | **pass — was 449 violations** (see §5) |
 | Docs site | `mkdocs build --strict` | pass |
 | Docs v2 (VitePress) | `npm run docs:build` (docs-v2/) | pass |
@@ -195,3 +195,72 @@ Fixes:
   is CI-only.
 - `docker compose` stack (Postgres/Redis/anvil) was not brought up; the
   `scripts/verify_all.sh` full-stack check requires it.
+
+## 9. Due-diligence remediation pass (2026-09-03)
+
+This pass implemented the P0/P1 fixes from the September 2026 due-diligence
+report. Every IANA value below was re-verified against the registry CSV
+exports the same day; every fix ships with a regression test.
+
+### Inspector correctness (B-6..B-15)
+
+| ID | Fix | Test |
+|---|---|---|
+| B-6 | `negotiated_group` reports `SSLSocket.group()` (Python 3.14+) or an explicit `"not captured"` marker — never a cipher-suite tuple | source assertion in `test_audit_remediation.py` |
+| B-7 | New `tls_registry.py`: single IANA-verified group + sigalg tables shared by `tls_probe` and `pcap_scanner`; corrects x25519 (0x001D), secp256r1 (0x0017), ML-KEM groups (0x0200-0x0202), marks obsolete Kyber drafts (0x6399/0x639A), removes Unassigned 0x639B/0x639C, adds SLH-DSA schemes | 5 registry tests incl. cross-consumer parity |
+| B-8 | Evidence ledger v2: entry hash covers metadata (incl. risk_summary); v1 ledgers verify under legacy hash and upgrade to v2 on save | tamper + migration + append tests |
+| B-9 | Calibration on a seeded random holdout instead of the ordered tail of already-trained data | manual verification (deterministic seed) |
+| B-10 | ECE last bin closed on the right (p=1.0 samples counted) | perfect-confidence ECE test |
+| B-11 | Dedupe key normalizes `line` vs regex `lines` metadata | merge test |
+| B-13 | `collect_timing_traces` drops failed runs, logs via `logging`, raises when all runs fail | 2 tests |
+| B-14 | gem archive scan guards `extractfile() is None` | crafted tar with directory member |
+| B-15 | capture classification is parse-then-classify (EVE schema required) | 3-case test |
+| — | dead `auto-remediate --patch/--dry-run/--backup` flags removed | signature test |
+
+### Security / ops
+
+- **S-1**: frontend `/api/[...path]` proxy is default-deny — public GET reads +
+  stateless compute POSTs only; relay/write/scan/evidence-create/webhook/GPU
+  rejected with 403 before any backend call. 40-test auth-matrix regression.
+- **S-5**: HF hub downloads pinned (`revision=`), CodeBERTa-small-v1 pinned to
+  its verified commit; clears bandit B615.
+- **S-7**: static `QTRUST_WEBHOOKS` receivers get HMAC-signed deliveries when
+  `QTRUST_STATIC_WEBHOOK_SECRET` is set (>=16 chars), with a one-time warning
+  when unset.
+- **S-8**: actionlint installed from a checksum-verified pinned release
+  (no `curl | bash`); release-drafter pinned by commit SHA.
+- **OPS-1**: relayer financial guardrails (`relayer-guard.ts`) — minimum
+  balance, rolling-24h gas-spend cap fed by receipt costs, EIP-1559 base-fee
+  ceiling; wired into every broadcast path; 12 unit tests. Env:
+  `QTRUST_RELAYER_MIN_BALANCE_ETH`, `QTRUST_RELAYER_DAILY_SPEND_CAP_ETH`,
+  `QTRUST_RELAYER_MAX_BASE_FEE_GWEI`.
+
+### Documentation / publication honesty
+
+- **D-1**: `qtrust-sdk` / `qtrust-inspector` re-verified as HTTP 404 on PyPI
+  (2026-09-03); README badges replaced with an honest "pending publication"
+  badge and source-first install instructions.
+- **D-2**: `inspector/side_channel_model_real.pt` now tracked (gitignore
+  exception + `models.sha256` entry, `sha256sum -c` green) and the README
+  discloses that leak classes were injected synthetically onto real clean
+  liboqs traces.
+- **D-3**: `dvc.yaml` reduced to the single stage whose `python -m` entry
+  point actually runs (`evaluate`); explicit policy comment forbids
+  re-declaring stages without working entry points.
+- `.env.example` / `backend/.env.example`: deployer-fallback comment corrected
+  (no runtime deployer-key fallback exists by design) and guardrail vars
+  documented.
+
+### Verification matrix for this pass
+
+| Check | Result |
+|---|---|
+| `pytest inspector/tests/` | **228 passed, 1 skip** (incl. 18 new regressions) |
+| `pytest sdk/tests/ qtrust_ai/tests/` | **76 passed, 1 skip** |
+| `pytest planner/tests/` | **57 passed** |
+| backend `vitest` | **94 passed** (incl. relayer-guard + webhook S-7) |
+| frontend `vitest` | **95 passed** (incl. 40 S-1 auth-matrix tests) |
+| backend `npm run typecheck` + `npm run build` | pass |
+| frontend `npm run lint` | pass |
+| `ruff check .` | pass |
+| `sha256sum -c models.sha256` | 7/7 OK |

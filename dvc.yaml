@@ -1,66 +1,29 @@
+# DVC pipeline — ML Factory data versioning.
+#
+# D-3 fix (2026-09-03): the previous dvc.yaml declared 8 stages, but 7 of the
+# `python -m qtrust.…` module entry points did not exist (the modules define
+# library functions only, no __main__ CLI), so `dvc repro` failed at the first
+# stage and the pipeline was decorative. The two stages below are the ones
+# whose entry point and outputs are real today:
+#
+#   * evaluate — `qtrust/evaluation/run_all.py` has a __main__ CLI taking
+#     --splits / --out, and runs honestly (it refuses to fabricate metrics
+#     when splits are missing, see REG-08).
+#
+# Stages for ingest → bronze → silver → gold → splits → model training are
+# deliberately NOT declared until their module entry points exist. Add a stage
+# here only when `python -m <module>` runs end-to-end; a pipeline that cannot
+# reproduce is worse than no pipeline.
+#
+# To re-check stage claims: `dvc repro --dry` (or `python -m <stage module>`).
+
 stages:
-  raw_ingest:
-    cmd: python -m qtrust.data_pipeline.github --out qtrust_data/raw
-    deps:
-      - qtrust/data_pipeline/github.py
-    outs:
-      - qtrust_data/raw
-
-  bronze:
-    cmd: python -m qtrust.data.bronze --in qtrust_data/raw --out qtrust_data/bronze
-    deps:
-      - qtrust/data/bronze.py
-      - qtrust_data/raw
-    outs:
-      - qtrust_data/bronze
-
-  silver:
-    cmd: python -m qtrust.data_pipeline.ast_extractor --in qtrust_data/bronze --out qtrust_data/silver
-    deps:
-      - qtrust/data_pipeline/ast_extractor.py
-      - qtrust_data/bronze
-    outs:
-      - qtrust_data/silver
-
-  gold:
-    cmd: python -m qtrust.labeling.gold_builder --in qtrust_data/silver --out qtrust_data/gold/gold.json
-    deps:
-      - qtrust/labeling/gold_builder.py
-      - qtrust_data/silver
-    outs:
-      - qtrust_data/gold/gold.json
-      - qtrust_data/gold/manifest.json
-
-  splits:
-    cmd: python -m qtrust.data.splits --in qtrust_data/gold/gold.json --out qtrust_data/splits
-    deps:
-      - qtrust/data/splits.py
-      - qtrust_data/gold/gold.json
-    outs:
-      - qtrust_data/splits/train.json
-      - qtrust_data/splits/val.json
-      - qtrust_data/splits/test.json
-
-  discovery_train:
-    cmd: python -m qtrust.models.discovery.train --gold qtrust_data/gold/gold.json
-    deps:
-      - qtrust/models/discovery/model.py
-      - qtrust_data/gold/gold.json
-    outs:
-      - qtrust/models/discovery/artifacts/model.pt
-
-  risk_train:
-    cmd: python -m qtrust.models.risk.train --gold qtrust_data/gold/gold.json
-    deps:
-      - qtrust/models/risk/model.py
-      - qtrust_data/gold/gold.json
-    outs:
-      - qtrust/models/risk/artifacts/model.pt
-
   evaluate:
     cmd: python -m qtrust.evaluation.run_all --splits qtrust_data/splits --out qtrust_bench/evaluation/report.json
     deps:
+      - qtrust/evaluation/run_all.py
       - qtrust/evaluation/metrics.py
       - qtrust_data/splits
     outs:
-      - qtrust_bench/evaluation/report.json
+      - qtrust_bench/evaluation/report.json:
+          cache: false

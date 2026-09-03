@@ -52,6 +52,9 @@ planner/*_real.pt
 !planner/model_ddp_v3.pt
 !planner/model_gpu_v3.pt
 !planner/rl_agent.pt
+# D-2 fix: side_channel_model_real.pt is cited by the README and referenced by
+# the side-channel analyzer; track it (668 KB) so the claim is shippable.
+!inspector/side_channel_model_real.pt
 
 # ─── OS & IDE ─────────────────────────────────────────────────────────────────
 .DS_Store

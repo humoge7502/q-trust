@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Q-Trust API
-  version: "1.0.0"
+  version: "2.2.0"
   description: |
     Q-Trust is a post-quantum trust evaluation and attestation platform built on
     Base (Sepolia / Mainnet). The API provides:
@@ -17,7 +17,9 @@ info:
     - **Webhooks**: Redis-backed event subscriptions.
     - **Legacy**: pre-v1 alias routes (deprecated, sunset 2026-12-31).
 
-    **Write routes** (`/v1/write/*`) require a valid `X-Api-Key` header in production.
+    **Protected operations** require a valid `X-Api-Key` header in production,
+    including scans, GPU analysis, write, relay, planner, evidence creation,
+    webhook management, and metrics.
     **Gasless relay routes** (`/v1/relay/*`) let vendors sign EIP-712 typed data off-chain;
     the relayer submits the transaction so vendors never need gas tokens.
 
@@ -30,12 +32,13 @@ servers:
   - url: http://localhost:3001
     description: Local development server
 
-security:
-  - ApiKeyAuth: []
-
 tags:
   - name: health
     description: Server health and chain status
+  - name: scanner
+    description: Source and manifest cryptographic scanning
+  - name: gpu
+    description: Optional GPU analytics and migration planning
   - name: assets
     description: CBOM asset registration and verification
   - name: orgs
@@ -318,6 +321,8 @@ paths:
     post:
       operationId: createPlan
       tags: [plans]
+      security:
+        - ApiKeyAuth: []
       summary: Create an AI migration plan
       description: |
         Proxied to the planner microservice. Requires a non-empty `cbom.assets` array.
@@ -352,6 +357,8 @@ paths:
     get:
       operationId: getPlan
       tags: [plans]
+      security:
+        - ApiKeyAuth: []
       summary: Get migration plan for an organisation
       description: Proxied to the planner microservice. Returns 503 if unavailable.
       parameters:
@@ -507,6 +514,8 @@ paths:
     post:
       operationId: relayAttestation
       tags: [relay]
+      security:
+        - ApiKeyAuth: []
       summary: Relay a gasless EIP-712 attestation
       description: |
         Verifies the vendor's EIP-712 signature, recovers the signer, checks
@@ -542,6 +551,8 @@ paths:
     post:
       operationId: relayCBOMRegistration
       tags: [relay]
+      security:
+        - ApiKeyAuth: []
       summary: Relay a gasless EIP-712 CBOM registration
       description: |
         Verifies the org's EIP-712 signature for CBOM registration and
@@ -576,6 +587,8 @@ paths:
     post:
       operationId: relayMigration
       tags: [relay]
+      security:
+        - ApiKeyAuth: []
       summary: Relay a gasless EIP-712 migration recording
       description: |
         Verifies the org's EIP-712 signature for migration recording and
@@ -606,10 +619,68 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /v1/relay/audit:
+    post:
+      operationId: relayAudit
+      tags: [relay]
+      security:
+        - ApiKeyAuth: []
+      summary: Relay a gasless EIP-712 audit attestation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignedAuditPayload"
+      responses:
+        "200":
+          description: Audit relayed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400":
+          description: Signature, nonce, or payload validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401": { description: Invalid or missing API key }
+        "422": { description: Relay failed }
+
+  /v1/relay/audit-nonce/{did}:
+    get:
+      operationId: getAuditNonce
+      tags: [relay]
+      security: []
+      summary: Get auditor EIP-712 nonce
+      parameters:
+        - name: did
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^0x[0-9a-fA-F]{40}$"
+      responses:
+        "200":
+          description: Auditor nonce
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonceResponse"
+        "400":
+          description: Invalid address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /v1/relay/nonce/{did}:
     get:
       operationId: getVendorNonce
       tags: [relay]
+      security: []
       summary: Get vendor EIP-712 nonce
       description: Returns the current on-chain nonce for a vendor address (used for EIP-712 signing).
       parameters:
@@ -637,6 +708,7 @@ paths:
     get:
       operationId: getOrgNonce
       tags: [relay]
+      security: []
       summary: Get org EIP-712 nonce for CBOM registration
       description: Returns the current on-chain nonce for an org address (used for EIP-712 CBOM signing).
       parameters:
@@ -665,6 +737,7 @@ paths:
     post:
       operationId: evaluateTrust
       tags: [evaluate]
+      security: []
       summary: Evaluate PQC readiness against a policy
       description: |
         Scores an organisation's post-quantum cryptography readiness by
@@ -734,6 +807,7 @@ paths:
     post:
       operationId: verifyCredential
       tags: [credentials]
+      security: []
       summary: Verify a verifiable credential cryptographically (fail-closed)
       description: |
         Full cryptographic verification, fail-closed: the credential must be
@@ -867,6 +941,8 @@ paths:
     post:
       operationId: subscribeWebhook
       tags: [webhooks]
+      security:
+        - ApiKeyAuth: []
       summary: Subscribe to events
       description: |
         Creates a webhook subscription in Redis. Subscribes to the given event
@@ -901,6 +977,8 @@ paths:
     post:
       operationId: unsubscribeWebhook
       tags: [webhooks]
+      security:
+        - ApiKeyAuth: []
       summary: Unsubscribe from events
       requestBody:
         required: true
@@ -928,7 +1006,8 @@ paths:
       tags: [webhooks]
       summary: List webhook subscribers
       description: Returns all active webhook subscriptions grouped by event type.
-      security: []
+      security:
+        - ApiKeyAuth: []
       responses:
         "200":
           description: Subscriber list
@@ -936,6 +1015,437 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WebhookSubscribersResponse"
+
+  # ── Health aliases ─────────────────────────────────────────────────
+  /v1/health:
+    get:
+      operationId: getVersionedHealth
+      tags: [health]
+      summary: Versioned server health check
+      security: []
+      responses:
+        "200":
+          description: Server and scanner health
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version, services]
+                properties:
+                  status:
+                    type: string
+                  version:
+                    type: string
+                  services:
+                    type: object
+                    additionalProperties:
+                      type: boolean
+
+  # ── Scanner and analysis ───────────────────────────────────────────
+  /v1/scan/source:
+    post:
+      operationId: scanSource
+      tags: [scanner]
+      summary: Scan source files in an allowed directory
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [directory]
+              properties:
+                directory:
+                  type: string
+                  minLength: 1
+      responses:
+        "200":
+          description: Source scan result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanResponse"
+        "400":
+          description: Invalid directory
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid or missing API key
+        "403":
+          description: Directory is outside the configured roots
+        "503":
+          description: Scanner unavailable or production scan roots unconfigured
+
+  /v1/scan/manifests:
+    post:
+      operationId: scanManifests
+      tags: [scanner]
+      summary: Scan package manifests in an allowed directory
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [directory]
+              properties:
+                directory:
+                  type: string
+                  minLength: 1
+      responses:
+        "200":
+          description: Manifest scan result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanResponse"
+        "400": { description: Invalid directory }
+        "401": { description: Invalid or missing API key }
+        "403": { description: Directory is outside the configured roots }
+        "503": { description: Scanner unavailable or production scan roots unconfigured }
+
+  /v1/scan/full:
+    post:
+      operationId: scanFull
+      tags: [scanner]
+      summary: Run a full source and manifest scan
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target]
+              properties:
+                target:
+                  type: string
+                  minLength: 1
+                includeSource:
+                  type: boolean
+                  default: true
+                includeManifests:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: Full scan result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanResponse"
+        "400": { description: Invalid scan request or directory }
+        "401": { description: Invalid or missing API key }
+        "403": { description: Directory is outside the configured roots }
+        "503": { description: Scanner unavailable or production scan roots unconfigured }
+
+  /v1/risk/score:
+    post:
+      operationId: scoreRisk
+      tags: [evaluate]
+      summary: Score findings for quantum risk
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindingsRequest"
+      responses:
+        "200":
+          description: Scored findings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoredFindingsResponse"
+
+  /v1/risk/summary:
+    post:
+      operationId: summarizeRisk
+      tags: [evaluate]
+      summary: Summarize finding risk levels
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindingsRequest"
+      responses:
+        "200":
+          description: Risk summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskSummary"
+
+  /v1/compliance/evaluate:
+    post:
+      operationId: evaluateCompliance
+      tags: [evaluate]
+      summary: Evaluate findings against a compliance framework
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplianceEvaluateRequest"
+      responses:
+        "200":
+          description: Compliance evaluation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceEvaluateResponse"
+
+  /v1/compliance/full-report:
+    post:
+      operationId: fullComplianceReport
+      tags: [evaluate]
+      summary: Evaluate findings against all supported frameworks
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindingsRequest"
+      responses:
+        "200":
+          description: Compliance reports
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /v1/evidence/create:
+    post:
+      operationId: createEvidenceLedger
+      tags: [assets]
+      summary: Append a scan result to the evidence ledger
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceCreateRequest"
+      responses:
+        "200":
+          description: Ledger entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceCreateResponse"
+        "401": { description: Invalid or missing API key }
+
+  /v1/evidence/verify:
+    post:
+      operationId: verifyEvidenceLedger
+      tags: [assets]
+      summary: Verify an evidence ledger entry and chain
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceVerifyRequest"
+      responses:
+        "200":
+          description: Ledger verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceVerifyResponse"
+
+  /v1/roadmap/generate:
+    post:
+      operationId: generateRoadmap
+      tags: [plans]
+      summary: Generate a migration roadmap from findings
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoadmapRequest"
+      responses:
+        "200":
+          description: Migration roadmap
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /v1/stats:
+    get:
+      operationId: getStats
+      tags: [health]
+      summary: Get scanner statistics
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Scanner statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+        "401": { description: Invalid or missing API key }
+
+  # ── GPU analytics ──────────────────────────────────────────────────
+  /v1/gpu/status:
+    get:
+      operationId: getGpuStatus
+      tags: [gpu]
+      summary: Get GPU availability and loaded models
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: GPU status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Invalid or missing API key }
+
+  /v1/gpu/side-channel/analyze:
+    post:
+      operationId: analyzeSideChannel
+      tags: [gpu]
+      summary: Analyze timing traces for side-channel leakage
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SideChannelRequest"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400": { description: Invalid request }
+        "401": { description: Invalid or missing API key }
+        "403": { description: Implementation command is not allowlisted }
+        "409": { description: Detector model is untrained }
+        "502": { description: Analysis failed }
+        "503": { description: GPU disabled or real analysis unconfigured }
+
+  /v1/gpu/anomaly/score:
+    post:
+      operationId: scoreAnomaly
+      tags: [gpu]
+      summary: Score a CBOM for anomalies
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnomalyRequest"
+      responses:
+        "200":
+          description: Anomaly result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Invalid or missing API key }
+        "409": { description: Detector model is untrained }
+        "502": { description: Anomaly scoring failed }
+        "503": { description: GPU disabled }
+
+  /v1/gpu/quantum/estimate/{bits}:
+    get:
+      operationId: estimateQuantumResources
+      tags: [gpu]
+      summary: Estimate quantum resources for RSA factoring
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: bits
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 512
+            maximum: 16384
+      responses:
+        "200":
+          description: Quantum resource estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400": { description: Invalid bit size }
+        "401": { description: Invalid or missing API key }
+        "502": { description: Quantum estimation failed }
+        "503": { description: GPU disabled }
+
+  /v1/gpu/rl/plan:
+    post:
+      operationId: createRlPlan
+      tags: [gpu]
+      summary: Request an RL migration plan from the planner service
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RlPlanRequest"
+      responses:
+        "200":
+          description: RL migration plan
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Invalid or missing API key }
+        "503": { description: Planner service unavailable }
+
+  /metrics:
+    get:
+      operationId: getMetrics
+      tags: [health]
+      summary: Prometheus metrics
+      description: API-key protected in production; open in development.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Prometheus text exposition
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401": { description: Invalid or missing API key }
 
   # ── Legacy (deprecated) ────────────────────────────────────────────
   /assets/{id}:
@@ -1241,6 +1751,198 @@ components:
         revoked:
           type: boolean
 
+    # ── Scanner, analysis, and evidence ─────────────────────────────
+    FindingsRequest:
+      type: object
+      required: [findings]
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ScanResponse:
+      type: object
+      required: [findings, scanType, timestamp]
+      properties:
+        directory:
+          type: string
+        target:
+          type: string
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        scanType:
+          type: string
+          enum: [source, manifests, full]
+        timestamp:
+          type: string
+          format: date-time
+
+    ScoredFindingsResponse:
+      type: object
+      required: [findings]
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    RiskSummary:
+      type: object
+      required: [totalFindings, critical, high, medium, low, none, averageRiskScore, overallRiskLevel]
+      properties:
+        totalFindings: { type: integer }
+        critical: { type: integer }
+        high: { type: integer }
+        medium: { type: integer }
+        low: { type: integer }
+        none: { type: integer }
+        averageRiskScore: { type: integer }
+        overallRiskLevel: { type: string }
+
+    ComplianceEvaluateRequest:
+      type: object
+      required: [findings, framework]
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        framework:
+          type: string
+          minLength: 1
+
+    ComplianceEvaluateResponse:
+      type: object
+      required: [framework, results, compliant, nonCompliant, total]
+      properties:
+        framework: { type: string }
+        results:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        compliant: { type: integer }
+        nonCompliant: { type: integer }
+        total: { type: integer }
+
+    EvidenceCreateRequest:
+      type: object
+      required: [scanResultHash, scanTarget, findingsCount, riskSummary]
+      properties:
+        scanResultHash: { type: string, minLength: 1 }
+        scanTarget: { type: string, minLength: 1 }
+        findingsCount: { type: integer, minimum: 0 }
+        riskSummary:
+          type: object
+          additionalProperties: true
+
+    EvidenceVerifyRequest:
+      type: object
+      required: [ledger]
+      properties:
+        ledger:
+          type: object
+          required: [data, integrityHash]
+          additionalProperties: true
+          properties:
+            data:
+              type: object
+              additionalProperties: true
+            integrityHash: { type: string, minLength: 1 }
+
+    EvidenceCreateResponse:
+      type: object
+      properties:
+        ledger:
+          $ref: "#/components/schemas/LedgerEntry"
+
+    EvidenceVerifyResponse:
+      type: object
+      required: [valid]
+      properties:
+        valid: { type: boolean }
+        reason: { type: string }
+        detail: { type: string }
+        expectedHash: { type: string }
+        providedHash: { type: string }
+        chainLength: { type: integer }
+
+    LedgerEntry:
+      type: object
+      required: [version, data, integrityHash, previousHash, chainIndex]
+      properties:
+        version: { type: string }
+        data:
+          type: object
+          additionalProperties: true
+        integrityHash: { type: string }
+        previousHash: { type: string }
+        chainIndex: { type: integer }
+
+    RoadmapRequest:
+      type: object
+      required: [findings]
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        dailyRate: { type: number, minimum: 0 }
+
+    StatsResponse:
+      type: object
+      required: [totalScans, totalFindings, riskLevels, complianceScores, scanHistory, timestamp]
+      properties:
+        totalScans: { type: integer }
+        totalFindings: { type: integer }
+        riskLevels:
+          type: object
+          additionalProperties: { type: integer }
+        complianceScores:
+          type: object
+          additionalProperties: { type: integer }
+        scanHistory:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        timestamp: { type: string, format: date-time }
+
+    SideChannelRequest:
+      type: object
+      properties:
+        simulated: { type: boolean, default: true }
+        leakage_prob: { type: number, minimum: 0, maximum: 1, default: 0 }
+        implementation_cmd:
+          type: array
+          maxItems: 8
+          items: { type: string, maxLength: 256 }
+        n_traces: { type: integer, minimum: 100, maximum: 50000, default: 10000 }
+
+    AnomalyRequest:
+      type: object
+      required: [cbom]
+      properties:
+        cbom:
+          type: object
+          additionalProperties: true
+
+    RlPlanRequest:
+      type: object
+      required: [cbom]
+      properties:
+        cbom:
+          type: object
+          additionalProperties: true
+
     # ── Plans ──────────────────────────────────────────────────────
     CreatePlanRequest:
       type: object
@@ -1323,6 +2025,25 @@ components:
           description: Relayer address that submitted the transaction
 
     # ── Relay ──────────────────────────────────────────────────────
+    SignedAuditPayload:
+      type: object
+      required: [orgDid, result, assetsReviewed, assetsMigrated, reportHash, reportURI, nonce, signature]
+      properties:
+        orgDid:
+          type: string
+          pattern: "^0x[0-9a-fA-F]{40}$"
+        result: { type: integer, minimum: 0, maximum: 3 }
+        assetsReviewed: { type: integer, minimum: 0 }
+        assetsMigrated: { type: integer, minimum: 0 }
+        reportHash:
+          type: string
+          pattern: "^0x[0-9a-fA-F]{64}$"
+        reportURI: { type: string, minLength: 1, maxLength: 2048 }
+        nonce: { type: integer, minimum: 0 }
+        signature:
+          type: string
+          pattern: "^0x[0-9a-fA-F]{130}$"
+
     SignedAttestationPayload:
       type: object
       required: [productId, version, algorithm, supported, signature]

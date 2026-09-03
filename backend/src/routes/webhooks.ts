@@ -10,6 +10,8 @@ import { isValidAddress } from "../config.js";
 import { WebhookSubscribeSchema, WebhookUnsubscribeSchema } from "../schemas/index.js";
 
 export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis | null): Promise<void> {
+  const redisReady = (): boolean => redis?.status === "ready";
+
   app.post("/v1/webhooks/subscribe", {
     preHandler: requireApiKey,
     config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
@@ -26,17 +28,23 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
     if (!isPublicHttpsUrl(url)) {
       return reply.status(400).send({ error: "URL must be public HTTPS (no localhost/private)" });
     }
-    if (!redis) {
-      return reply.status(503).send({ error: "Redis unavailable — webhook service not running" });
+    if (!redis || !redisReady()) {
+      return reply.status(503).send({ error: "Redis unavailable — webhook service not ready" });
     }
     const eventList = events && events.length ? events : ["*"];
-    const stored = JSON.stringify({
-      url, address,
-      secret: encryptSecret(secret ?? "", () => app.log.warn("QTRUST_WEBHOOK_ENC_KEY not set — webhook secrets are stored UNENCRYPTED in Redis")),
-    });
-    for (const event of eventList) {
-      const key = event === "*" ? "subscribers:*" : `subscribers:${event}`;
-      await redis.sadd(key, stored);
+    let stored: string;
+    try {
+      stored = JSON.stringify({
+        url, address,
+        secret: encryptSecret(secret ?? "", () => app.log.warn("QTRUST_WEBHOOK_ENC_KEY not set — webhook secrets are stored UNENCRYPTED in Redis")),
+      });
+      for (const event of eventList) {
+        const key = event === "*" ? "subscribers:*" : `subscribers:${event}`;
+        await redis.sadd(key, stored);
+      }
+    } catch (err) {
+      request.log.warn({ err }, "Webhook subscription storage failed");
+      return reply.status(503).send({ error: "Webhook subscription storage unavailable" });
     }
     return { subscribed: true, subscriber: { address, url, events: eventList, secret: secret ? "•••" : "" } };
   });
@@ -47,7 +55,7 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
     schema: { body: WebhookUnsubscribeSchema },
   }, async (request, reply) => {
     const { address, url, events } = request.body as { address: string; url: string; events?: string[] };
-    if (!redis) {
+    if (!redis || !redisReady()) {
       return reply.status(503).send({ error: "Redis unavailable" });
     }
     if (!address || !url) {
@@ -55,31 +63,40 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
     }
     const eventList = events && events.length ? events : ["*"];
     let removed = 0;
-    for (const event of eventList) {
-      const key = event === "*" ? "subscribers:*" : `subscribers:${event}`;
-      const records = await redis.smembers(key);
-      for (const raw of records) {
-        try {
-          const parsed = JSON.parse(raw) as { url?: string; address?: string };
-          if (parsed.url === url && parsed.address === address) {
-            removed += await redis.srem(key, raw);
-          }
-        } catch { continue; }
+    try {
+      for (const event of eventList) {
+        const key = event === "*" ? "subscribers:*" : `subscribers:${event}`;
+        const records = await redis.smembers(key);
+        for (const raw of records) {
+          try {
+            const parsed = JSON.parse(raw) as { url?: string; address?: string };
+            if (parsed.url === url && parsed.address === address) {
+              removed += await redis.srem(key, raw);
+            }
+          } catch { continue; }
+        }
       }
+    } catch (err) {
+      request.log.warn({ err }, "Webhook unsubscription storage failed");
+      return reply.status(503).send({ error: "Webhook storage unavailable" });
     }
     return { unsubscribed: true, removed };
   });
 
   app.get("/v1/webhooks/subscribers", { preHandler: requireApiKey }, async () => {
-    if (!redis) return { subscribers: [] };
+    if (!redis || !redisReady()) return { subscribers: [] };
     // REG-20: SCAN not KEYS (blocking O(N) on live Redis)
     const keys: string[] = [];
     let cursor = "0";
-    do {
-      const [nextCursor, batch] = await redis.scan(cursor, "MATCH", "subscribers:*", "COUNT", 100);
-      cursor = nextCursor;
-      keys.push(...batch);
-    } while (cursor !== "0");
+    try {
+      do {
+        const [nextCursor, batch] = await redis.scan(cursor, "MATCH", "subscribers:*", "COUNT", 100);
+        cursor = nextCursor;
+        keys.push(...batch);
+      } while (cursor !== "0");
+    } catch (err) {
+      return { subscribers: [], error: "Webhook storage unavailable" };
+    }
     const byId = new Map<string, { id: string; url: string; events: string[] }>();
     for (const key of keys) {
       const event = key.replace("subscribers:", "");

@@ -7,7 +7,109 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — due-diligence remediation pass (2026-09-03)
+
+All findings below come from the September 2026 due-diligence report; each fix
+ships with a regression test, and every IANA value was re-verified against the
+registry CSV exports the same day.
+
+- **B-6 — `negotiated_group` no longer mislabels a cipher as a TLS group.**
+  `tls_probe.probe_tls_endpoint` now reports `SSLSocket.group()` where the
+  interpreter exposes it (Python 3.14+/OpenSSL 3.2+), and otherwise emits an
+  explicit `"not captured"` marker instead of `shared_ciphers()[0]` — the
+  exact signal a PQC migration tool exists to report is no longer fabricated.
+- **B-7 — single IANA-verified TLS registry.** The two conflicting hand-copied
+  group/sigalg tables (`tls_probe.py` vs `pcap_scanner.py`) are replaced by
+  `qtrust_inspector/tls_registry.py`, checked against the IANA
+  `tls-parameters-8.csv` and `tls-signaturescheme.csv` exports: x25519 is
+  0x001D (not 0x0012), secp256r1 is 0x0017, pure ML-KEM groups are
+  0x0200-0x0202 (not 0x6399-0x639B, which are the obsolete
+  X25519Kyber768Draft00/SecP256r1Kyber768Draft00 hybrids), ML-DSA signature
+  schemes (0x0904-0x0906) are no longer listed as key-exchange groups, and
+  SLH-DSA schemes are included. Both consumers import the shared table; a
+  parity test asserts the two modules can never disagree again.
+- **B-8 — evidence ledger format v2: metadata is now inside the hash chain.**
+  The entry hash covers the full canonical entry (metadata incl. risk_summary
+  was previously editable without breaking `verify_chain()`). v1 ledgers load
+  and verify under the legacy construction and are transparently re-hashed to
+  v2 on the next save; append-after-upgrade stays chained.
+- **B-9/B-10 — honest calibration.** `qrisk.QRiskEnsemble.fit` calibrates on
+  a seeded random holdout instead of the ordered tail of the training set
+  (the old ECE was optimistically biased), and `_ece` closes the last bin so
+  p=1.0 samples are counted. Reported ECE is now a conservative estimate.
+- **B-11 — cross-layer dedupe actually dedupes.** `merge_findings_dedupe`
+  normalizes the line component (explicit `line`, else first of regex-layer
+  `lines`) so the same call site found by both the AST and regex layers
+  merges into one finding instead of duplicating.
+- **B-13 — timing-trace collection drops failed runs.**
+  `side_channel.collect_timing_traces` no longer appends 0 ns on errors
+  (which skewed z-normalization feeding the leakage detector); failures are
+  logged via `logging`, and an all-failed run raises instead of returning a
+  zero vector. Training-loop prints converted to structured logging.
+- **B-14 — gem archive scanning guards non-regular tar members.**
+  `extractfile()` returning None (directories/links) is handled instead of
+  raising AttributeError outside the caught exception types.
+- **B-15 — capture classification is parse-then-classify.** A file whose head
+  starts with `{` is classified as Suricata EVE only when the first line
+  parses as a JSON object carrying EVE fields; everything else is `unknown`.
+- **Dead CLI surface removed — `auto-remediate --patch/--dry-run/--backup`.**
+  Accepted, documented, never referenced (users could believe patches were
+  applied when nothing was written). The command still only SUGGESTS
+  replacements; automated source rewriting remains out of scope by design.
+- **S-1 — frontend proxy is default-deny.** `/api/[...path]` no longer
+  forwards the admin API key to every `/v1/*` path. A route policy allowlist
+  proxies public GET reads and stateless compute POSTs only; relay, write,
+  scan, evidence-create, webhook and GPU routes are rejected at the proxy
+  with 403 before any backend call. 40-test auth-matrix regression added.
+- **S-5 — HF hub downloads pinned.** `qtrust_ai` base-model downloads pass
+  `revision=` (CodeBERTa-small-v1 pinned to its current main commit); bandit
+  B615 cleared.
+- **S-7 — static webhook deliveries are signed when configured.** Receivers
+  on the `QTRUST_WEBHOOKS` list get the same `x-webhook-signature` HMAC as
+  per-subscriber endpoints when `QTRUST_STATIC_WEBHOOK_SECRET` (≥16 chars) is
+  set; without it a one-time warning makes the gap visible in ops logs.
+- **S-8 — CI supply-chain pins.** actionlint downloads a pinned release
+  tarball verified against the official checksum (no more `curl | bash` from
+  `main`), and release-drafter is pinned by commit SHA with a comment mapping
+  SHA → tag.
+- **OPS-1 — relayer financial guardrails.** New `backend/src/services/relayer-guard.ts`:
+  a minimum-balance circuit breaker, a daily gas-spend cap over a rolling 24 h
+  window fed by real receipt costs, and an EIP-1559 base-fee ceiling. Every
+  broadcast path in `attestation.ts` funnels through the guard; thresholds
+  via `QTRUST_RELAYER_MIN_BALANCE_ETH` / `QTRUST_RELAYER_DAILY_SPEND_CAP_ETH`
+  / `QTRUST_RELAYER_MAX_BASE_FEE_GWEI` (unset = disabled, so anvil dev is
+  unaffected). A drained relayer now fails loudly, not silently.
+- **D-1 — README PyPI claims corrected.** `qtrust-sdk` / `qtrust-inspector`
+  were re-verified as HTTP 404 on the PyPI API (2026-09-03); the fake PyPI
+  badges are replaced with an honest "pending publication" badge, and the
+  install instructions lead with `pip install -e ./sdk` from source until the
+  packages actually publish via `publish-pypi.yml`.
+- **D-2 — side-channel real model shipped and disclosed.**
+  `inspector/side_channel_model_real.pt` is now tracked (removed from
+  `.gitignore`, added to `models.sha256`, verified), and the README row
+  discloses that training used real liboqs clean traces with synthetically
+  injected leak classes — no claim of real leaking-hardware traces.
+- **D-3 — DVC pipeline no longer decorative.** 7 of 8 declared stages invoked
+  `python -m` entry points that do not exist. `dvc.yaml` now declares only
+  the stage that actually runs (`evaluate`, which itself refuses to fabricate
+  metrics when splits are missing), with an explicit policy comment: add a
+  stage only when its entry point runs end-to-end.
+- **.env.example factual repairs.** Removed the "fallback to deployer key"
+  implication (the backend refuses a deployer-key fallback by design) and
+  documented the new relayer guardrail variables in both env templates.
+
+### Added
+- `inspector/qtrust_inspector/tls_registry.py` — single IANA-verified group +
+  signature-scheme registry (B-7).
+- `backend/src/services/relayer-guard.ts` + 12 unit tests — relayer financial
+  guardrails (OPS-1).
+- `inspector/tests/test_audit_remediation.py` — 18 regression tests covering
+  B-6/B-7/B-8/B-9/B-10/B-11/B-13/B-14/B-15 and the dead-flag removal.
+- `frontend/src/app/api/[...path]/route.test.ts` — 40-test proxy auth-matrix
+  regression for the S-1 default-deny allowlist.
+
 ### Changed
+- **Synthetic benchmark pool corrected → full honest retrain of the v2/v3
 - **Synthetic benchmark pool corrected → full honest retrain of the v2/v3
   checkpoints.** The synthetic ML-DSA parameter sets were renamed from the
   draft names (441/659/877) to the final FIPS 204 names (44/65/87) and the

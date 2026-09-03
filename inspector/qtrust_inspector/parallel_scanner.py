@@ -64,8 +64,8 @@ class ParallelScanner:
         self.max_concurrent = max_concurrent
         self.timeout = timeout
         self.scanner = CryptoScanner(timeout=int(timeout))
-        self.use_gpu = use_gpu and torch.cuda.is_available()
-        self.device = torch.device("cuda" if self.use_gpu else "cpu")
+        self.use_gpu = bool(torch is not None and use_gpu and torch.cuda.is_available())
+        self.device = torch.device("cuda" if self.use_gpu else "cpu") if torch is not None else None
 
         # Load risk model (if available) — decoupled from planner package.
         #
@@ -89,6 +89,10 @@ class ParallelScanner:
         # scoring falls back to the heuristic with a logged reason instead of
         # raising at import time.
         self.risk_model = None
+        if torch is None:
+            # Torch is an optional ML extra. Network scanning and heuristic risk
+            # scoring must remain available in a minimal inspector install.
+            return
         try:
             import logging
             import os
@@ -262,7 +266,7 @@ class ParallelScanner:
         if not assets:
             return []
 
-        if self.risk_model is None:
+        if self.risk_model is None or torch is None or self.device is None:
             # Fallback: simple heuristic risk scoring
             return [self._heuristic_risk(a) for a in assets]
 

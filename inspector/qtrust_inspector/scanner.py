@@ -24,6 +24,8 @@ except ImportError:
     NMAP_AVAILABLE = False
 
 DEFAULT_TIMEOUT = 5
+MAX_SSH_PACKET_LENGTH = 256 * 1024
+MAX_CIDR_HOSTS = 4096
 CBOM_SCHEMA_VERSION = "qtrust.cbom.v1"
 ALLOW_PRIVATE_SCANS_ENV_VAR = "QTRUST_ALLOW_PRIVATE_SCANS"
 METADATA_IPV4 = "169.254.169.254"
@@ -83,7 +85,10 @@ def validate_scan_cidr(cidr: str, allow_private: bool = False) -> None:
         or network.is_reserved
         or network.is_multicast
         or network.is_unspecified
-        or METADATA_IPV4 in network
+        or (
+            network.version == 4
+            and ipaddress.ip_address(METADATA_IPV4) in network
+        )
     ):
         raise ValueError(f"Scan target resolves to forbidden address: {cidr}")
 
@@ -290,24 +295,44 @@ class CryptoScanner:
 
     @staticmethod
     def _read_ssh_packet(sock: socket.socket) -> bytes | None:
-        """Read a single SSH packet payload from the socket."""
+        """Read one bounded SSH packet payload from the socket.
+
+        SSH packet_length includes the padding-length byte, payload, and
+        padding, but not the four-byte length field itself. Read exactly the
+        advertised body and reject impossible or oversized values before
+        allocating a buffer. This keeps a hostile peer from forcing an
+        unbounded read or memory allocation.
+        """
         try:
-            # SSH binary packet format: uint32 packet_length, byte padding_length, payload
-            header = sock.recv(5)
-            if len(header) < 5:
+            header = CryptoScanner._recv_exact(sock, 5)
+            if header is None:
                 return None
             packet_length = int.from_bytes(header[:4], "big")
             padding_length = header[4]
+            if (
+                packet_length < 1 + padding_length
+                or packet_length > MAX_SSH_PACKET_LENGTH
+                or padding_length < 4
+            ):
+                return None
+            body = CryptoScanner._recv_exact(sock, packet_length - 1)
+            if body is None:
+                return None
             payload_length = packet_length - padding_length - 1
-            payload = b""
-            while len(payload) < payload_length:
-                chunk = sock.recv(payload_length - len(payload))
-                if not chunk:
-                    break
-                payload += chunk
-            return payload
+            return body[:payload_length]
         except OSError:
             return None
+
+    @staticmethod
+    def _recv_exact(sock: socket.socket, size: int) -> bytes | None:
+        """Read exactly ``size`` bytes unless the peer closes the socket."""
+        data = bytearray()
+        while len(data) < size:
+            chunk = sock.recv(size - len(data))
+            if not chunk:
+                return None
+            data.extend(chunk)
+        return bytes(data)
 
     @staticmethod
     def _extract_host_key_algos(kex_payload: bytes) -> list[str]:
@@ -377,17 +402,27 @@ class CryptoScanner:
         key_size = 0
         if algorithm.startswith("ssh-rsa"):
             key_type = "RSA"
-            # RSA key size is encoded in the key blob
-            if len(key_bytes) >= 11:
-                # ssh-rsa + e + n; n is the modulus
-                try:
-                    offset = 7  # length of "ssh-rsa" string
-                    e_len = int.from_bytes(key_bytes[offset:offset + 4], "big")
-                    offset += 4 + e_len
-                    n_len = int.from_bytes(key_bytes[offset:offset + 4], "big")
-                    key_size = n_len * 8
-                except Exception:
-                    key_size = 0
+            # RFC 4253 mpints are encoded as SSH strings. The key blob starts
+            # with a four-byte length before the ``ssh-rsa`` name; starting at
+            # byte 7 (the old implementation) reads the name bytes as a length
+            # and reports every RSA key as zero bits.
+            try:
+                offset = 0
+                name_len = int.from_bytes(key_bytes[offset:offset + 4], "big")
+                offset += 4
+                if name_len != len("ssh-rsa") or key_bytes[offset:offset + name_len] != b"ssh-rsa":
+                    raise ValueError("invalid ssh-rsa key name")
+                offset += name_len
+                e_len = int.from_bytes(key_bytes[offset:offset + 4], "big")
+                offset += 4 + e_len
+                n_len = int.from_bytes(key_bytes[offset:offset + 4], "big")
+                if n_len <= 0 or offset + 4 + n_len > len(key_bytes):
+                    raise ValueError("invalid RSA modulus length")
+                modulus = key_bytes[offset + 4:offset + 4 + n_len]
+                # SSH mpints may include a leading sign-protection zero byte.
+                key_size = (len(modulus) - (1 if modulus[:1] == b"\x00" else 0)) * 8
+            except (IndexError, ValueError, OverflowError):
+                key_size = 0
         elif algorithm.startswith("ssh-ed25519"):
             key_type = "Ed25519"
             key_size = 256
@@ -417,12 +452,19 @@ class CryptoScanner:
     # ------------------------------------------------------------------
     # Combined host scan
     # ------------------------------------------------------------------
-    def scan_host(self, host: str, allow_private: bool = False) -> dict[str, Any]:
+    def scan_host(
+        self,
+        host: str,
+        allow_private: bool = False,
+        ports: list[int] | None = None,
+    ) -> dict[str, Any]:
         """Scan a single host for both TLS and SSH cryptographic assets.
 
         Args:
             host: Hostname or IP address.
             allow_private: Skip the SSRF/private-range guard (explicit opt-in).
+            ports: Optional ports to scan. When omitted, scan the standard TLS
+                and SSH ports; when supplied, scan exactly those ports.
 
         Returns:
             A dict with: host, scan_timestamp, tls_findings (list), ssh_findings (list).
@@ -439,9 +481,13 @@ class CryptoScanner:
             "ssh_findings": [],
         }
 
-        # Common TLS ports
-        tls_ports = [443, 8443, 993, 995, 636, 465]
+        # Common TLS ports. An explicit port list is used by network scans and
+        # must not be silently ignored.
+        requested_ports = [int(port) for port in ports] if ports is not None else None
+        tls_ports = requested_ports if requested_ports is not None else [443, 8443, 993, 995, 636, 465]
         for port in tls_ports:
+            if port == 22:
+                continue
             try:
                 res = self.scan_tls(host, port)
                 if res:
@@ -449,10 +495,11 @@ class CryptoScanner:
             except Exception:
                 continue
 
-        # SSH port
-        ssh_result = self.scan_ssh(host, 22)
-        if ssh_result:
-            findings["ssh_findings"].append(ssh_result.model_dump())
+        # SSH is included by default, or only when explicitly requested.
+        if requested_ports is None or 22 in requested_ports:
+            ssh_result = self.scan_ssh(host, 22)
+            if ssh_result:
+                findings["ssh_findings"].append(ssh_result.model_dump())
 
         return findings
 
@@ -604,7 +651,7 @@ def trust_findings_to_dict(finding: Any) -> dict:
         return finding.model_dump()
     return {}
 
-def scan_host(host: str, ports: list = None) -> ScanResult:
+def scan_host(host: str, ports: list[int] | None = None) -> ScanResult:
     """Top-level function for scanning a host."""
     # Audit I-3: guard every network entry point, not just the CLI.
     validate_scan_target(host)
@@ -614,14 +661,14 @@ def scan_host(host: str, ports: list = None) -> ScanResult:
 
     findings = []
     for port in ports:
-        if port in (443, 8443):
-            res = scanner.scan_tls(host, port)
-            if res:
-                findings.append(res)
-        elif port == 22:
+        if port == 22:
             res = scanner.scan_ssh(host, port)
-            if res:
-                findings.append(res)
+        else:
+            # The caller owns the port selection; arbitrary TLS service ports
+            # are valid and should be probed rather than discarded.
+            res = scanner.scan_tls(host, port)
+        if res:
+            findings.append(res)
 
     return ScanResult(
         target=host,
@@ -634,11 +681,13 @@ def scan_host(host: str, ports: list = None) -> ScanResult:
 
 def scan_directory(directory: str) -> ScanResult:
     """Top-level function for scanning a directory."""
-    from datetime import datetime, timezone
     findings = []
     for f in scan_pem_files(directory):
         findings.append(f)
-    for f in scan_ssh_directory():
+    # Scope SSH discovery to the requested tree. Scanning the operator's
+    # default ~/.ssh directory during every directory scan is surprising and
+    # can leak unrelated credentials into generated CBOMs.
+    for f in scan_ssh_directory(directory):
         findings.append(f)
     return ScanResult(
         target=directory,
@@ -649,15 +698,39 @@ def scan_directory(directory: str) -> ScanResult:
         findings=findings
     )
 
-def scan_network(hosts: list, ports: list = None) -> list[ScanResult]:
-    """Top-level function for scanning a network."""
+def expand_scan_targets(targets: list[str], max_hosts: int = MAX_CIDR_HOSTS) -> list[str]:
+    """Expand host and CIDR targets into concrete, validated scan targets."""
+    expanded: list[str] = []
+    for target in targets:
+        try:
+            network = ipaddress.ip_network(target, strict=False)
+        except ValueError:
+            expanded.append(target)
+            continue
+        validate_scan_cidr(target)
+        # hosts() excludes network/broadcast addresses only for IPv4 prefixes
+        # shorter than /31. IPv6 has no broadcast address.
+        if network.version == 4 and network.prefixlen < network.max_prefixlen - 1:
+            count = network.num_addresses - 2
+        else:
+            count = network.num_addresses
+        if count > max_hosts:
+            raise ValueError(
+                f"CIDR {target} expands to {count} hosts, exceeding the {max_hosts}-host limit"
+            )
+        expanded.extend(str(host) for host in network.hosts())
+    return expanded
+
+
+def scan_network(hosts: list[str], ports: list[int] | None = None) -> list[ScanResult]:
+    """Top-level function for scanning hosts and CIDR ranges."""
     scanner = CryptoScanner()
     if ports is None:
         ports = [443, 8443, 22]
 
     results = []
-    for host in hosts:
-        res_dict = scanner.scan_host(host)
+    for host in expand_scan_targets([str(h) for h in hosts]):
+        res_dict = scanner.scan_host(host, ports=ports)
         findings = []
         for f in res_dict.get("tls_findings", []) + res_dict.get("ssh_findings", []):
             findings.append(AssetFinding(**f))

@@ -74,9 +74,9 @@ for the full per-subsystem matrix.
 
 ## Docker Compose profile
 
-The repo's `docker-compose.yml` starts the whole backend stack — API,
-webhook watcher, Postgres indexer store, Redis, the AI planner, Prometheus,
-Alertmanager and Grafana:
+The repo's `docker-compose.yml` starts the whole backend stack — API
+(including indexer and webhook fan-out), Postgres, Redis, the AI planner,
+Prometheus, Alertmanager and Grafana:
 
 ```bash
 cp .env.example .env   # set POSTGRES_PASSWORD, REDIS_PASSWORD, GRAFANA_PASSWORD, ...

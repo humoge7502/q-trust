@@ -277,7 +277,8 @@ class TestPcapTLSExtraction:
         path = _write(tmp_path, "deep.pcap", _pcap([_frame(ch)]))
         result = analyze_pcap(path, deep_scan=True)
         flow = result["flows"][0]
-        assert "MLDSA65" in flow["signature_algorithms"]
+        # IANA-verified name (B-7 fix): the registry entry is mldsa65.
+        assert "mldsa65" in flow["signature_algorithms"]
         assert flow["offered_ciphers"] == ["TLS_AES_128_GCM_SHA256"]
 
 

@@ -101,3 +101,32 @@ describe("SSRF filter — isPublicHttpsUrl", () => {
     expect(isPublicHttpsUrl("")).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// S-7 regression: static QTRUST_WEBHOOKS receivers get HMAC-signed deliveries
+// when the operator configures QTRUST_STATIC_WEBHOOK_SECRET.
+import { afterEach, describe as describeS7, expect as expectS7, it as itS7 } from "vitest";
+import { staticWebhookSecret } from "../src/services/webhook.js";
+
+const SECRET_ENV = "QTRUST_STATIC_WEBHOOK_SECRET";
+
+describeS7("S-7: static webhook signing secret", () => {
+  afterEach(() => {
+    delete process.env[SECRET_ENV];
+  });
+
+  itS7("returns the secret when configured with adequate length", () => {
+    process.env[SECRET_ENV] = "a".repeat(32);
+    expectS7(staticWebhookSecret()).toBe("a".repeat(32));
+  });
+
+  itS7("ignores secrets shorter than 16 chars", () => {
+    process.env[SECRET_ENV] = "short";
+    expectS7(staticWebhookSecret()).toBeUndefined();
+  });
+
+  itS7("returns undefined and warns when unset", () => {
+    delete process.env[SECRET_ENV];
+    expectS7(staticWebhookSecret()).toBeUndefined();
+  });
+});

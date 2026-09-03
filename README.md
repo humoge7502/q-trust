@@ -60,8 +60,10 @@
 <a href="https://github.com/humoge7502/q-trust/graphs/contributors"><img src="https://img.shields.io/github/contributors/humoge7502/q-trust?style=flat-square&color=success" alt="Contributors"/></a>
 <a href="https://github.com/humoge7502/q-trust/commits"><img src="https://img.shields.io/github/last-commit/humoge7502/q-trust?style=flat-square&color=blueviolet" alt="Last Commit"/></a>
 <a href="https://github.com/humoge7502/q-trust"><img src="https://img.shields.io/github/languages/code-size/humoge7502/q-trust?style=flat-square&color=lightgrey" alt="Code Size"/></a>
-<a href="https://pypi.org/project/qtrust-sdk/"><img src="https://img.shields.io/pypi/v/qtrust-sdk?style=flat-square&label=SDK&logo=pypi&logoColor=white&color=%233776AB" alt="qtrust-sdk on PyPI"/></a>
-<a href="https://pypi.org/project/qtrust-inspector/"><img src="https://img.shields.io/pypi/v/qtrust-inspector?style=flat-square&label=INSPECTOR&logo=pypi&logoColor=white&color=%233776AB" alt="qtrust-inspector on PyPI"/></a>
+<!-- D-1 fix: qtrust-sdk / qtrust-inspector are NOT yet on PyPI (verified HTTP 404
+     from the PyPI API, 2026-09-03). These badges go live only when the packages
+     actually publish via publish-pypi.yml. Install from source meanwhile. -->
+<a href="https://github.com/humoge7502/q-trust/actions/workflows/publish-pypi.yml"><img src="https://img.shields.io/badge/PyPI-pending%20publication-orange?style=flat-square&logo=pypi&logoColor=white" alt="PyPI packages pending publication"/></a>
 <a href="https://github.com/humoge7502/q-trust"><img src="https://tokei.rs/b1/github/humoge7502/q-trust?style=flat-square&category=code" alt="Lines of code"/></a>
 <a href="https://github.com/humoge7502/q-trust/commits"><img src="https://img.shields.io/github/commit-activity/m/humoge7502/q-trust?style=flat-square" alt="Commit activity"/></a>
 
@@ -317,7 +319,7 @@ flowchart LR
     end
     subgraph services["Services (Docker Compose)"]
         api["Fastify 5 API<br/>147.8 req/s · p95 11.3 ms"]
-        wh["Webhook watcher"]
+        wh["Webhook fan-out (API)"]
         plan["Planner microservice<br/>(GNN inference)"]
         idx["Indexer (viem watchEvent)"]
     end
@@ -358,7 +360,7 @@ flowchart LR
 | API throughput | **147.8 req/s** @ 100 VUs · p95 **11.3 ms** (anvil, 24-core / A100) | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) |
 | Contract tests | **213** — unit + invariant (1000 runs) + fuzz + attack | [`CHANGELOG.md`](CHANGELOG.md) |
 | Scanner coverage | **12+** source languages · **10+** manifest formats | [`inspector/`](inspector/) |
-| Side-channel detector | **5/5 real liboqs traces → VERIFIED (0.05)** · **5/5 leak-injected → HIGH_RISK (0.95)** · trained on real ML-KEM-512/768, ML-DSA-44 timing traces | [`inspector/side_channel_model_real.pt`](inspector/) |
+| Side-channel detector | **5/5 real liboqs traces → VERIFIED (0.05)** · **5/5 leak-injected → HIGH_RISK (0.95)** — trained on real liboqs clean traces with synthetically injected leak classes (real leaking hardware traces not yet collected; D-2 disclosure) | [`inspector/side_channel_model_real.pt`](inspector/) |
 
 > **Validation status (honest scope):** the **flagship planner is now trained and
 > evaluated on real data**: a **real code corpus of 13,973 files** (incl. 915
@@ -542,12 +544,14 @@ Exposed via REST (`/v1/gpu/*`) and surfaced in the dashboard's **Side Channel** 
 <a name="ecosystem"></a>
 ## 🧩 Ecosystem & Packages
 
-Q-Trust ships as installable packages, not just a repo. The Python SDK and the inspector CLI are packaged for PyPI, the backend and planner services run as containers, and the full protocol lives on the docs site. Take the piece you need:
+Q-Trust ships as an installable repo plus (planned) packages. The Python SDK and the inspector CLI are packaged and CI-ready for PyPI trusted publishing, but **are not yet published** — verified 404 on the PyPI API as of 2026-09-03, so the badges above say "pending publication" until they are. Install from source today; the backend and planner services run as containers, and the full protocol lives on the docs site. Take the piece you need:
 
 **🐍 `qtrust-sdk` — the Python client: on-chain CBOM registration, gasless attestations, risk & compliance engines, W3C VCs + DIDs**
 
 ```bash
-pip install qtrust-sdk
+# Not yet on PyPI — install from source (publish tracked in publish-pypi.yml)
+git clone https://github.com/humoge7502/q-trust && cd q-trust
+pip install -e ./sdk
 ```
 
 ```python
@@ -571,7 +575,9 @@ asset_id, cid = client.register_cbom(cbom)   # → on-chain attestation + IPFS C
 **🔎 `qtrust-inspector` — the `crypto-inspector` CLI: all 10 scanner modules, one command**
 
 ```bash
-pip install qtrust-inspector
+# Not yet on PyPI — install from source
+git clone https://github.com/humoge7502/q-trust && cd q-trust/inspector
+pip install -e .
 ```
 
 ```bash
@@ -580,8 +586,8 @@ crypto-inspector scan example.com --risk --compliance nist,cnsa
 
 | Package | What it does | PyPI | Docs |
 |---|---|---|---|
-| `qtrust-sdk` | Python client — CBOM registration, EIP-712 gasless signing, risk & compliance engines, W3C VCs + DIDs | [qtrust-sdk](https://pypi.org/project/qtrust-sdk/) | [sdk/README.md](sdk/README.md) |
-| `qtrust-inspector` | `crypto-inspector` CLI — 10 scanner modules → risk report, CycloneDX 1.7 CBOM, SARIF 2.1 | [qtrust-inspector](https://pypi.org/project/qtrust-inspector/) | [inspector/README.md](inspector/README.md) |
+| `qtrust-sdk` | Python client — CBOM registration, EIP-712 gasless signing, risk & compliance engines, W3C VCs + DIDs | pending publication | [sdk/README.md](sdk/README.md) |
+| `qtrust-inspector` | `crypto-inspector` CLI — 10 scanner modules → risk report, CycloneDX 1.7 CBOM, SARIF 2.1 | pending publication | [inspector/README.md](inspector/README.md) |
 | Docker images | Fastify API + relayer and GNN planner microservices — `ghcr.io/humoge7502/qtrust-backend` · `qtrust-planner` | GHCR — built by [publish-docker.yml](.github/workflows/publish-docker.yml) on `vX` tags | [docker-compose.yml](docker-compose.yml) |
 | Docs site | Whitepaper, ADRs, deployment guides, runbooks, performance methodology | — | [humoge7502.github.io/q-trust](https://humoge7502.github.io/q-trust) |
 

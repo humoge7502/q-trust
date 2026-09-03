@@ -56,6 +56,7 @@ describe("indexer graceful shutdown", () => {
     process.env.QTRUST_INDEXER_FROM_BLOCK = "0";
     unwatch.mockClear();
     watchEvent.mockClear();
+    watchEvent.mockImplementation(() => unwatch);
   });
 
   afterEach(() => {
@@ -85,5 +86,26 @@ describe("indexer graceful shutdown", () => {
     expect(watchEvent).toHaveBeenCalledTimes(7);
     indexer.stopIndexer();
     expect(unwatch).toHaveBeenCalledTimes(7);
+  });
+
+  it("cleans up partial startup and permits retry after a transient failure", async () => {
+    const indexer = await import("../src/services/indexer.js");
+    let calls = 0;
+    watchEvent.mockImplementation(() => {
+      calls += 1;
+      if (calls === 3) throw new Error("temporary RPC outage");
+      return unwatch;
+    });
+
+    await indexer.startIndexer();
+    expect(watchEvent).toHaveBeenCalledTimes(3);
+    expect(unwatch).toHaveBeenCalledTimes(2);
+
+    watchEvent.mockImplementation(() => unwatch);
+    await indexer.startIndexer();
+    expect(watchEvent).toHaveBeenCalledTimes(10);
+    expect(unwatch).toHaveBeenCalledTimes(2);
+    indexer.stopIndexer();
+    expect(unwatch).toHaveBeenCalledTimes(9);
   });
 });

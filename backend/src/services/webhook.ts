@@ -262,6 +262,35 @@ export type SubscriberResolver = (eventType: string) => Promise<StoredSubscriber
 
 let subscriberResolver: SubscriberResolver | null = null;
 
+/**
+ * S-7 fix: static QTRUST_WEBHOOKS receivers now get HMAC-signed deliveries.
+ *
+ * The static list had no per-endpoint secret, so those receivers previously
+ * got unsigned deliveries and could not authenticate origin. Operators who
+ * need origin verification set QTRUST_STATIC_WEBHOOK_SECRET (>= 16 chars);
+ * every static endpoint then receives the same x-webhook-signature header as
+ * per-subscriber endpoints. Without it, deliveries stay unsigned but a
+ * warning is logged once per process so the gap is visible in ops logs.
+ */
+let staticSecretWarned = false;
+export function staticWebhookSecret(): string | undefined {
+  const secret = process.env.QTRUST_STATIC_WEBHOOK_SECRET?.trim();
+  if (secret && secret.length >= 16) return secret;
+  if (secret) {
+    console.warn(
+      "QTRUST_STATIC_WEBHOOK_SECRET is set but shorter than 16 chars; ignoring it for webhook signing",
+    );
+    return undefined;
+  }
+  if (!staticSecretWarned) {
+    staticSecretWarned = true;
+    console.warn(
+      "QTRUST_WEBHOOKS deliveries are UNSIGNED; set QTRUST_STATIC_WEBHOOK_SECRET to enable HMAC signing",
+    );
+  }
+  return undefined;
+}
+
 export function setSubscriberResolver(resolver: SubscriberResolver | null): void {
   subscriberResolver = resolver;
 }
@@ -282,7 +311,7 @@ export async function fanOut(orgDid: string, type: string, payload: Record<strin
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((url) => ({ url, secret: undefined as string | undefined }));
+    .map((url) => ({ url, secret: staticWebhookSecret() }));
 
   const subscribed = await resolveSubscribers(type);
 

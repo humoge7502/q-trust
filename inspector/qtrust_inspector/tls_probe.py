@@ -14,6 +14,16 @@ import ssl
 from dataclasses import dataclass, field
 from typing import Any
 
+# B-7 FIX: single IANA-verified registry shared with pcap_scanner instead of
+# two conflicting hand-copied tables. PCAP_GROUP_NAMES merges the pcap table
+# over the verified base so no name that only lived in the pcap table is lost.
+from .tls_registry import (
+    TLS_GROUP_CODEPOINTS,
+    TLS_SIGALG_CODEPOINTS,
+    is_pqc_group,
+)
+from .pcap_scanner import GROUP_NAMES as PCAP_GROUP_NAMES
+
 
 @dataclass
 class TLSProbeResult:
@@ -39,63 +49,13 @@ class TLSProbeResult:
     hndl_score: float = 0.0
 
 
-# IANA TLS Group Codepoints
-TLS_GROUP_CODEPOINTS: dict[int, str] = {
-    0x0001: "secp256r1",
-    0x0002: "sect163k1",
-    0x0003: "sect163r1",
-    0x0004: "sect283k1",
-    0x0005: "sect283r1",
-    0x0006: "sect409k1",
-    0x0007: "sect409r1",
-    0x0008: "secp521r1",
-    0x0009: "secp384r1",
-    0x000A: "sect283k1",
-    0x000B: "sect283r1",
-    0x000C: "sect409k1",
-    0x000D: "sect409r1",
-    0x000E: "secp521r1",
-    0x0012: "x25519",
-    0x0013: "x448",
-    0x001B: "secp256k1",
-    0x0100: "ffdhe2048",
-    0x0101: "ffdhe3072",
-    0x0102: "ffdhe4096",
-    0x0103: "ffdhe6144",
-    0x0104: "ffdhe8192",
-    # PQC codepoints
-    0x11EC: "X25519MLKEM768",       # Hybrid X25519 + ML-KEM-768
-    0x6399: "MLKEM512",             # ML-KEM-512
-    0x639A: "MLKEM768",             # ML-KEM-768
-    0x639B: "MLKEM1024",            # ML-KEM-1024
-    0x11E4: "SecP256r1MLKEM768",    # Hybrid P-256 + ML-KEM-768
-    0x11E5: "X25519Kyber768",       # Draft hybrid (deprecated)
-    0x0200: "MLDSA44",              # ML-DSA-44 (signature)
-    0x0201: "MLDSA65",              # ML-DSA-65 (signature)
-    0x0202: "MLDSA87",              # ML-DSA-87 (signature)
-}
-
-# TLS Signature Algorithm Codepoints
-TLS_SIGALG_CODEPOINTS: dict[int, str] = {
-    0x0401: "rsa_pkcs1_sha256",
-    0x0501: "rsa_pkcs1_sha384",
-    0x0601: "rsa_pkcs1_sha512",
-    0x0403: "ecdsa_secp256r1_sha256",
-    0x0503: "ecdsa_secp384r1_sha384",
-    0x0603: "ecdsa_secp521r1_sha512",
-    0x0804: "rsa_pss_rsae_sha256",
-    0x0805: "rsa_pss_rsae_sha384",
-    0x0806: "rsa_pss_rsae_sha512",
-    0x0807: "ed25519",
-    0x0808: "ed448",
-    0x0809: "rsa_pss_pss_sha256",
-    0x080A: "rsa_pss_pss_sha384",
-    0x080B: "rsa_pss_pss_sha512",
-    # PQC signature algorithms
-    0x0904: "MLDSA44",
-    0x0905: "MLDSA65",
-    0x0906: "MLDSA87",
-}
+# B-7 FIX (2026-09-03): the two hand-copied tables that used to live here were
+# wrong against the IANA registry (x25519 listed at 0x0012 instead of 0x001D,
+# pure ML-KEM groups listed at 0x6399-0x639B instead of 0x0200-0x0202, and
+# ML-DSA signature schemes listed as key-exchange groups at 0x0200-0x0202).
+# They now live in tls_registry.py (imported above), verified against the IANA
+# CSV exports, and are shared with pcap_scanner; the names are re-exported for
+# backward compatibility with existing imports and tests.
 
 
 def probe_tls_endpoint(
@@ -160,7 +120,19 @@ def probe_tls_endpoint(
             with ctx.wrap_socket(sock, server_hostname=host) as ssock:
                 result["tls_version"] = ssock.version()
                 result["cipher_suite"] = ssock.cipher()[0]
-                result["negotiated_group"] = ssock.shared_ciphers()[0] if ssock.shared_ciphers() else "unknown"
+                # B-6 FIX: report the actual TLS key-exchange group, not a
+                # cipher-suite tuple. ``SSLSocket.group()`` exists only from
+                # Python 3.14 (OpenSSL 3.2+ native API); on older interpreters
+                # the field is an explicit "not captured" marker instead of a
+                # mislabeled cipher.
+                group_getter = getattr(ssock, "group", None)
+                if callable(group_getter):
+                    try:
+                        result["negotiated_group"] = group_getter() or "not captured"
+                    except (ValueError, OSError):
+                        result["negotiated_group"] = "not captured"
+                else:
+                    result["negotiated_group"] = "not captured"
 
                 # Check for PQC in cipher suite name
                 cs = result["cipher_suite"].upper()
@@ -193,14 +165,18 @@ def probe_tls_endpoint(
         # Honest enumeration: only the actually negotiated group (from the handshake
         # above) is claimed as `supported`. The static table is exposed as
         # `known_pqc_groups` for UI reference, not as `supported_groups`.
-        result["known_pqc_groups"] = [name for name in TLS_GROUP_CODEPOINTS.values() if "MLKEM" in name or "Kyber" in name or "MLDSA" in name]
+        result["known_pqc_groups"] = sorted(
+            name
+            for name in {*TLS_GROUP_CODEPOINTS.values(), *PCAP_GROUP_NAMES.values()}
+            if is_pqc_group(name)
+        )
         # If the negotiated cipher/group itself contains PQC, we already set
         # pqc_kem_detected / pqc_hybrid_detected above via `cs` inspection.
         # Do NOT synthesize pqc_signature_detected from enumeration.
         pass
 
     if deep_probe or enumerate_sigalgs:
-        result["known_pqc_sigalgs"] = [name for name in TLS_SIGALG_CODEPOINTS.values() if "MLDSA" in name]
+        result["known_pqc_sigalgs"] = [name for name in TLS_SIGALG_CODEPOINTS.values() if "MLDSA" in name.lower() or name.startswith("slhdsa")]
         # pqc_signature_detected remains as set by the real handshake (or False
         # for classical hosts). Never set to True from static enumeration.
 

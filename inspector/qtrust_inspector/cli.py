@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import importlib.util
+import ipaddress
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -25,12 +28,35 @@ console = Console()
 mcp_app = typer.Typer(help="MCP server for AI coding agents")
 app.add_typer(mcp_app, name="mcp")
 
-try:
-    from qtrust import QTrustClient
-    from qtrust.schema import CBOM
-    SDK_AVAILABLE = True
-except ImportError:
-    SDK_AVAILABLE = False
+def _load_sdk() -> tuple[object | None, object | None]:
+    """Load the SDK without letting the repository ML package shadow it."""
+    try:
+        from qtrust import QTrustClient as client_class
+        from qtrust.schema import CBOM as cbom_class
+        return client_class, cbom_class
+    except ImportError:
+        sdk_root = Path(__file__).resolve().parents[2] / "sdk" / "qtrust"
+        init_path = sdk_root / "__init__.py"
+        if not init_path.is_file():
+            return None, None
+        spec = importlib.util.spec_from_file_location(
+            "_qtrust_sdk", init_path, submodule_search_locations=[str(sdk_root)]
+        )
+        if spec is None or spec.loader is None:
+            return None, None
+        module = importlib.util.module_from_spec(spec)
+        # Relative imports inside sdk/qtrust (for example .client) resolve
+        # against the package name used by the import spec.
+        sys.modules[spec.name] = module
+        try:
+            spec.loader.exec_module(module)
+        except (ImportError, ModuleNotFoundError):
+            return None, None
+        return getattr(module, "QTrustClient", None), getattr(module, "CBOM", None)
+
+
+QTrustClient, CBOM = _load_sdk()
+SDK_AVAILABLE = QTrustClient is not None and CBOM is not None
 
 
 @app.callback(invoke_without_command=True)
@@ -403,11 +429,15 @@ def auto_remediate(
     language: str = typer.Option("python", "--language", "-l"),
     file_path: Optional[Path] = typer.Option(None, "--file", "-f"),
     output: Optional[Path] = typer.Option(None, "--output", "-o"),
-    patch: bool = typer.Option(False, "--patch", help="Apply patches directly to files"),
-    dry_run: bool = typer.Option(False, "--dry-run"),
-    backup: bool = typer.Option(True, "--backup/--no-backup"),
 ):
-    """Generate PQC migration code snippets for vulnerable algorithms."""
+    """Generate PQC migration code snippets for vulnerable algorithms.
+
+    This command only SUGGESTS replacements; it never modifies files. The
+    former --patch/--dry-run/--backup options were removed (audit finding:
+    dead CLI surface) - they were accepted and documented but never
+    referenced, so users could believe patches had been applied when nothing
+    was written. Automated source rewriting remains out of scope by design.
+    """
     from .remediation import generate_remediations
     ext_map = {"python": ".py", "javascript": ".js", "go": ".go", "java": ".java", "rust": ".rs", "c": ".c", "csharp": ".cs", "php": ".php", "swift": ".swift", "ruby": ".rb", "kotlin": ".kt"}
     ext = ext_map.get(language, ".py")
@@ -560,8 +590,12 @@ def mcp_start():
 
 
 def _is_cidr(target: str) -> bool:
-    import re
-    return bool(re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}", target))
+    """Return whether ``target`` is a valid IPv4 or IPv6 CIDR."""
+    try:
+        ipaddress.ip_network(target, strict=False)
+    except ValueError:
+        return False
+    return "/" in target
 
 
 def _merge_results(results: list[ScanResult]) -> ScanResult:

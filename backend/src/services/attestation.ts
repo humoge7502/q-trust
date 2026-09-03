@@ -19,6 +19,7 @@ import {
 } from "../lib/abis.js";
 import { CHAIN_ID, isValidAddress, isValidBytes32 } from "../config.js";
 import { getPublicClient, getWalletClient as getPooledWalletClient } from "./rpc-pool.js";
+import { RelayerGuard, relayerFinancialConfigFromEnv, receiptCostWei } from "./relayer-guard.js";
 
 dotenv.config();
 
@@ -37,6 +38,39 @@ const AUDIT_REGISTRY = process.env.QTRUST_AUDIT_REGISTRY_ADDRESS as Address;
 // check+broadcast per (registry, signer) closes the race in-process.
 // ------------------------------------------------------------------
 const nonceLocks = new Map<string, Promise<unknown>>();
+
+// ------------------------------------------------------------------
+// OPS-1: relayer financial guardrails. Every broadcast path funnels
+// through `withFinancialGuard`; gas actually spent is recorded from
+// receipts so the daily budget reflects reality.
+// ------------------------------------------------------------------
+const relayerGuard = new RelayerGuard(relayerFinancialConfigFromEnv());
+
+async function withFinancialGuard<T>(fn: () => Promise<T>): Promise<T> {
+  await relayerGuard.assertCanBroadcast({
+    relayerAddress: cachedAccount?.address ?? (RELAYER_KEY ? getRelayerAccount().address : null),
+    getBalance: (addr) => publicClient.getBalance({ address: addr }),
+    getBaseFeeGwei: async () => {
+      try {
+        const block = await publicClient.getBlock();
+        const baseFee = block.baseFeePerGas;
+        return baseFee === undefined ? null : Number(baseFee) / 1e9;
+      } catch {
+        return null; // chains without EIP-1559 base fee: skip the fee guard
+      }
+    },
+  });
+  return fn();
+}
+
+/** Record gas spent for a mined receipt (feeds the daily spend cap). */
+function recordReceiptSpend(receipt: { gasUsed: bigint; effectiveGasPrice?: bigint }): void {
+  const costWei = receiptCostWei(receipt);
+  if (costWei > 0n) {
+    const gwei = receipt.effectiveGasPrice !== undefined ? Number(receipt.effectiveGasPrice) / 1e9 : 0;
+    relayerGuard.recordSpend(costWei, gwei);
+  }
+}
 
 function withNonceLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
   const prev = nonceLocks.get(key) ?? Promise.resolve();
@@ -114,13 +148,15 @@ export interface RegisterCBOMPayload {
 }
 
 export async function registerCBOM(payload: RegisterCBOMPayload) {
-  const txHash = await getWalletClient().writeContract({
-    address: ASSET_REGISTRY,
-    abi: AssetRegistryAbi,
-    functionName: "registerCBOM",
-    args: [payload.cbomHash as `0x${string}`, payload.metadataURI],
+  return withFinancialGuard(async () => {
+    const txHash = await getWalletClient().writeContract({
+      address: ASSET_REGISTRY,
+      abi: AssetRegistryAbi,
+      functionName: "registerCBOM",
+      args: [payload.cbomHash as `0x${string}`, payload.metadataURI],
+    });
+    return { txHash };
   });
-  return { txHash };
 }
 
 export interface AttestProductPayload {
@@ -132,19 +168,21 @@ export interface AttestProductPayload {
 }
 
 export async function attestProduct(payload: AttestProductPayload) {
-  const txHash = await getWalletClient().writeContract({
-    address: VENDOR_REGISTRY,
-    abi: VendorRegistryAbi,
-    functionName: "attestProduct",
-    args: [
-      payload.productId,
-      payload.version,
-      payload.algorithm,
-      payload.supported,
-      payload.evidenceURI,
-    ],
+  return withFinancialGuard(async () => {
+    const txHash = await getWalletClient().writeContract({
+      address: VENDOR_REGISTRY,
+      abi: VendorRegistryAbi,
+      functionName: "attestProduct",
+      args: [
+        payload.productId,
+        payload.version,
+        payload.algorithm,
+        payload.supported,
+        payload.evidenceURI,
+      ],
+    });
+    return { txHash };
   });
-  return { txHash };
 }
 
 export interface MigrationPayload {
@@ -157,20 +195,22 @@ export interface MigrationPayload {
 }
 
 export async function recordMigration(payload: MigrationPayload) {
-  const txHash = await getWalletClient().writeContract({
-    address: MIGRATION_REGISTRY,
-    abi: MigrationRegistryAbi,
-    functionName: "recordMigration",
-    args: [
-      payload.migrationId as `0x${string}`,
-      payload.assetId as `0x${string}`,
-      payload.fromAlgorithm,
-      payload.toAlgorithm,
-      payload.evidenceHash as `0x${string}`,
-      payload.evidenceURI,
-    ],
+  return withFinancialGuard(async () => {
+    const txHash = await getWalletClient().writeContract({
+      address: MIGRATION_REGISTRY,
+      abi: MigrationRegistryAbi,
+      functionName: "recordMigration",
+      args: [
+        payload.migrationId as `0x${string}`,
+        payload.assetId as `0x${string}`,
+        payload.fromAlgorithm,
+        payload.toAlgorithm,
+        payload.evidenceHash as `0x${string}`,
+        payload.evidenceURI,
+      ],
+    });
+    return { txHash };
   });
-  return { txHash };
 }
 
 // ------------------------------------------------------------------
@@ -260,22 +300,25 @@ export async function relaySignedAttestation(
     // Audit H-3: reject signers without VENDOR_ROLE before spending gas.
     await assertHasRole(VENDOR_REGISTRY, VendorRegistryAbi, VENDOR_ROLE, "VENDOR_ROLE", signer);
 
-    const txHash = await getWalletClient().writeContract({
-      address: VENDOR_REGISTRY,
-      abi: VendorRegistryAbi,
-      functionName: "attestProductSigned",
-      args: [
-        payload.productId,
-        payload.version,
-        payload.algorithm,
-        payload.supported,
-        payload.evidenceURI,
-        BigInt(payload.nonce),
-        payload.signature as `0x${string}`,
-      ],
-    });
+    const txHash = await withFinancialGuard(() =>
+      getWalletClient().writeContract({
+        address: VENDOR_REGISTRY,
+        abi: VendorRegistryAbi,
+        functionName: "attestProductSigned",
+        args: [
+          payload.productId,
+          payload.version,
+          payload.algorithm,
+          payload.supported,
+          payload.evidenceURI,
+          BigInt(payload.nonce),
+          payload.signature as `0x${string}`,
+        ],
+      }),
+    );
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+    recordReceiptSpend(receipt);
     const productAttestedLog = receipt.logs.find(
       (log) => (log as any).eventName === "ProductAttested",
     );
@@ -371,19 +414,22 @@ export async function relaySignedCBOMRegistration(
     // Audit H-3: reject signers without REGISTRAR_ROLE before spending gas.
     await assertHasRole(ASSET_REGISTRY, AssetRegistryAbi, REGISTRAR_ROLE, "REGISTRAR_ROLE", signer);
 
-    const txHash = await getWalletClient().writeContract({
-      address: ASSET_REGISTRY,
-      abi: AssetRegistryAbi,
-      functionName: "registerCBOMSigned",
-      args: [
-        payload.cbomHash as `0x${string}`,
-        payload.metadataURI,
-        BigInt(payload.nonce),
-        payload.signature as `0x${string}`,
-      ],
-    });
+    const txHash = await withFinancialGuard(() =>
+      getWalletClient().writeContract({
+        address: ASSET_REGISTRY,
+        abi: AssetRegistryAbi,
+        functionName: "registerCBOMSigned",
+        args: [
+          payload.cbomHash as `0x${string}`,
+          payload.metadataURI,
+          BigInt(payload.nonce),
+          payload.signature as `0x${string}`,
+        ],
+      }),
+    );
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+    recordReceiptSpend(receipt);
     const cbomRegisteredLog = receipt.logs.find(
       (log) => (log as any).eventName === "CBOMRegistered",
     );
@@ -491,23 +537,26 @@ export async function relaySignedMigration(
     // Audit H-3: reject signers without MIGRATOR_ROLE before spending gas.
     await assertHasRole(MIGRATION_REGISTRY, MigrationRegistryAbi, MIGRATOR_ROLE, "MIGRATOR_ROLE", signer);
 
-    const txHash = await getWalletClient().writeContract({
-      address: MIGRATION_REGISTRY,
-      abi: MigrationRegistryAbi,
-      functionName: "recordMigrationSigned",
-      args: [
-        payload.migrationId as `0x${string}`,
-        payload.assetId as `0x${string}`,
-        payload.fromAlgorithm,
-        payload.toAlgorithm,
-        payload.evidenceHash as `0x${string}`,
-        payload.evidenceURI,
-        BigInt(payload.nonce),
-        payload.signature as `0x${string}`,
-      ],
-    });
+    const txHash = await withFinancialGuard(() =>
+      getWalletClient().writeContract({
+        address: MIGRATION_REGISTRY,
+        abi: MigrationRegistryAbi,
+        functionName: "recordMigrationSigned",
+        args: [
+          payload.migrationId as `0x${string}`,
+          payload.assetId as `0x${string}`,
+          payload.fromAlgorithm,
+          payload.toAlgorithm,
+          payload.evidenceHash as `0x${string}`,
+          payload.evidenceURI,
+          BigInt(payload.nonce),
+          payload.signature as `0x${string}`,
+        ],
+      }),
+    );
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+    recordReceiptSpend(receipt);
     const migrationRecordedLog = receipt.logs.find(
       (log) => (log as any).eventName === "MigrationRecorded",
     );
@@ -610,23 +659,26 @@ export async function relaySignedAudit(
     // Audit H-3: reject signers without AUDITOR_ROLE before spending gas.
     await assertHasRole(AUDIT_REGISTRY, AuditRegistryAbi, AUDITOR_ROLE, "AUDITOR_ROLE", signer);
 
-    const txHash = await getWalletClient().writeContract({
-      address: AUDIT_REGISTRY,
-      abi: AuditRegistryAbi,
-      functionName: "postAuditSigned",
-      args: [
-        payload.orgDid as Address,
-        payload.result,
-        BigInt(payload.assetsReviewed),
-        BigInt(payload.assetsMigrated),
-        payload.reportHash as `0x${string}`,
-        payload.reportURI,
-        BigInt(payload.nonce),
-        payload.signature as `0x${string}`,
-      ],
-    });
+    const txHash = await withFinancialGuard(() =>
+      getWalletClient().writeContract({
+        address: AUDIT_REGISTRY,
+        abi: AuditRegistryAbi,
+        functionName: "postAuditSigned",
+        args: [
+          payload.orgDid as Address,
+          payload.result,
+          BigInt(payload.assetsReviewed),
+          BigInt(payload.assetsMigrated),
+          payload.reportHash as `0x${string}`,
+          payload.reportURI,
+          BigInt(payload.nonce),
+          payload.signature as `0x${string}`,
+        ],
+      }),
+    );
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+    recordReceiptSpend(receipt);
     const auditPostedLog = receipt.logs.find(
       (log) => (log as any).eventName === "AuditPosted",
     );

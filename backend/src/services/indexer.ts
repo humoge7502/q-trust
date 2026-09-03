@@ -445,7 +445,18 @@ export async function startIndexer(): Promise<void> {
     }
     console.log("Indexer started (Postgres read model live)");
   } catch (err) {
-    console.warn("Indexer failed to start — API will use direct RPC reads:", err);
+    // A transient Postgres/RPC failure must not permanently disable indexing.
+    // Remove subscriptions created before the failure and allow the next
+    // supervised retry or explicit startIndexer() call to initialize again.
+    for (const unwatch of unwatchers.splice(0)) {
+      try {
+        if (typeof unwatch === "function") unwatch();
+      } catch {
+        // best-effort cleanup after partial startup
+      }
+    }
+    started = false;
+    console.warn("Indexer failed to start — API will use direct RPC reads and may retry:", err);
   }
 }
 

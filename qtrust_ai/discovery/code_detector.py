@@ -69,6 +69,25 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
+# S-5 FIX (bandit B615): pinned hub revisions for every base model the
+# detector downloads. Verified 2026-09-03 via the HF API. A mirror of this
+# pin lives in models.sha256 for in-repo checkpoints.
+PINNED_MODEL_REVISIONS: Dict[str, str] = {
+    "huggingface/CodeBERTa-small-v1": "e93b5898cff07f03f1c1c09cde284d1b85962363",
+}
+
+
+def _default_model_revision(model_name: str) -> str:
+    """Return the pinned revision for ``model_name``.
+
+    Falls back to ``main`` for unknown models so custom/local paths still
+    work; production fine-tunes should always pass an explicit SHA via
+    ``model_revision``.
+    """
+    return PINNED_MODEL_REVISIONS.get(model_name, "main")
+
+
 SUPPORTED_LANGUAGES: List[str] = [
     "python", "java", "c", "cpp", "c/c++", "rust", "go",
     "javascript", "typescript", "js", "ts", "csharp", "c#",
@@ -815,6 +834,7 @@ class CryptoCodeDetector:
         batch_size: int = 24,
         max_len: int = 256,
         save_dir: Optional[str] = None,
+        model_revision: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Real transformer fine-tune on labelled code (GPU when available).
 
@@ -846,8 +866,15 @@ class CryptoCodeDetector:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         try:
-            tok = AutoTokenizer.from_pretrained(model_name)  # type: ignore
-            model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)  # type: ignore
+            # S-5 FIX (bandit B615): pin hub downloads to a verified revision so
+            # an upstream model swap cannot silently change classifier behavior
+            # mid-release. The default pins CodeBERTa-small-v1 @ e93b589 (its
+            # current main); callers may pass any full 40-char commit SHA.
+            revision = model_revision or _default_model_revision(model_name)
+            tok = AutoTokenizer.from_pretrained(model_name, revision=revision)  # type: ignore
+            model = AutoModelForSequenceClassification.from_pretrained(
+                model_name, revision=revision, num_labels=2
+            )  # type: ignore
         except Exception as exc:
             return {"status": "skipped", "reason": f"model download failed: {exc}"}
         model = model.to(dev)

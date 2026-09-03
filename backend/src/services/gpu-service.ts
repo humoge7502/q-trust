@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import * as dotenv from "dotenv";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { requireApiKey } from "../middleware/auth.js";
 import {
@@ -7,6 +8,8 @@ import {
   AnomalyScoreSchema,
   RLPlanSchema,
 } from "../schemas/index.js";
+
+dotenv.config();
 
 const GPU_BRIDGE = process.env.QTRUST_GPU_BRIDGE ||
   fileURLToPath(new URL("../../scripts/gpu_bridge.py", import.meta.url));
@@ -24,6 +27,38 @@ interface GpuStatus {
 
 function gpuEnabled(): boolean {
   return process.env.QTRUST_GPU_ENABLED === "true";
+}
+
+/**
+ * Parse the operator-owned real side-channel command allowlist.
+ *
+ * The value is JSON because comma-separated command strings cannot represent
+ * arguments unambiguously. Each entry is an exact argv prefix, for example:
+ * [["/opt/pqc/ml_dsa_sign", "input.hex"]]. The bridge appends its generated
+ * input as the final argument after this exact request is authorized.
+ */
+function allowedSideChannelCommands(): string[][] {
+  const raw = process.env.QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS;
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (command): command is string[] =>
+        Array.isArray(command) &&
+        command.length > 0 &&
+        command.length <= 8 &&
+        command.every((part) => typeof part === "string" && part.length > 0 && part.length <= 256),
+    );
+  } catch {
+    return [];
+  }
+}
+
+function isAllowedSideChannelCommand(command: string[]): boolean {
+  return allowedSideChannelCommands().some(
+    (allowed) => allowed.length === command.length && allowed.every((part, i) => part === command[i]),
+  );
 }
 
 interface BridgeResult {
@@ -200,6 +235,16 @@ export async function registerGPURoutes(server: FastifyInstance): Promise<void> 
       if (b.simulated === false) {
         if (!Array.isArray(b.implementation_cmd) || b.implementation_cmd.length === 0) {
           return fail(reply, 400, { error: "implementation_cmd required when simulated=false" });
+        }
+        if (!isAllowedSideChannelCommand(b.implementation_cmd)) {
+          if (allowedSideChannelCommands().length === 0) {
+            return fail(reply, 503, {
+              error: "real side-channel analysis is not configured",
+            });
+          }
+          return fail(reply, 403, {
+            error: "implementation command is not allowlisted",
+          });
         }
         payload.simulated = false;
         payload.implementation_cmd = b.implementation_cmd;

@@ -222,6 +222,9 @@ Enable in backend:
 ```bash
 # In backend/.env
 QTRUST_GPU_ENABLED=true
+# Real binaries must be explicitly allowlisted as exact argv arrays.
+# Leave empty to keep real command execution disabled.
+QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS=[["/opt/pqc/ml_dsa_sign","input.hex"]]
 ```
 
 ---
@@ -256,6 +259,10 @@ QTRUST_GPU_ENABLED=true
   request). `GET /v1/gpu/status` and the RL proxy are always available.
 - Request payloads reach Python **only via stdin JSON** through
   `backend/scripts/gpu_bridge.py` — no shell interpolation of user data.
+- Real side-channel commands are defense-in-depth allowlisted by exact argv
+  arrays in `QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS`; an empty allowlist returns
+  `503` and an unlisted command returns `403`. API authentication alone never
+  authorizes arbitrary local process execution.
 - Untrained detectors return HTTP 409 (`*_untrained`) rather than garbage
   scores; set `QTRUST_SIDE_CHANNEL_MODEL` / `QTRUST_ANOMALY_MODEL` to
   pre-trained checkpoint paths in the backend environment.

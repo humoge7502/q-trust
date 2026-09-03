@@ -114,10 +114,43 @@ def cmd_status(_payload: dict) -> None:
     _emit(info)
 
 
+def _allowed_side_channel_commands() -> list[list[str]]:
+    """Read the operator-owned exact argv allowlist for real analysis."""
+    raw = os.environ.get("QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS", "")
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [
+        command
+        for command in parsed
+        if isinstance(command, list)
+        and 0 < len(command) <= 8
+        and all(isinstance(part, str) and 0 < len(part) <= 256 for part in command)
+    ]
+
+
+def _is_allowed_side_channel_command(command: list[str]) -> bool:
+    return any(command == allowed for allowed in _allowed_side_channel_commands())
+
+
 def cmd_side_channel(payload: dict) -> None:
     simulated = bool(payload.get("simulated", True))
     n_traces = int(payload.get("n_traces", 10_000))
     seed = int(payload.get("seed", 42))
+
+    if not simulated:
+        cmd = payload.get("implementation_cmd")
+        if not isinstance(cmd, list) or not cmd or not all(isinstance(c, str) for c in cmd):
+            raise ValueError("implementation_cmd must be a non-empty array of strings")
+        if not _is_allowed_side_channel_command(cmd):
+            raise PermissionError(
+                "implementation_cmd is not present in QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS"
+            )
 
     analyzer = _get_side_channel_analyzer()
     if not analyzer.model_trained:
@@ -130,9 +163,7 @@ def cmd_side_channel(payload: dict) -> None:
             seed=seed,
         )
     else:
-        cmd = payload.get("implementation_cmd")
-        if not isinstance(cmd, list) or not cmd or not all(isinstance(c, str) for c in cmd):
-            raise ValueError("implementation_cmd must be a non-empty array of strings")
+        # The command was validated against the operator-owned allowlist above.
         result = analyzer.analyze_implementation(cmd, n_traces=n_traces)
 
     _emit({

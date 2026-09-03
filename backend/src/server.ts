@@ -39,22 +39,52 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-const redisUrl = process.env.QTRUST_REDIS_URL ?? process.env.REDIS_URL ?? "redis://localhost:6379";
+const redisUrl = process.env.QTRUST_REDIS_URL ?? process.env.REDIS_URL;
 let redis: Redis | null = null;
-try {
-  redis = new Redis(redisUrl, { lazyConnect: true, maxRetriesPerRequest: 1 });
-  redis.connect().catch(() => { console.warn("Redis unavailable — webhook subscriptions disabled"); redis = null; });
-} catch { redis = null; }
+if (redisUrl) {
+  try {
+    redis = new Redis(redisUrl, {
+      lazyConnect: true,
+      connectTimeout: 2_000,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      retryStrategy: (attempt) => Math.min(attempt * 250, 5_000),
+    });
+    // ioredis emits connection errors asynchronously; always attach a
+    // listener so a transient Redis outage cannot become an uncaught error.
+    redis.on("error", (err) => {
+      server.log.warn({ err }, "Redis unavailable");
+    });
+    redis.connect().catch(() => {
+      server.log.warn("Redis unavailable at startup; Redis-backed features will retry on demand");
+    });
+  } catch (err) {
+    server.log.warn({ err }, "Redis client initialization failed");
+    redis = null;
+  }
+}
 
 // REG-14: API returns JSON, not HTML — CSP false is intentional for /docs Swagger UI.
 // Frontend (Next.js) enforces strict CSP via next.config.js (QTRUST-014).
 await server.register(helmet, { contentSecurityPolicy: false, hsts: { maxAge: 15552000 } });
 server.register(cors, { origin: CORS_ORIGINS.includes("*") ? true : CORS_ORIGINS, methods: ["GET", "POST", "OPTIONS"] });
 
+const rateLimitOptions = {
+  max: Number(process.env.QTRUST_RATE_LIMIT_MAX) || 120,
+  timeWindow: "1 minute",
+  // Redis is shared across API replicas when explicitly configured. In
+  // production a Redis storage error rejects the request rather than silently
+  // disabling abuse protection; local development remains available during a
+  // laptop Redis outage.
+  ...(redis ? {
+    redis,
+    skipOnError: process.env.NODE_ENV !== "production",
+  } : {}),
+};
 if (process.env.QTRUST_RATE_LIMIT_MAX === "0") {
   server.register(rateLimit, { global: false });
 } else {
-  server.register(rateLimit, { max: Number(process.env.QTRUST_RATE_LIMIT_MAX) || 120, timeWindow: "1 minute" });
+  server.register(rateLimit, rateLimitOptions);
 }
 
 registerSentryHooks(server);

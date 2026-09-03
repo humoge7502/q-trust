@@ -427,11 +427,18 @@ def _scan_gem_archive(host: str, data: bytes) -> list[AssetFinding]:
                     break
             if inner_member is None:
                 return findings
-            inner_bytes = outer.extractfile(inner_member).read(MAX_FILE_SIZE_DEFAULT)
+            # B-14 FIX: extractfile() returns None for non-regular members
+            # (directories, links, sparse entries); guard instead of raising
+            # AttributeError outside the caught exception types.
+            inner_stream = outer.extractfile(inner_member)
+            if inner_stream is None:
+                return findings
+            inner_bytes = inner_stream.read(MAX_FILE_SIZE_DEFAULT)
         with tarfile.open(fileobj=io.BytesIO(inner_bytes), mode="r:*") as inner:
             for member in inner.getmembers():
                 if member.name.endswith(".gemspec"):
-                    blob = inner.extractfile(member).read(2 * 1024 * 1024) if inner.extractfile(member) else b""
+                    gem_stream = inner.extractfile(member)
+                    blob = gem_stream.read(2 * 1024 * 1024) if gem_stream else b""
                     text = blob.decode("utf-8", errors="replace")
                     if re.search(r"\b(crypto|openssl|rsa|ecdsa|bcrypt)\b", text, re.IGNORECASE):
                         name_match = re.search(r"name\s*=\s*[\"']([^\"']+)", text)

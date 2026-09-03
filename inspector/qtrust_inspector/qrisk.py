@@ -60,20 +60,28 @@ class QRiskEnsemble(nn.Module if HAS_ML and nn is not None else object):  # type
             loss.backward()
             opt.step()
         self.deep_head.eval()
-        # Calibration — temperature scaling on held-out (20%)
+        # B-9 FIX: calibrate on a random holdout, not the ordered tail of the
+        # training set. The ordered tail is correlated with training order
+        # (the model has already seen every sample), so the reported ECE was
+        # optimistically biased. Seeded so calibration is reproducible.
         n = len(X)
         n_cal = max(10, n // 5)
+        generator = torch.Generator().manual_seed(42)
+        perm = torch.randperm(n, generator=generator).tolist()
+        cal_idx = perm[:n_cal]
+        X_cal = X_t[cal_idx]
+        y_cal = y_t[cal_idx]
         # Simple Platt-like temp scaling: grid search T in [0.5, 2.0]
         best_t, best_ece = 1.0, float("inf")
         for t in [0.5, 0.8, 1.0, 1.2, 1.5, 2.0]:
-            logits = self.deep_head(X_t[-n_cal:]).squeeze(-1).detach().numpy() / t
+            logits = self.deep_head(X_cal).squeeze(-1).detach().numpy() / t
             probs = 1 / (1 + np.exp(-logits))
             # ECE with 10 bins
-            ece = _ece(probs, np.array(y[-n_cal:]))
+            ece = _ece(probs, y_cal.detach().numpy())
             if ece < best_ece:
                 best_ece, best_t = ece, t
         self.temperature = best_t
-        return {"temperature": best_t, "ece": best_ece, "n": n}
+        return {"temperature": best_t, "ece": best_ece, "n": n, "n_calibration": n_cal}
 
     def predict_proba(self, X: Any) -> Any:
         X_t = torch.tensor(X, dtype=torch.float32) if not isinstance(X, torch.Tensor) else X  # type: ignore
@@ -96,10 +104,15 @@ class QRiskEnsemble(nn.Module if HAS_ML and nn is not None else object):  # type
             return {"shap_values": "shap not installed — install shap for full explainability", "fallback_feature_importance": self.gbdt.feature_importances_.tolist()}
 
 def _ece(probs: Any, y: Any, n_bins: int = 10) -> float:
+    # B-10 FIX: close the last bin on the right (probs == 1.0 previously fell
+    # outside every bin and was silently dropped from the calibration error).
     bins = np.linspace(0, 1, n_bins + 1)
     ece = 0.0
     for i in range(n_bins):
-        mask = (probs >= bins[i]) & (probs < bins[i+1])
+        if i < n_bins - 1:
+            mask = (probs >= bins[i]) & (probs < bins[i + 1])
+        else:
+            mask = (probs >= bins[i]) & (probs <= bins[i + 1])
         if mask.sum() == 0:
             continue
         acc = y[mask].mean()

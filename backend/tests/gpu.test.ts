@@ -52,11 +52,13 @@ beforeEach(() => {
   capturedArgs = [];
   plannerFetch.mockReset();
   process.env.QTRUST_GPU_ENABLED = "true";
+  delete process.env.QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS;
 });
 
 afterEach(() => {
   delete process.env.QTRUST_GPU_ENABLED;
   delete process.env.QTRUST_API_KEYS;
+  delete process.env.QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS;
   process.env.QTRUST_GPU_ENABLED = "true";
 });
 
@@ -172,6 +174,52 @@ describe("POST /v1/gpu/side-channel/analyze", () => {
       payload: { simulated: false },
     });
     expect(res.statusCode).toBe(400);
+    await app.close();
+  });
+
+  it("fails closed when real command execution is not configured", async () => {
+    const app = await build();
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/gpu/side-channel/analyze",
+      payload: { simulated: false, implementation_cmd: ["/bin/echo"] },
+    });
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({ error: "real side-channel analysis is not configured" });
+    expect(capturedArgs).toHaveLength(0);
+    await app.close();
+  });
+
+  it("accepts only an exact operator-allowlisted command", async () => {
+    process.env.QTRUST_SIDE_CHANNEL_ALLOWED_COMMANDS = JSON.stringify([["/opt/pqc/ml_dsa_sign", "input.hex"]]);
+    bridgeResponses.push(ok({
+      leakage_probability: 0.02,
+      verdict: "SIDE_CHANNEL_VERIFIED",
+      evidence_hash: "0x" + "aa".repeat(32),
+      traces_collected: 10000,
+      gpu_used: false,
+    }));
+    const app = await build();
+
+    const denied = await app.inject({
+      method: "POST",
+      url: "/v1/gpu/side-channel/analyze",
+      payload: { simulated: false, implementation_cmd: ["/opt/pqc/ml_dsa_sign", "other.hex"] },
+    });
+    expect(denied.statusCode).toBe(403);
+    expect(capturedArgs).toHaveLength(0);
+
+    const accepted = await app.inject({
+      method: "POST",
+      url: "/v1/gpu/side-channel/analyze",
+      payload: { simulated: false, implementation_cmd: ["/opt/pqc/ml_dsa_sign", "input.hex"] },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(capturedArgs[0].args[1]).toBe("side-channel");
+    expect(JSON.parse(capturedArgs[0].stdin).implementation_cmd).toEqual([
+      "/opt/pqc/ml_dsa_sign",
+      "input.hex",
+    ]);
     await app.close();
   });
 

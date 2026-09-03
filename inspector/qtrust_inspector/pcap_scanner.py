@@ -25,7 +25,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Iterator
 
-from .tls_probe import TLS_SIGALG_CODEPOINTS, TLS_GROUP_CODEPOINTS
+# B-7 FIX: import from the single IANA-verified registry (tls_registry.py)
+# instead of pulling tls_probe's (formerly wrong) hand-copied tables.
+# Importing tls_probe here would also create an import cycle now that
+# tls_probe merges this module's legacy-draft names into its reference view.
+from .tls_registry import TLS_SIGALG_CODEPOINTS, TLS_GROUP_CODEPOINTS
 
 
 class FlowProtocol(str, Enum):
@@ -85,16 +89,18 @@ GROUP_NAMES: dict[int, str] = {
     0x0102: "ffdhe4096",
     0x0103: "ffdhe6144",
     0x0104: "ffdhe8192",
-    0x11EC: "X25519MLKEM768",
-    0x11EB: "SecP256r1MLKEM768",
-    0x11ED: "SecP384r1MLKEM1024",
-    0x11E4: "SecP256r1MLKEM768",
-    0x11E5: "X25519Kyber768",
-    0x6399: "X25519Kyber768Draft00",
-    0x639A: "X25519Kyber768Draft01",
-    0x639B: "MLKEM512",
-    0x639C: "MLKEM768",
-    0x639D: "MLKEM1024",
+    0x11E9: "SecP256r1MLKEM512",   # 4585 (draft-rosomakho-tls-ecdhe-mlkem512)
+    0x11EA: "MLKEM512X25519",      # 4586 (draft-rosomakho-tls-ecdhe-mlkem512)
+    0x11EB: "SecP256r1MLKEM768",   # 4587 RFC 10024
+    0x11EC: "X25519MLKEM768",      # 4588 RFC 10024
+    0x11ED: "SecP384r1MLKEM1024",  # 4589 RFC 10024
+    0x11EE: "curveSM2MLKEM768",    # 4590 (draft-yang-tls-hybrid-sm2-mlkem)
+    0x11E5: "X25519Kyber768 (legacy draft name)",
+    0x11E4: "SecP256r1MLKEM768 (legacy draft name)",
+    # IANA-verified obsolete pre-standards hybrids: 25497/25498. The old table
+    # wrongly placed the pure ML-KEM groups here; they live at 0x0200-0x0202.
+    0x6399: "X25519Kyber768Draft00 (OBSOLETE)",
+    0x639A: "SecP256r1Kyber768Draft00 (OBSOLETE)",
 }
 for _g_code, _g_name in TLS_GROUP_CODEPOINTS.items():
     GROUP_NAMES.setdefault(_g_code, _g_name)
@@ -1094,14 +1100,18 @@ def detect_capture_format(path: str | Path) -> str:
     if stripped.startswith(b"#separator") or stripped.startswith(b"#fields"):
         return "zeek"
     if stripped.startswith(b"{"):
+        # B-15 FIX: parse-then-classify. A leading '{' alone used to classify
+        # any file as Suricata EVE JSON even when it was not valid event JSON
+        # (e.g. arbitrary JSON exports). Require the first line to parse as a
+        # JSON object AND carry a Suricata EVE field before claiming the type.
         try:
             first_line = stripped.splitlines()[0].decode("utf-8", errors="replace")
             obj = json.loads(first_line)
-            if isinstance(obj, dict) and ("event_type" in obj or "tls" in obj):
-                return "suricata"
-        except (json.JSONDecodeError, IndexError):
-            pass
-        return "suricata"
+        except (json.JSONDecodeError, IndexError, UnicodeDecodeError):
+            return "unknown"
+        if isinstance(obj, dict) and ("event_type" in obj or "tls" in obj):
+            return "suricata"
+        return "unknown"
     return "unknown"
 
 
