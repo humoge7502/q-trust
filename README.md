@@ -33,8 +33,6 @@
 
 <div align="center">
 
-<a href="https://github.com/humoge7502/q-trust/stargazers"><img src="https://img.shields.io/github/stars/humoge7502/q-trust?style=for-the-badge&logo=github&label=STARS&color=%23EAC54F" alt="Stars"/></a>
-<a href="https://github.com/humoge7502/q-trust/network/members"><img src="https://img.shields.io/github/forks/humoge7502/q-trust?style=for-the-badge&logo=github&label=FORKS&color=%2300D9FF" alt="Forks"/></a>
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/humoge7502/q-trust/ci.yml?style=for-the-badge&label=CI&logo=githubactions&logoColor=white&color=%2322C55E" alt="CI"/></a>
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/pqc-scan.yml"><img src="https://img.shields.io/github/actions/workflow/status/humoge7502/q-trust/pqc-scan.yml?style=for-the-badge&label=PQC%20SELF-SCAN&color=%2300D9FF" alt="PQC Self-Scan"/></a>
 <a href="https://github.com/humoge7502/q-trust/releases"><img src="https://img.shields.io/github/v/release/humoge7502/q-trust?style=for-the-badge&logo=semver&logoColor=white&color=%23A855F7" alt="Release"/></a>
@@ -49,32 +47,18 @@
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/halmos.yml"><img src="https://img.shields.io/github/actions/workflow/status/humoge7502/q-trust/halmos.yml?style=flat-square&label=HALMOS%20SYMBOLIC&color=%236366F1" alt="Halmos"/></a>
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/publish-docker.yml"><img src="https://img.shields.io/github/actions/workflow/status/humoge7502/q-trust/publish-docker.yml?style=flat-square&label=DOCKER&logo=docker&logoColor=white&color=%232496ED" alt="Docker"/></a>
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/publish-pypi.yml"><img src="https://img.shields.io/github/actions/workflow/status/humoge7502/q-trust/publish-pypi.yml?style=flat-square&label=PYPI&logo=pypi&logoColor=white&color=%233776AB" alt="PyPI"/></a>
-<a href="https://github.com/humoge7502/q-trust/discussions"><img src="https://img.shields.io/github/discussions/humoge7502/q-trust?style=flat-square&label=DISCUSSIONS&color=blueviolet" alt="Discussions"/></a>
-<a href="https://github.com/humoge7502/q-trust/issues"><img src="https://img.shields.io/github/issues/humoge7502/q-trust?style=flat-square&color=orange" alt="Issues"/></a>
 <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome"/></a>
 
 </div>
 
 <div align="center">
 
-<a href="https://github.com/humoge7502/q-trust/graphs/contributors"><img src="https://img.shields.io/github/contributors/humoge7502/q-trust?style=flat-square&color=success" alt="Contributors"/></a>
-<a href="https://github.com/humoge7502/q-trust/commits"><img src="https://img.shields.io/github/last-commit/humoge7502/q-trust?style=flat-square&color=blueviolet" alt="Last Commit"/></a>
-<a href="https://github.com/humoge7502/q-trust"><img src="https://img.shields.io/github/languages/code-size/humoge7502/q-trust?style=flat-square&color=lightgrey" alt="Code Size"/></a>
 <!-- D-1 fix: qtrust-sdk / qtrust-inspector are NOT yet on PyPI (verified HTTP 404
      from the PyPI API, 2026-09-03). These badges go live only when the packages
      actually publish via publish-pypi.yml. Install from source meanwhile. -->
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/publish-pypi.yml"><img src="https://img.shields.io/badge/PyPI-pending%20publication-orange?style=flat-square&logo=pypi&logoColor=white" alt="PyPI packages pending publication"/></a>
 <a href="https://github.com/humoge7502/q-trust"><img src="https://tokei.rs/b1/github/humoge7502/q-trust?style=flat-square&category=code" alt="Lines of code"/></a>
-<a href="https://github.com/humoge7502/q-trust/commits"><img src="https://img.shields.io/github/commit-activity/m/humoge7502/q-trust?style=flat-square" alt="Commit activity"/></a>
 
-</div>
-
-<br/>
-
-<div align="center">
-  <a href="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=18&pause=1200&color=00D9FF&center=true&vCenter=true&random=false&width=650&separator=%3B&lines=Quantum+is+coming.+RSA+has+an+expiry+date.;Scan+your+crypto+estate+before+2030.;CBOM+%E2%86%92+risk+%E2%86%92+GNN+plan+%E2%86%92+on-chain+attestation.;Trust%2C+proven+post-quantum.">
-    <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=18&pause=1200&color=00D9FF&center=true&vCenter=true&random=false&width=650&separator=%3B&lines=Quantum+is+coming.+RSA+has+an+expiry+date.;Scan+your+crypto+estate+before+2030.;CBOM+%E2%86%92+risk+%E2%86%92+GNN+plan+%E2%86%92+on-chain+attestation.;Trust%2C+proven+post-quantum." alt="Typing SVG" />
-  </a>
 </div>
 
 <br/>
@@ -735,17 +719,7 @@ Good first issues: [`good first issue`](https://github.com/humoge7502/q-trust/la
 <a name="community"></a>
 ## 🌟 Community
 
-<div align="center">
-
-<a href="https://github.com/humoge7502/q-trust/stargazers"><img src="https://reporoster.com/stars/dark/humoge7502/q-trust?limit=100" alt="Stargazers repo roster for humoge7502/q-trust"/></a>
-
-<a href="https://github.com/humoge7502/q-trust/graphs/contributors">
-<img src="https://contrib.rocks/image?repo=humoge7502/q-trust&max=100&columns=12" width="90%" alt="Contributors"/>
-</a>
-
-<a href="https://star-history.com/#humoge7502/q-trust&Date"><img src="https://api.star-history.com/svg?repos=humoge7502/q-trust&type=Date" alt="Star History Chart"/></a>
-
-</div>
+Maintainer: [@humoge7502](https://github.com/humoge7502) · contributions welcome via [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

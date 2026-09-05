@@ -1,0 +1,56 @@
+# Q-Trust — OpenSSF Scorecard
+#
+# Why this file exists: VoltHub already publishes an OpenSSF Scorecard badge;
+# Q-Trust did not. Scorecard scores ~20 supply-chain checks (branch protection,
+# pinned dependencies, token permissions, security policy, releases...).
+# For a project whose pitch is verifiable trust, publishing its own score is
+# the cheapest possible receipt.
+#
+# This is the canonical OSSF workflow: weekly + event-driven analysis, SARIF
+# results uploaded to Code scanning so every failed check is a triageable alert.
+# publish_results: true requires the repo to be public (it is) and adds the
+# result to the public Scorecard API, which powers api.scorecard.dev badges.
+
+name: scorecard
+
+on:
+  # Deep, scheduled run — catches branch-protection and release-hygiene drift
+  schedule:
+    - cron: '30 2 * * 3'
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write          # scorecard-action authenticates via OIDC
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@v2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to code-scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
