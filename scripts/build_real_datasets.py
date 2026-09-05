@@ -141,8 +141,8 @@ def _download_tarball(owner_repo: str, ref: str) -> Optional[Path]:
         print(f"  ! failed to download {owner_repo}: {exc}")
         return None
     extract_dir.mkdir(parents=True, exist_ok=True)
+    # nosemgrep: trailofbits.python.tarfile-extractall-traversal.tarfile-extractall-traversal — PEP 706 `filter="data"` strips absolute paths and `..` traversal members
     with tarfile.open(tarball, "r:gz") as tf:
-        # nosemgrep: trailofbits.python.tarfile-extractall-traversal.tarfile-extractall-traversal — PEP 706 `filter="data"` strips absolute paths and `..` traversal members
         tf.extractall(extract_dir, filter="data")  # type: ignore[attr-defined]
     # codeload extracts into <name>-<ref>/ — flatten one level
     subs = [p for p in extract_dir.iterdir() if p.is_dir()]

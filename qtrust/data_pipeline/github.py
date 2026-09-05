@@ -32,8 +32,8 @@ def download_repo(owner_repo: str, ref: str = "HEAD") -> Optional[Path]:
         print(f"! download failed {owner_repo}: {exc}")
         return None
     extract_dir.mkdir(parents=True, exist_ok=True)
+    # nosemgrep: trailofbits.python.tarfile-extractall-traversal.tarfile-extractall-traversal — PEP 706 `filter="data"` strips absolute paths and `..` traversal members
     with tarfile.open(tarball, "r:gz") as tf:
-        # nosemgrep: trailofbits.python.tarfile-extractall-traversal.tarfile-extractall-traversal — PEP 706 `filter="data"` strips absolute paths and `..` traversal members
         tf.extractall(extract_dir, filter="data")
     subs = [p for p in extract_dir.iterdir() if p.is_dir()]
     if len(subs) == 1:
