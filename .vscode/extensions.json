@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "charliermarsh.ruff",
+    "ms-python.vscode-pylance",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "juanblanco.solidity",
+    "NomicFoundation.hardhat-solidity",
+    "editorconfig.editorconfig",
+    "bierner.markdown-mermaid",
+    "ms-vscode.vscode-docker"
+  ]
+}
