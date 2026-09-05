@@ -244,7 +244,11 @@ contract AuditRegistryTest is Test {
             signerAuditor, auditorKey,
             org, AuditRegistry.AuditResult.Passed, 10, 1, keccak256("report"), "ipfs://QmReport", 0
         );
-        sig[0] ^= 0x01;
+        // Flip the v byte, not r: a tampered r can still recover a garbage but
+        // valid ecrecover address, which then reverts NotAuditor instead of
+        // ECDSAInvalidSignature — a probabilistic failure. Tampering v makes
+        // recovery itself fail deterministically.
+        sig[64] ^= 0x01;
 
         vm.prank(relayer);
         vm.expectRevert(ECDSA.ECDSAInvalidSignature.selector);

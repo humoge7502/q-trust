@@ -41,7 +41,7 @@ jobs:
             --output scan-${{ matrix.language }}.sarif \
             --cyclonedx cbom-${{ matrix.language }}.json \
             --risk \
-            --compliance all
+            --compliance nist,cnsa,fips
 
       - name: Upload SARIF to GitHub Security
         if: always()
@@ -65,7 +65,7 @@ jobs:
             --format json \
             --output results.json \
             --risk \
-            --compliance cnsa-2.0 \
+            --compliance cnsa \
             --ci-gate high
 
   network-scan:

@@ -553,6 +553,11 @@ def scan_source(
     cyclonedx_out: Optional[Path] = typer.Option(None, "--cyclonedx", help="CycloneDX 1.7 CBOM output"),
     risk: bool = typer.Option(False, "--risk/--no-risk"),
     compliance: Optional[str] = typer.Option(None, "--compliance", "-c"),
+    ci_gate: Optional[str] = typer.Option(
+        None,
+        "--ci-gate",
+        help="Fail with exit code 1 when a finding meets or exceeds this criticality (critical|high|medium).",
+    ),
 ):
     """Scan a source tree for cryptographic API usage (PQC readiness).
 
@@ -579,6 +584,32 @@ def scan_source(
     else:
         _display(result)
     _apply_outputs(result, output if fmt != "sarif" else None, risk, compliance, cyclonedx_out, None, False)
+
+    if ci_gate:
+        _run_ci_gate(result, ci_gate)
+
+
+def _run_ci_gate(result: ScanResult, threshold: str):
+    """Exit 1 when any finding meets or exceeds the criticality threshold.
+
+    Order is lowest-to-highest so `--ci-gate high` fails on both high and
+    critical findings. The gate never blocks on unknown criticality values.
+    """
+    order = ["critical", "high", "medium"]
+    if threshold not in order:
+        console.print(f"[red]--ci-gate must be one of: {', '.join(order)}[/red]")
+        raise typer.Exit(2)
+    min_index = order.index(threshold)
+    blocking = [
+        f for f in result.findings
+        if f.criticality in order[: min_index + 1]
+    ]
+    if blocking:
+        console.print(f"[red]CI gate failed: {len(blocking)} finding(s) at or above '{threshold}'[/red]")
+        for f in blocking[:20]:
+            console.print(f"  [{f.criticality.upper()}] {f.location}: {f.algorithm or f.asset_type}")
+        raise typer.Exit(1)
+    console.print(f"[green]CI gate passed: no findings at or above '{threshold}'[/green]")
 
 
 @mcp_app.command("start")
