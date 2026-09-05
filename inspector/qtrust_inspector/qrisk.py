@@ -17,8 +17,9 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 try:
-    import numpy as np
     import torch
     import torch.nn as nn
     from sklearn.ensemble import GradientBoostingClassifier  # type: ignore
@@ -26,7 +27,6 @@ try:
     HAS_ML = True
 except ImportError:
     HAS_ML = False
-    np = None  # type: ignore
     nn = None  # type: ignore
     GradientBoostingClassifier = None  # type: ignore
 
