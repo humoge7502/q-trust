@@ -6,6 +6,12 @@ solc = "0.8.24"
 optimizer = true
 optimizer_runs = 200
 via_ir = false
+
+# Foundry >= 1.8 rewrites `new C()` inside test contracts into
+# vm.deployCode("path:Name") cheatcode calls (dynamic test linking, new
+# default). Halmos 0.3.3 cannot execute that cheatcode, which breaks the
+# symbolic suite's setUp. Disable it until Halmos supports the rewrite.
+dynamic_test_linking = false
 test = "test"
 # Exclude OpenZeppelin's own test files from compilation
 deny_warnings = false

@@ -128,6 +128,7 @@ class OpenAICompatibleProvider(LLMProvider):
             },
             method="POST",
         )
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected — base URL comes from operator config (QTRUST_LLM_BASE_URL), not end-user input; https enforced in config validation
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310 — caller-controlled base URL
             body = json.loads(resp.read().decode("utf-8"))
         choices = body.get("choices") or []

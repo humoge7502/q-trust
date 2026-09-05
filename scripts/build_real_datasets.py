@@ -135,12 +135,14 @@ def _download_tarball(owner_repo: str, ref: str) -> Optional[Path]:
     tarball = CACHE / f"{safe}.tar.gz"
     try:
         print(f"  downloading {owner_repo}@{ref} ...")
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected — org/name from the hardcoded corpus list; https-only codeload host
         urllib.request.urlretrieve(url, tarball)  # noqa: S310 — public github
     except Exception as exc:
         print(f"  ! failed to download {owner_repo}: {exc}")
         return None
     extract_dir.mkdir(parents=True, exist_ok=True)
     with tarfile.open(tarball, "r:gz") as tf:
+        # nosemgrep: trailofbits.python.tarfile-extractall-traversal.tarfile-extractall-traversal — PEP 706 `filter="data"` strips absolute paths and `..` traversal members
         tf.extractall(extract_dir, filter="data")  # type: ignore[attr-defined]
     # codeload extracts into <name>-<ref>/ — flatten one level
     subs = [p for p in extract_dir.iterdir() if p.is_dir()]
@@ -374,6 +376,7 @@ def fetch_nvd_cves(keywords: Dict[str, List[str]], max_per_lib: int = 40) -> Dic
                    f"?keywordSearch={urllib.request.quote(kw)}&resultsPerPage=40")
             try:
                 req = urllib.request.Request(url, headers={"User-Agent": "qtrust-ai/1.0"})
+                # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected — fixed https://services.nvd.nist.gov host; keyword is URL-quoted
                 with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 — public NVD API
                     body = json.loads(resp.read().decode("utf-8"))
             except Exception as exc:

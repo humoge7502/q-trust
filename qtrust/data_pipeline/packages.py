@@ -16,6 +16,7 @@ from typing import Any, Dict
 
 def fetch_pypi_metadata(package: str) -> Dict[str, Any]:
     try:
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected — fixed https://pypi.org host; `package` is a lookup key, scheme is never attacker-controlled
         with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/json", timeout=10) as r:
             return json.loads(r.read().decode())
     except Exception:
