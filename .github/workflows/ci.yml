@@ -202,7 +202,7 @@ jobs:
         working-directory: planner
         run: |
           python -m qtrust_planner.eval_harness --model-path model_gpu_v3.pt --n-graphs 200 --seeds 42 43 44 --json-out /tmp/eval_harness.json
-          cat /tmp/eval_harness.json | head -n 50
+          head -n 50 /tmp/eval_harness.json
           python -c "
           import json
           data=json.load(open('/tmp/eval_harness.json'))
@@ -215,7 +215,7 @@ jobs:
         working-directory: planner
         run: |
           python -m qtrust_planner.benchmark_v3 --n-graphs 200 --json-out /tmp/bench_v3.json
-          cat /tmp/bench_v3.json | head -n 80
+          head -n 80 /tmp/bench_v3.json
           python -c "
           import json
           data=json.load(open('/tmp/bench_v3.json'))
