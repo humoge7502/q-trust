@@ -63,7 +63,7 @@ No labels touched. Additions are audit records only (see E-04 in `EXPERIMENTS.md
 
 ## Testing Results
 
-forge **213/213** · pytest **381 passed, 2 skipped** (+15 Hypothesis property tests) · backend **104** · frontend **111** · Playwright **16** (desktop+mobile+a11y) · SDK on-chain E2E green · `verify_all.sh` 12/12. New regression tests this engagement: 15 (planner incl. docs-exposure) + 3 (inspector CLI) + 3 (dedupe) + 2 (docs-contract) + 2 (IPausable invariant) + 4 (mobile overflow) + 8 (IPFS CID validation).
+forge **213/213** · pytest **380 passed, 2 skipped** (+15 Hypothesis property tests) · backend **104** · frontend **103** · Playwright **16** (desktop+mobile+a11y) · SDK on-chain E2E green (re-run on final HEAD: ALL E2E CHECKS PASSED) · all gates re-verified on merged `main` (mkdocs strict, docs-v2 build, ruff, sdk mypy strict, go-live preflight). New regression tests this engagement: 15 (planner incl. docs-exposure) + 3 (inspector CLI) + 3 (dedupe) + 2 (docs-contract) + 2 (IPausable invariant) + 4 (mobile overflow) + 8 (IPFS CID validation).
 
 ## Performance Results
 
