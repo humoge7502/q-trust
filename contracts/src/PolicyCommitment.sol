@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title PolicyCommitment — on-chain anchor for versioned policy hashes
 /// @notice Each policy version has its hash committed on-chain. Trust assessments
 ///         reference the policy version used, enabling reproducible historical evaluation.
 ///         The full policy text is stored off-chain (IPFS); only hashes live here.
 ///         Supports UUPS proxy upgradeability.
-contract PolicyCommitment is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract PolicyCommitment is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error PolicyNotFound(string policyId);
     error PolicyAlreadyExists(string policyId, uint256 version);

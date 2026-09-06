@@ -21,7 +21,7 @@ import { CHAIN_ID, isValidAddress, isValidBytes32 } from "../config.js";
 import { getPublicClient, getWalletClient as getPooledWalletClient } from "./rpc-pool.js";
 import { RelayerGuard, relayerFinancialConfigFromEnv, receiptCostWei } from "./relayer-guard.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const RELAYER_KEY = process.env.QTRUST_RELAYER_PRIVATE_KEY;
 const ASSET_REGISTRY = process.env.QTRUST_ASSET_REGISTRY_ADDRESS as Address;

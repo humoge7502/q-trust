@@ -8,13 +8,14 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title RevocationAnchor — on-chain Merkle root for credential revocation
 /// @notice Issuers maintain a Merkle tree of revoked credential IDs off-chain.
 ///         The root is anchored here. Verifiers check if a credential is revoked
 ///         via a Merkle proof — learning only whether THIS credential is revoked.
 ///         Supports EIP-712 gasless root updates and UUPS proxy upgradeability.
-contract RevocationAnchor is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract RevocationAnchor is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error IssuerNotRegistered(address issuer);
     error IssuerInactive(address issuer);

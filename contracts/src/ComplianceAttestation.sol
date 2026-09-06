@@ -8,13 +8,14 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title ComplianceAttestation — compliance attestation results from scanner evaluations
 /// @notice Organizations post compliance scores against standard frameworks (e.g.,
 ///         NIST SP 800-131A, CNSA 2.0). Each attestation records the score, rule
 ///         breakdown, and links to supporting evidence. Supports EIP-712 gasless
 ///         attestation and UUPS proxy upgradeability.
-contract ComplianceAttestation is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract ComplianceAttestation is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error AttestationNotFound(bytes32 attestationId);
     error DuplicateAttestation(bytes32 attestationId);

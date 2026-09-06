@@ -9,7 +9,7 @@ import {
   RLPlanSchema,
 } from "../schemas/index.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const GPU_BRIDGE = process.env.QTRUST_GPU_BRIDGE ||
   fileURLToPath(new URL("../../scripts/gpu_bridge.py", import.meta.url));

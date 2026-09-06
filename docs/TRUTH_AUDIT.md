@@ -4,7 +4,7 @@ Every number displayed by Q-Trust must be classified (Phase 0, §4):
 
 | Metric | Value | Source | Training | Validation | Status |
 |---|---|---|---|---|---|
-| Discovery F1 0.952 | REAL (expanded 13,973-file corpus, repo-disjoint held-out) | real code corpus 14k (incl. SolidiFI/SmartBugs/EIPs/WebAuthn) | CodeBERTa 4-epoch GPU fine-tune on A100 | repo-disjoint 27→7 split | **REAL — major improvement (was 0.841)** — +0.11 F1 from expanded real blockchain code corpus |
+| Discovery F1 0.952 | REAL (expanded 13,973-file corpus, repo-disjoint held-out) | real code corpus 14k (incl. SolidiFI/SmartBugs/EIPs/WebAuthn) | CodeBERTa GPU fine-tune on A100 (epoch count not recorded in the shipped artifact; script default `--hf-epochs 2`) | repo-disjoint 30→8 split (38 repos, seed 42; 11,558 train / 2,415 eval files — verified by re-running `_code_splits`) | **REAL — major improvement (was 0.841)** — +0.11 F1 from expanded real blockchain code corpus |
 | GNN τ 0.971 in-dist | REAL (synthetic held-out) | 60k synthetic + 37 real CBOMs | LayerNorm GNN | host-disjoint 80/20 | **SYNTHETIC L1** — do not claim enterprise |
 | GNN real-CBOM LOO τ-b ≈0.73 | **REAL (out-of-sample, 40-fold COMPLETE)** | 40 host-disjoint real TLS CBOMs (280 hosts), leave-one-out | 30-epoch real fine-tune per fold on A100, folds sharded across 4 GPUs, deterministic-kernel harness (re-run 2026-09-02; 3-fold repro bit-identical to merged shards) | τ-b **0.7263** vs heuristic **0.7450** (Δ **−0.0188**; 60-epoch overfits, Δ −0.0545); **reproduces the doctrine on 38/40 folds** (0 wins / 38 ties / 2 losses, both n≤13); +0.503 vs random | REAL — 40 CBOMs, 30-epoch fine-tune is the best out-of-sample operating point; the pre-fix τ-b 0.7377 (39/40) is superseded by the deterministic run |
 | Risk τ (synthetic demo) | SYNTHETIC | features → synthetic expert formula | RF | synthetic prefs | **DEMO ONLY** (QTRUST-001) — NOT expert |
@@ -17,5 +17,7 @@ Every number displayed by Q-Trust must be classified (Phase 0, §4):
 | Contracts 11 UUPS | **UNAUDITED** (§QTRUST-010) | no external audit, no Sepolia, EOA governance, backend relayer | — | — | P0 blocker |
 
 **Policy:** Any benchmark using synthetic expert/WhatIf/Twin/graph must be labeled `synthetic` (Level 1) and never published as `expert` or `enterprise` performance. Real RiskBench requires `qtrust_data/gold/riskbench-v1/` human annotations (5-10 experts, 5k-10k pairs, blinded, adjudicated, inter-rater κ).
+
+**Leakage audit (2026-09-06, empirical):** Repo-level split integrity confirmed — re-running `_code_splits(seed=42)` on the 13,973-file corpus reproduces 30 train repos / 8 eval repos with 11,558/2,415 files and **zero repo overlap**. Cross-repo exact-duplicate code snippets (vendored/test-fixture copies): 11 distinct snippets affecting 58 files (0.4% of corpus); exact full-record train/eval overlap: 11 files (0.46% of eval) — organic cross-repo copies, not split manipulation; effect on held-out F1 bounded well below the 0.11 claimed gain. Vendor dataset (16 records): zero duplicates. No host-level leakage: CBOM builder guarantees each host lands in exactly one CBOM (`scripts/build_real_cboms.py`), and LOO folds are host-disjoint.
 
 **Artifact lineage:** Every prediction stores `model_version + dataset_hash + feature_schema + policy` → Merkle → chain (§42, `qtrust/data/lineage.py`).

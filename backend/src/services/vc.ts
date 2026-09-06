@@ -29,7 +29,7 @@ import * as tls from "node:tls";
 import { isIP } from "node:net";
 import { isPrivateIp, resolvePublicAddress } from "./webhook.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 // ---------------------------------------------------------------------------
 // Types

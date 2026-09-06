@@ -7,12 +7,13 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title VendorRegistry — vendors post PQC readiness attestations
 /// @notice Vendors (DigiCert, Thales, AWS, etc.) attest which products
 ///         and versions support which PQC algorithms.
 ///         Supports EIP-712 gasless attestations and UUPS proxy upgradeability.
-contract VendorRegistry is AccessControl, Pausable, Initializable, UUPSUpgradeable {
+contract VendorRegistry is AccessControl, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error VendorNotFound(address vendorDid);
     error VendorAlreadyRegistered(address vendorDid);

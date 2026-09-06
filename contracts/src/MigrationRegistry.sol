@@ -9,11 +9,12 @@ import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./AssetRegistry.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title MigrationRegistry — records each PQC migration step
 /// @notice Each step is one asset migrating from one algorithm to another.
 ///         Supports EIP-712 gasless migration recording and UUPS proxy upgradeability.
-contract MigrationRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract MigrationRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error MigrationNotFound(bytes32 migrationId);
     error DuplicateMigration(bytes32 migrationId);

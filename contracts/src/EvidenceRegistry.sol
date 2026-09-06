@@ -9,13 +9,14 @@ import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title EvidenceRegistry — hash-chained evidence ledger roots
 /// @notice Organizations post the Merkle root of a tamper-evident evidence
 ///         ledger on-chain. The full ledger is stored off-chain (IPFS or S3);
 ///         only its root hash lives here. Supports EIP-712 gasless registration
 ///         and UUPS proxy upgradeability.
-contract EvidenceRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract EvidenceRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error EvidenceNotFound(bytes32 evidenceId);
     error DuplicateEvidence(bytes32 evidenceId);

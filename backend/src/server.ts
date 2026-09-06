@@ -24,7 +24,7 @@ import { registerMetrics } from "./plugins/metrics.js";
 import { CORS_ORIGINS, CHAIN_ID } from "./config.js";
 import { relayerAddress } from "./services/attestation.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 initSentry();
 
 const PACKAGE_VERSION: string = (JSON.parse(readFileSync(fileURLToPath(new URL("../package.json", import.meta.url)), "utf8")) as { version: string }).version;

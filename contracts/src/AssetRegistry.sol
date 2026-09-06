@@ -8,12 +8,13 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title AssetRegistry — registers Cryptographic Bills of Materials (CBOMs)
 /// @notice Organizations post the hash of their CBOM (asset inventory) on-chain.
 ///         The full CBOM is stored off-chain (IPFS or S3); only its hash is here.
 ///         Supports EIP-712 gasless registration and UUPS proxy upgradeability.
-contract AssetRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract AssetRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error AssetNotFound(bytes32 assetId);
     error AssetAlreadyExists(bytes32 assetId);
