@@ -32,6 +32,22 @@
 <br/>
 
 <div align="center">
+  <img src="docs/card-qtrust.svg" width="90%" alt="Q-Trust — mission card"/>
+</div>
+
+### 🎮 OPERATION: SILENT QUANTUM
+
+| | |
+|---|---|
+| 🎯 **OBJECTIVE** | Migrate a live cryptographic estate before Q-Day — and prove it happened |
+| 🧠 **INTEL** | CBOM scanning → NIST & CNSA 2.0 scoring → GNN migration planning → attestation on Base L2 |
+| 💣 **BOSS FIGHT** | Cryptographic amnesia — you can't migrate what you can't see |
+| 🏆 **LOOT** | 11 UUPS registries on Base L2 · tamper-proof attestation flows · a plan a CISO can sign |
+| 🎮 **DIFFICULTY** | ★★★★★ · the threat has a countdown clock |
+
+<br/>
+
+<div align="center">
 
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/humoge7502/q-trust/ci.yml?style=for-the-badge&label=CI&logo=githubactions&logoColor=white&color=%2322C55E" alt="CI"/></a>
 <a href="https://github.com/humoge7502/q-trust/actions/workflows/pqc-scan.yml"><img src="https://img.shields.io/github/actions/workflow/status/humoge7502/q-trust/pqc-scan.yml?style=for-the-badge&label=PQC%20SELF-SCAN&color=%2300D9FF" alt="PQC Self-Scan"/></a>
