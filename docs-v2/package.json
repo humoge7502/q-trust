@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Q-Trust documentation (docs-v2) — VitePress site with native Mermaid support.",
+  "description": "Q-Trust documentation (docs-v2) \u2014 VitePress site with native Mermaid support.",
   "scripts": {
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
@@ -16,5 +16,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "overrides": {
+    "vite": "^6.4.3",
+    "esbuild": "^0.25.0"
   }
 }
