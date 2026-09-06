@@ -27,7 +27,7 @@ export function TxStatus({ state, txHash, explorerBase, error, assetId, onRetry 
   const explorerLink = txHash && explorerBase ? `${explorerBase}/tx/${txHash}` : null;
 
   return (
-    <div role="status" aria-live="polite" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div key={state} role="status" aria-live="polite" className="tx-bridge rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${state === "confirmed" ? "bg-emerald-500" : state === "reverted" || state === "rejected" ? "bg-amber-500" : state === "pending-chain" ? "bg-sky-500 animate-pulse" : "bg-slate-300"}`} aria-hidden="true" />
         <div className="min-w-0 flex-1">

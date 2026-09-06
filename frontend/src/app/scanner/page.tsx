@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ScannerDashboard } from "@/components/scanner-dashboard";
 
 export const metadata: Metadata = {
-  title: "PQC Migration Scanner — Q-Trust",
+  title: "PQC Migration Scanner: Q-Trust",
   description:
     "Comprehensive cryptographic asset scanning for post-quantum migration readiness. Detect vulnerable algorithms, assess risk, and plan your migration roadmap.",
 };
@@ -16,7 +16,7 @@ export default function ScannerPage() {
             PQC Migration Scanner
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Comprehensive cryptographic asset scanning — detect vulnerable algorithms,
+            Comprehensive cryptographic asset scanning: detect vulnerable algorithms,
             assess quantum risk, evaluate compliance, and plan your migration roadmap.
           </p>
         </div>
