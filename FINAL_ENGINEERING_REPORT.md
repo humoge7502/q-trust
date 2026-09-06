@@ -1,6 +1,6 @@
 # Q-Trust Final Engineering Report
 
-Engagement window: this session (2026-09-06). All work merged to `main` via PRs #51–#55, each CI-green (31–32 checks) before merge. Every number below was measured or read from verified artifacts — none estimated.
+Engagement window: this session (2026-09-06). All work merged to `main` via PRs #51–#57, each CI-green (31–32 checks) before merge. Every number below was measured or read from verified artifacts — none estimated.
 
 ## Executive Summary
 
@@ -30,6 +30,8 @@ Unchanged in shape (the existing architecture is sound): Base L2 contracts (11 U
 | #52 (earlier hallmark pass) + #53 | README SDK fictional-API fix + docs-contract test; `overflow-x: clip`; measured planner latency recorded in `docs/PERFORMANCE.md` |
 | #54 | Scanner detection gap (`rsa`/`Crypto`) + regex/AST dedupe fix; GPU train smokes; **IPausable invariant**; empirical leakage audit recorded; dotenv log silencing |
 | #55 | Design-craft pass: reduced-motion spinner fix, button press feedback, tx-state bridge, em-dash/version-tell copy hygiene |
+| #56 | Governance artifacts: scorecard, risk/debt/experiment registers, release checklist, final report |
+| #57 | Security pass from curated skill index: repo threat model (`docs/SECURITY_THREAT_MODEL.md`), **IPFS SSRF fix** (strict CID validation, 8 tests), planner docs/OpenAPI disabled in prod (2 tests), constant-time review clean, external-audit dossier (`docs/audit/DOSSIER.md`) |
 
 ## ML Changes
 
@@ -53,13 +55,15 @@ No labels touched. Additions are audit records only (see E-04 in `EXPERIMENTS.md
 | Planner 500 on malformed input; no request size bound | Medium (DoS/robustness) | Fixed + live-verified (422, cap, rate limit, auth) |
 | Inspector silent-failure on bad target | High (for a security tool) | Fixed: exit 2 with message |
 | Scanner missed `import rsa`/`Crypto`; double-counted sites | High (false negatives / false positives) | Fixed + 9 regression tests |
+| Server-side SSRF via on-chain `metadata_uri` (TM-FE-01, PR #57) | High (exposed deployments) | Fixed: strict CID validation + `redirect: "error"`, 8 regression tests |
+| Planner `/docs`+`/openapi.json` exposed in production (PR #57) | Medium | Disabled in production, kept in dev, 2 regression tests |
 | Backend dotenv v17 promo banners in prod logs | Low | Fixed (`quiet: true`, 5 sites) |
 | Slither on project sources | — | No critical/high; `missing-inheritance` cleared by IPausable; remaining flags are vendored-OZ or intentional `==0` sentinels |
 | Secrets | — | None found (sweep + CI gitleaks) |
 
 ## Testing Results
 
-forge **213/213** · pytest **378 passed, 2 skipped** (+15 Hypothesis property tests) · backend **104** · frontend **95** · Playwright **16** (desktop+mobile+a11y) · SDK on-chain E2E green · `verify_all.sh` 12/12. New regression tests this engagement: 9 (planner) + 3 (inspector CLI) + 3 (dedupe) + 2 (docs-contract) + 2 (IPausable invariant) + 4 (mobile overflow).
+forge **213/213** · pytest **381 passed, 2 skipped** (+15 Hypothesis property tests) · backend **104** · frontend **111** · Playwright **16** (desktop+mobile+a11y) · SDK on-chain E2E green · `verify_all.sh` 12/12. New regression tests this engagement: 15 (planner incl. docs-exposure) + 3 (inspector CLI) + 3 (dedupe) + 2 (docs-contract) + 2 (IPausable invariant) + 4 (mobile overflow) + 8 (IPFS CID validation).
 
 ## Performance Results
 

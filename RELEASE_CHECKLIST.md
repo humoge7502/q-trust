@@ -32,6 +32,12 @@ Re-run each gate before tagging a release; do not check boxes from memory.
 - [x] pip-audit CI jobs — green (one transient network failure re-run green)
 - [x] Planner defenses probed live — auth, 422 validation, asset cap, rate limit
 - [x] Backend fail-closed startup gates verified — CORS, relayer key, scan roots
+- [x] Repo threat model written and reviewed — `docs/SECURITY_THREAT_MODEL.md` (PR #57)
+- [x] IPFS metadata fetch SSRF-hardened with strict CID validation + tests (TM-FE-01, PR #57)
+- [x] Planner OpenAPI/docs disabled in production (FASTAPI-OPENAPI-001, PR #57)
+- [x] Constant-time review of secret comparisons — clean (PR #57)
+- [x] External-audit dossier prepared — `docs/audit/DOSSIER.md`
+- [ ] Pin SHA256 of model checkpoints at deploy (TM-PL-02 recommendation)
 
 ## Model & data
 - [x] Checkpoints load; `/health` reports model provenance (variant, config, eval metrics)
