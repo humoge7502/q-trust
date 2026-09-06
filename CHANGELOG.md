@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — GPU pipeline validation + scanner detection gap (2026-09-06)
+
+Fourth pass: GPU training smoke tests (GNN: val τ 0.922→0.927 on seeded quick
+run; RL PPO: 6-episode vectorized run; both checkpoints load and eval on
+CUDA), planner latency benchmarking (p50 28–123 ms / p95 43–337 ms for
+50–2000-asset CBOMs, no regression from the new validation gate), and an
+end-to-end inspector CLI exercise that surfaced two real detection defects:
+
+- **`import rsa; rsa.newkeys(2048)` was invisible to both scanner layers.**
+  The regex layer had no `rsa`-package pattern and the AST layer did not
+  treat `rsa` as a crypto root module (same for PyCryptodome `Crypto`), so a
+  common Python crypto usage scanned as clean. Both layers now detect it;
+  the AST layer resolves the exact key size (`rsa.newkeys(2048)` → RSA-2048).
+- **Same call site counted twice.** The regex layer reports the family
+  ("RSA") while the AST layer reports the resolved variant ("RSA-2048"); the
+  B-11 dedupe kept both because the algorithm strings differ. The merge now
+  supersedes a regex family-level finding when a same-family AST finding in
+  the same file resolves one of its lines (the stronger claim wins), while
+  regex findings remain the sole signal for languages/files the AST layer
+  cannot resolve, and distinct algorithms are never collapsed.
+
 ### Fixed — deep adversarial pass + docs-contract lock (2026-09-06)
 
 Third verification pass: live probing of the backend API (36 malformed-input,

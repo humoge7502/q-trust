@@ -28,7 +28,10 @@ JS_AST_EXTENSIONS = {".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
 
 TEST_DIRECTORY_NAMES = {"tests", "test", "__tests__", "spec", "specs"}
 
-KNOWN_CRYPTO_ROOT_MODULES = {"hashlib", "ssl", "hmac", "jwt"}
+# Roots that are crypto-relevant on their own (resolved case-insensitively
+# even without an explicit import binding). "rsa" covers the PyPI `rsa`
+# package (rsa.newkeys), "crypto" covers PyCryptodome root-module usage.
+KNOWN_CRYPTO_ROOT_MODULES = {"hashlib", "ssl", "hmac", "jwt", "rsa", "crypto"}
 
 PY_HASH_FUNCTIONS: dict[str, tuple[str, str]] = {
     "md5": ("MD5", "hash"),
@@ -315,6 +318,14 @@ def _evaluate_py_call(call: ast.Call, imports: _ImportMap) -> list[tuple[str, st
         results.append(("DH", "asymmetric"))
     if _endswith_suffix(chain, ("publickey", "rsa", "generate")):
         bits = _const_int(_arg_or_kwarg(call, 0, "bits"))
+        if bits is not None and bits in RSA_KEY_SIZE_NAMES:
+            results.append((RSA_KEY_SIZE_NAMES[bits], "asymmetric"))
+        else:
+            results.append(("RSA", "asymmetric"))
+    if _endswith_suffix(chain, ("rsa", "newkeys")):
+        # PyPI `rsa` package: rsa.newkeys(bits) — first positional arg is the
+        # key size in bits.
+        bits = _const_int(_arg_or_kwarg(call, 0, "keysize"))
         if bits is not None and bits in RSA_KEY_SIZE_NAMES:
             results.append((RSA_KEY_SIZE_NAMES[bits], "asymmetric"))
         else:
@@ -969,21 +980,44 @@ def scan_source_directory_ast(
     return findings
 
 
+def _algorithm_family(algorithm: str) -> str:
+    """Leading alphanumeric family of an algorithm name ("RSA-2048" -> "RSA")."""
+    match = re.match(r"[A-Za-z0-9]+", algorithm or "")
+    return (match.group(0) if match else algorithm or "").upper()
+
+
 def merge_findings_dedupe(
     base: list[AssetFinding],
     extra: list[AssetFinding],
 ) -> list[AssetFinding]:
     """Merge findings, dropping duplicates across the regex and AST layers.
 
-    B-11 FIX: the dedupe key used ``metadata["line"]``, but regex-layer
-    findings carry ``lines`` (plural, a sorted list) instead. Their key line
-    component was therefore always ``None``, so the same call site found by
-    both layers survived as two findings. The key now normalizes both shapes:
-    an explicit ``line``, else the first entry of ``lines``, else None.
+    ``base`` is the regex layer (file-granularity: ``metadata["lines"]`` lists
+    every matching line for an algorithm family in a file); ``extra`` is the
+    AST layer (call-site granularity: one finding per resolved usage with
+    ``metadata["line"]``).
+
+    Three dedupe phases:
+
+    1. *Exact* — same location + algorithm + line. B-11 FIX: the old key used
+       ``metadata["line"]`` only, which regex findings never carry, so every
+       regex/AST pair survived. The key now normalizes ``lines[0]`` too.
+    2. *Layer supersede* — a regex finding is a family-level claim ("this
+       file uses RSA", with matching lines as evidence). A resolved same-
+       family AST finding ("rsa.newkeys(2048) → RSA-2048 at line 2") is a
+       strictly stronger claim about the same usage, so it supersedes the
+       aggregate when their lines overlap — keeping both double-counts one
+       usage. Regex findings remain the sole signal when the AST layer
+       cannot resolve that family at all (non-Python/JS languages, files
+       with syntax errors, unresolved dynamic patterns). A regex finding
+       with no line info at all is superseded by any same-family AST
+       finding in the same file.
+    3. *Family specificity* — same location + line + family with prefix-
+       related names ("RSA" vs "RSA-2048") keeps the more specific variant.
+       Genuinely different algorithms (MD5 vs RSA, SHA-256 vs SHA3-256) are
+       never collapsed.
     """
-    merged: list[AssetFinding] = []
-    seen: set[tuple[str, str | None, Any]] = set()
-    for finding in [*base, *extra]:
+    def _norm_line(finding: AssetFinding) -> Any:
         metadata = finding.metadata or {}
         line: Any = metadata.get("line")
         if line is None:
@@ -992,12 +1026,72 @@ def merge_findings_dedupe(
                 line = lines[0]
             elif lines is not None:
                 line = lines
-        key = (finding.location, finding.algorithm, line)
-        if key in seen:
+        return line
+
+    def _norm_lines_set(finding: AssetFinding) -> set[str]:
+        metadata = finding.metadata or {}
+        lines = metadata.get("lines")
+        if isinstance(lines, (list, tuple)):
+            return {str(x) for x in lines}
+        if lines is not None:
+            return {str(lines)}
+        line = metadata.get("line")
+        return {str(line)} if line is not None else set()
+
+    # Phase 1: exact duplicates (same location + algorithm + line).
+    exact: dict[tuple[str, str, Any], AssetFinding] = {}
+    order: list[tuple[str, str, Any]] = []
+    for finding in [*base, *extra]:
+        key = (finding.location, finding.algorithm, _norm_line(finding))
+        if key not in exact:
+            order.append(key)
+            exact[key] = finding
+
+    # Phase 2: regex-layer findings superseded by same-family AST coverage.
+    base_keys = {(f.location, f.algorithm, _norm_line(f)) for f in base}
+    ast_keys = {(f.location, f.algorithm, _norm_line(f)) for f in extra}
+    extra_findings = [(f, _norm_lines_set(f)) for f in extra]
+    superseded: set[tuple[str, str, Any]] = set()
+    for loc, alg, line in order:
+        if (loc, alg, line) not in base_keys:
+            continue  # supersede only applies to regex-layer findings
+        if (loc, alg, line) in ast_keys:
+            continue  # key shared by both layers — phase 1 already merged it
+        regex_lines = _norm_lines_set(exact[(loc, alg, line)])
+        fam = _algorithm_family(alg)
+        for ast_f, ast_lines in extra_findings:
+            if ast_f.location != loc or _algorithm_family(ast_f.algorithm) != fam:
+                continue
+            if not regex_lines or (ast_lines & regex_lines):
+                superseded.add((loc, alg, line))
+                break
+
+    # Phase 3: same call site + same family + prefix-related names -> keep
+    # the most specific variant.
+    groups: dict[tuple[str, Any, str], list[int]] = {}
+    survivors = [k for k in order if k not in superseded]
+    for i, (loc, alg, line) in enumerate(survivors):
+        groups.setdefault((loc, line, _algorithm_family(alg)), []).append(i)
+
+    kept: list[AssetFinding] = []
+    consumed: set[int] = set()
+    for i, key in enumerate(survivors):
+        if i in consumed:
             continue
-        seen.add(key)
-        merged.append(finding)
-    return merged
+        loc, alg, line = key
+        best = i
+        for j in groups[(loc, line, _algorithm_family(alg))]:
+            if j == i or j in consumed:
+                continue
+            other = survivors[j][1]
+            a, b = alg.lower(), other.lower()
+            if a.startswith(b) or b.startswith(a):
+                if len(other) > len(survivors[best][1]):
+                    best = j
+                consumed.add(j)
+        consumed.add(i)
+        kept.append(exact[survivors[best]])
+    return kept
 
 
 def scan_with_ast(path: Path | str, content: str, language: str) -> list[AssetFinding]:
