@@ -26,11 +26,13 @@ def download_repo(owner_repo: str, ref: str = "HEAD") -> Optional[Path]:
     url = f"https://codeload.github.com/{org}/{name}/tar.gz/{ref}"
     tarball = CACHE / f"{safe}.tar.gz"
     try:
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected — org/name come from the hardcoded CRYPTO_REPOS list (not user input); https-only codeload host
         urllib.request.urlretrieve(url, tarball)
     except Exception as exc:
         print(f"! download failed {owner_repo}: {exc}")
         return None
     extract_dir.mkdir(parents=True, exist_ok=True)
+    # nosemgrep: trailofbits.python.tarfile-extractall-traversal.tarfile-extractall-traversal — PEP 706 `filter="data"` strips absolute paths and `..` traversal members
     with tarfile.open(tarball, "r:gz") as tf:
         tf.extractall(extract_dir, filter="data")
     subs = [p for p in extract_dir.iterdir() if p.is_dir()]

@@ -41,11 +41,11 @@ jobs:
             --output scan-${{ matrix.language }}.sarif \
             --cyclonedx cbom-${{ matrix.language }}.json \
             --risk \
-            --compliance all
+            --compliance nist,cnsa,fips
 
       - name: Upload SARIF to GitHub Security
         if: always()
-        uses: github/codeql-action/upload-sarif@0fa1882f994fbd81a47ab0804f93354f5ea40147 # v3.28.17
+        uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3.28.17
         with:
           sarif_file: scan-${{ matrix.language }}.sarif
           category: pqc-${{ matrix.language }}
@@ -65,7 +65,7 @@ jobs:
             --format json \
             --output results.json \
             --risk \
-            --compliance cnsa-2.0 \
+            --compliance cnsa \
             --ci-gate high
 
   network-scan:
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload TLS SARIF
         if: always() && hashFiles('tls-sarif/*.sarif') != ''
-        uses: github/codeql-action/upload-sarif@0fa1882f994fbd81a47ab0804f93354f5ea40147 # v3.28.17
+        uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3.28.17
         with:
           sarif_file: tls-sarif
           category: pqc-tls

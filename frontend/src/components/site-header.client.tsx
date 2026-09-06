@@ -31,7 +31,7 @@ export function SiteHeader() {
         <Link href="/" className="group flex items-center gap-3 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-300 text-[11px] font-bold tracking-widest text-slate-950 transition group-hover:bg-cyan-200" aria-hidden="true">QT</span>
           <span className="text-sm font-semibold tracking-tight text-white">Q-Trust</span>
-          <span className="hidden border-l border-white/20 pl-3 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:inline">PQC assurance</span>
+          <span className="hidden border-l border-white/20 pl-3 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400 sm:inline">PQC assurance</span>
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
@@ -42,7 +42,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <span className="hidden items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 lg:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" /> {CHAIN.name}</span>
+          <span className="hidden items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 lg:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" /> {CHAIN.name}</span>
           <Link href="/dashboard" className="hidden items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 sm:inline-flex">Launch app <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden="true" /></Link>
 
           <Dialog.Root open={open} onOpenChange={setOpen}>
