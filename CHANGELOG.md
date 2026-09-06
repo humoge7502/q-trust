@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Hallmark UX audit pass (2026-09-06)
+
+A design-system audit of the marketing pages against the anti-AI-slop
+responsive/a11y gates (no fabricated metrics, no clipped display type, no
+horizontal overflow at 320–768 px).
+
+- **Findings**: the existing surface was already disciplined — AA-checked
+  token palette, skip link, reduced-motion support, honest preview mockups
+  (clearly labelled, internally consistent numbers), roman display type, and
+  genuinely ordinal step numbering. Two real gaps found:
+- **New mobile layout-safety regression tests** (`frontend/e2e/mobile-layout.spec.ts`):
+  real-browser assertions at 320 px and 375 px that the page never scrolls
+  horizontally and no element extends past the viewport (elements inside
+  deliberately clipped containers such as the marquee track are excluded).
+  The detector was red-team validated: it correctly ignores clipped regions
+  and was shown *not* to flag the hero (a width probe of the live h1 at
+  320 px measured max text rect 238 px — it fits, disproving the
+  estimate-based violation).
+- **Hero safety net**: `overflow-wrap: anywhere` on the hero `<h1>` so long
+  words can never clip on platforms with wider fallback font metrics (the
+  hero clamp itself was measured correct and is unchanged).
+- **CI now runs the mobile Playwright project** in addition to desktop,
+  making the 320/375 px gates blocking.
+
 ### Fixed — GPU pipeline validation + scanner detection gap (2026-09-06)
 
 Fourth pass: GPU training smoke tests (GNN: val τ 0.922→0.927 on seeded quick
