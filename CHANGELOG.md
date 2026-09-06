@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — adversarial API surface pass (2026-09-06)
+
+A second verification sweep probed the live HTTP/CLI surfaces with malformed
+inputs. Three defects found and fixed, each with a regression test.
+
+- **Planner `/plan` and `/rl/plan` no longer 500 on malformed CBOM assets.**
+  A non-numeric `key_size` (or a non-object asset entry) detonated mid-request
+  (`int("abc")` in the fallback path; a latent `NameError` on the graph when
+  the GNN path raised after a partial parse). Both endpoints now share one
+  validation gate and return a precise 422; integer-string `key_size` values
+  are still accepted and normalized.
+- **Planner CBOM size cap (DoS guard).** `/plan` accepted an arbitrarily
+  large CBOM (a 20k-asset / 2.5 MB request produced a 4.6 MB response with
+  no limit). Requests above `QTRUST_MAX_CBOM_ASSETS` (default 5000) are now
+  rejected with 422 before feature construction or GNN inference.
+- **`crypto-inspector scan` fails loudly on a mistyped path.** A directory-
+  shaped target that does not exist (or a bare file passed as target) fell
+  through to the network scanner and produced a misleading "0 findings"
+  clean report with exit 0 — dangerous for a security tool wired into CI.
+  Both cases now exit 2 with an explanatory message; real directories and
+  CIDR ranges are unaffected.
+- **README citation fix.** The code-discovery headline metrics (P 0.952 /
+  R 0.953 / F1 0.952 on 2,415 held-out files) are sourced to
+  `benchmark_comparison.json`, which actually contains them, instead of the
+  run log whose `evaluate` field is null; the unverifiable "4-epoch"
+  qualifier was dropped (the epoch count is not recorded in any artifact).
+
 ### Fixed — verification sweep (2026-09-06)
 
 Every CI gate was re-run locally on this checkout; the failures below were

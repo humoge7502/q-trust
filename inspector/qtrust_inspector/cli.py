@@ -171,6 +171,17 @@ def scan(
 ):
     """Universal scan command -- auto-detects target type and runs all scanners."""
     results: list[ScanResult] = []
+    # Fail loudly on a mistyped path: a directory-shaped target that does not
+    # exist must not silently fall through to the network scanner and produce
+    # a misleading "0 findings" clean report (exit 0 in CI pipelines).
+    if Path(target).exists() and not Path(target).is_dir() and not _is_cidr(target) and "/" in target:
+        console.print(f"[red]Error: target '{target}' is a file, not a directory, host, or CIDR range.[/red]")
+        console.print("[yellow]Hint: directories are scanned with `crypto-inspector scan <dir>`, hosts by hostname.[/yellow]")
+        raise typer.Exit(code=2)
+    if not Path(target).exists() and "/" in target and not _is_cidr(target):
+        console.print(f"[red]Error: target path '{target}' does not exist.[/red]")
+        console.print("[yellow]Hint: typo in the path? A missing path must not scan as clean.[/yellow]")
+        raise typer.Exit(code=2)
     if Path(target).is_dir():
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
             progress.add_task(description=f"Scanning directory {target}...", total=None)
