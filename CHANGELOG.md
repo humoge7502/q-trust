@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — threat model, audit dossier, and SSRF hardening (2026-09-06)
+
+Applied skills curated from VoltAgent/awesome-agent-skills:
+`openai/security-threat-model`, `openai/security-best-practices`,
+`trailofbits/constant-time-analysis`, `trailofbits/audit-context-building`.
+
+- **Fixed (SSRF, TM-FE-01):** `fetchIpfsJson` fetched the on-chain
+  attacker-influenceable `metadata_uri` server-side with only a prefix strip;
+  it now validates a strict CIDv0/CIDv1 grammar before any fetch and refuses
+  redirects. 8 regression tests added.
+- **Fixed (FASTAPI-OPENAPI-001):** planner `/docs`, `/redoc`, `/openapi.json`
+  are now disabled in production (available in dev); regression tests added.
+- **Added:** `docs/SECURITY_THREAT_MODEL.md` — repo-grounded threat model with
+  evidence anchors, 10 classified threats, abuse paths, and focus paths.
+- **Added:** `docs/audit/DOSSIER.md` — external-audit prep (R-01): system
+  rules, unenforced assumptions, and micro-analyses of the four
+  highest-value functions.
+- **Constant-time analysis:** no findings — all secret comparisons use vetted
+  primitives (`hmac.compare_digest`, hash+`timingSafeEqual`); SDK hashing is
+  public-data content addressing.
+- **Frontend security checklist verified clean:** strict CSP with
+  dev-only `unsafe-eval`/`unsafe-inline`, helmet on backend (HSTS), no
+  `dangerouslySetInnerHTML`, no client-exposed secrets.
+
 ### Improved — Design-craft pass with impeccable / taste-skill / animation skills (2026-09-06)
 
 Applied three external design-skill collections (pbakaus/impeccable,
