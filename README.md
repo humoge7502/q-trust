@@ -97,7 +97,7 @@
 
 <br/>
 
-| ⛓ **11**<br>UUPS registries on Base L2 | 🔎 **10**<br>scanner modules | 🧠 **τ 0.975**<br>GNN ranking accuracy | 🧪 **213**<br>contract tests | 🛡 **7**<br>compliance frameworks |
+| ⛓ **11**<br>UUPS registries on Base L2 | 🔎 **10**<br>scanner modules | 🧠 **τ 0.975**<br>GNN ranking accuracy | 🧪 **211**<br>contract tests | 🛡 **7**<br>compliance frameworks |
 |:---:|:---:|:---:|:---:|:---:|
 | EIP-712 gasless · 7-day timelock | TLS · SSH · source · binary | PyTorch Geometric + RL agent | unit · invariant · fuzz · attack | NIST · CNSA 2.0 · FIPS · NIS2 · FISMA · FedRAMP · CMMC |
 
@@ -355,10 +355,10 @@ flowchart LR
 | GNN v3 @ scale (synthetic) | 100K graphs · BF16 · per-graph ListMLE — held-out **τ 0.975** | [`planner/results/benchmark_v3.json`](planner/results/benchmark_v3.json) |
 | **GNN v3 + real data (LOO)** | in-dist **τ 0.9710** · **out-of-sample 40-fold LOO** on host-disjoint real TLS CBOMs (280 hosts, re-run 2026-09-02 on the deterministic-kernel harness, 30-epoch fine-tune, folds sharded across **4 A100s**): **τ-b 0.7263** vs doctrine heuristic **0.7450** (Δ **−0.0188**) — **reproduces the doctrine on 38/40** held-out real CBOMs (0 wins / 38 ties / 2 losses, both small heavily-tied n≤8 graphs) · **+0.503 vs random** | [`planner/results/real_cbom_loo_40.json`](planner/results/real_cbom_loo_40.json) · in-sample suite [`benchmark_real_v3.json`](planner/results/benchmark_real_v3.json) |
 | RL migration agent | **100%** completion on 40 packed real-CBOM estates (risk labels derived from the real scan fields: RSA-1024 → critical, RSA-2048 → high, expired/near-expiry raise the class) · mean reward **140.34** ± 8.13 vs doctrine heuristic **140.62** (Δ **−0.28** — **statistical tie**) vs random **136.84** (+**3.50**, +**2.6%**) — learns real risk-priority and matches the doctrine on real estates ([bit-reproducible](docs/TRUTH_AUDIT.md): 2/40 wins · 27 ties · 11 losses) | [`planner/results/rl_benchmark_real_cbom.json`](planner/results/rl_benchmark_real_cbom.json) |
-| Code discovery model | CodeBERTa fine-tuned on **13,973 real code files** incl. SolidiFI/SmartBugs/EIPs/WebAuthn blockchain contracts (GPU 4-epoch, deterministic — same seed → same F1) — held-out **precision 0.952 / recall 0.953 / F1 0.952**, beating all baselines (6/7 beat naive, mean relative gain 1.55×) | [`qtrust_ai/artifacts/training_report_real.json`](qtrust_ai/artifacts/training_report_real.json) |
+| Code discovery model | CodeBERTa fine-tuned on **13,973 real code files** incl. SolidiFI/SmartBugs/EIPs/WebAuthn blockchain contracts (seed-pinned, deterministic — same seed → same F1) — held-out **precision 0.952 / recall 0.953 / F1 0.952** (2,415 unseen files), beating all baselines (6/7 beat naive, mean relative gain 1.55×) | [`qtrust_ai/artifacts/benchmark_comparison.json`](qtrust_ai/artifacts/benchmark_comparison.json) · run log [`training_report_real.json`](qtrust_ai/artifacts/training_report_real.json) |
 | Real-data corpus | **13,973** real code files (incl. SolidiFI/SmartBugs/EIPs/WebAuthn) · **277** live TLS hosts · **401** NVD CVEs · **5** real liboqs timing trace sets | [`scripts/build_real_datasets.py`](scripts/build_real_datasets.py) + [`scripts/expand_real_corpus.py`](scripts/expand_real_corpus.py) |
 | API throughput | **147.8 req/s** @ 100 VUs · p95 **11.3 ms** (anvil, 24-core / A100) | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) |
-| Contract tests | **213** — unit + invariant (1000 runs) + fuzz + attack | [`CHANGELOG.md`](CHANGELOG.md) |
+| Contract tests | **211** — unit + invariant (1000 runs) + fuzz + attack | [`CHANGELOG.md`](CHANGELOG.md) |
 | Scanner coverage | **12+** source languages · **10+** manifest formats | [`inspector/`](inspector/) |
 | Side-channel detector | **5/5 real liboqs traces → VERIFIED (0.05)** · **5/5 leak-injected → HIGH_RISK (0.95)** — trained on real liboqs clean traces with synthetically injected leak classes (real leaking hardware traces not yet collected; D-2 disclosure) | [`inspector/side_channel_model_real.pt`](inspector/) |
 
@@ -453,7 +453,7 @@ Dashboard at `http://localhost:3000` · API at `http://localhost:3001` · Grafan
 <br/>
 
 ```bash
-# Contracts (Foundry — 213 tests incl. invariant + fuzz + attack)
+# Contracts (Foundry — 211 tests incl. invariant + fuzz + attack)
 cd contracts && forge test
 
 # Planner (PyTorch Geometric)
@@ -477,17 +477,17 @@ cd frontend && npm install && npm run dev
 <br/>
 
 ```python
-from qtrust import QTrustClient, RiskScoringEngine, ComplianceEngine
+from qtrust import QTrustClient, CBOM, CBOMEntry, RiskScoringEngine
 
-client = QTrustClient(base_url="http://localhost:3001")
+client = QTrustClient(rpc_url="https://sepolia.base.org")
 
-# Verify an on-chain attestation from any chain
-result = client.verify(asset_id="...")
-print(result.risk_score, result.compliance)
+# Verify an on-chain CBOM registration
+exists, active, org_did = client.verify_asset("0x...")
 
-# Score a CBOM locally
+# Score a finding locally
 engine = RiskScoringEngine()
-report = engine.score("cbom.json")
+score = engine.calculate({"algorithm": "RSA-2048", "hndl_exposure_score": 0.5})
+print(score.risk_level, score.overall_risk_score)
 ```
 
 </details>
@@ -607,7 +607,7 @@ gantt
     axisFormat %b %Y
 
     section Landed
-    11 registries + 213 tests        :done, 2025-11, 2026-02
+    11 registries + 211 tests        :done, 2025-11, 2026-02
     v2.0 scanner (10 modules)        :done, 2026-02, 2026-05
     GNN planner (τ 0.975)            :done, 2026-03, 2026-06
     7 CI pipelines + docs site       :done, 2026-05, 2026-07
@@ -723,7 +723,7 @@ PRs are welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, pre-c
 |---|---|
 | `ci.yml` | Foundry unit/invariant/fuzz/attack · pytest · vitest · Playwright · Hypothesis |
 | `security.yml` | npm audit · pip-audit · secret scanning |
-| `halmos.yml` | EVM symbolic execution (report-only) |
+| `halmos.yml` | EVM symbolic execution (blocking) |
 | `pqc-scan.yml` | Weekly post-quantum self-scan of this repo |
 | `publish-*.yml` | Docker (GHCR) · PyPI (`qtrust-sdk`, `qtrust-inspector`) |
 | `docs.yml` | MkDocs Material → GitHub Pages |

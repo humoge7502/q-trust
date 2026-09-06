@@ -28,6 +28,26 @@ describe("parseAssetId", () => {
   });
 });
 
+describe("pagination parsing", () => {
+  it("uses safe defaults and caps the requested page size", async () => {
+    const { parsePagination } = await import("../src/config.js");
+    expect(parsePagination({})).toEqual({ offset: 0, limit: 50 });
+    expect(parsePagination({ offset: "12", limit: "999" })).toEqual({ offset: 12, limit: 200 });
+  });
+
+  it.each([
+    { offset: "-1" },
+    { offset: "1.5" },
+    { offset: "nope" },
+    { limit: "0" },
+    { limit: "Infinity" },
+    { limit: "9007199254740992" },
+  ])("rejects malformed pagination: %j", async (query) => {
+    const { parsePagination } = await import("../src/config.js");
+    expect(parsePagination(query)).toBeNull();
+  });
+});
+
 describe("toBytes32", () => {
   it("pads short hex to bytes32", () => {
     const result = toBytes32("0x1234");

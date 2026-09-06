@@ -142,3 +142,25 @@ export function toBytes32(hash: string): `0x${string}` {
   }
   return `0x${hex.padStart(64, "0")}` as `0x${string}`;
 }
+
+/**
+ * Parse list pagination defensively before values reach a database query.
+ * Invalid, fractional, negative, non-decimal, or unsafe integer values are
+ * rejected instead of becoming NaN/Infinity or silently changing meaning.
+ */
+export function parsePagination(query: unknown): { offset: number; limit: number } | null {
+  const q = (query ?? {}) as { offset?: unknown; limit?: unknown };
+  const parse = (value: unknown, fallback: number): number | null => {
+    if (value === undefined || value === "") return fallback;
+    if (typeof value !== "string" && typeof value !== "number") return null;
+    const text = String(value);
+    if (!/^\d+$/.test(text)) return null;
+    const parsed = Number(text);
+    return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+  };
+
+  const offset = parse(q.offset, 0);
+  const requestedLimit = parse(q.limit, 50);
+  if (offset === null || requestedLimit === null || requestedLimit === 0) return null;
+  return { offset, limit: Math.min(200, requestedLimit) };
+}

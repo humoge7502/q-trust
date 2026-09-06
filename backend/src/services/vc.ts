@@ -23,7 +23,11 @@
 import { ed25519 } from "@noble/curves/ed25519";
 import { base58 } from "@scure/base";
 import * as dotenv from "dotenv";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import * as https from "node:https";
+import * as tls from "node:tls";
+import { isIP } from "node:net";
+import { isPrivateIp, resolvePublicAddress } from "./webhook.js";
 
 dotenv.config();
 
@@ -202,15 +206,33 @@ export function didKeyToPublicKey(did: string): Uint8Array | null {
   return null;
 }
 
-/** Deterministic dev issuer key (hex) — override with QTRUST_VC_ISSUER_KEY. */
+/**
+ * Resolve the issuer seed once per process so every credential has the same
+ * issuer identity and can be verified after the credential was issued.
+ * Production requires an operator-managed key; development uses a fixed,
+ * clearly non-production seed rather than generating a new identity per call.
+ */
+let cachedIssuerSeed: { key: string; seed: Uint8Array } | null = null;
 function issuerSeed(): Uint8Array {
-  const env = process.env.QTRUST_VC_ISSUER_KEY;
-  if (env && /^[0-9a-fA-F]{64}$/.test(env)) {
-    return Uint8Array.from(Buffer.from(env, "hex"));
+  const env = process.env.QTRUST_VC_ISSUER_KEY?.trim() ?? "";
+  if (process.env.NODE_ENV === "production" && !/^[0-9a-fA-F]{64}$/.test(env)) {
+    throw new Error("QTRUST_VC_ISSUER_KEY must be a 32-byte hex key in production");
   }
-  // Deterministic per-boot dev seed; never used for production credentials
-  // (production must set QTRUST_VC_ISSUER_KEY).
-  return ed25519.utils.randomPrivateKey();
+  if (cachedIssuerSeed?.key === env) return cachedIssuerSeed.seed;
+
+  if (env && /^[0-9a-fA-F]{64}$/.test(env)) {
+    const seed = Uint8Array.from(Buffer.from(env, "hex"));
+    cachedIssuerSeed = { key: env, seed };
+    return seed;
+  }
+
+  // Stable local identity makes development credentials mutually verifiable.
+  // This seed is intentionally public and must never be used in production.
+  const seed = createHash("sha256")
+    .update("qtrust-development-vc-issuer-v1", "utf8")
+    .digest();
+  cachedIssuerSeed = { key: env, seed };
+  return seed;
 }
 
 export function issuerKeyPair(): { privateKey: Uint8Array; publicKey: Uint8Array; did: string } {
@@ -223,12 +245,31 @@ export function issuerKeyPair(): { privateKey: Uint8Array; publicKey: Uint8Array
 // DID resolution (did:key + did:web with SSRF guard)
 // ---------------------------------------------------------------------------
 
-/** Extract the first Ed25519 key from a DID document's verificationMethod. */
-function publicKeyFromDidDocument(doc: { verificationMethod?: unknown[] }): Uint8Array | null {
+/**
+ * The proof's verificationMethod does not cryptographically bind to the issuer
+ * DID. This is a proof failure (invalid signature semantics), not a DID
+ * resolution failure, so callers classify it under invalid_signature.
+ */
+class DidKeyBindingError extends Error {}
+
+/** Extract the Ed25519 key bound to the requested verification method. */
+function publicKeyFromDidDocument(
+  doc: { id?: unknown; verificationMethod?: unknown[] },
+  issuerDid: string,
+  verificationMethod?: string,
+): Uint8Array | null {
+  if (doc.id !== issuerDid) {
+    throw new DidKeyBindingError("DID document id does not match the issuer DID");
+  }
   const methods = Array.isArray(doc.verificationMethod) ? doc.verificationMethod : [];
   for (const m of methods) {
     if (!m || typeof m !== "object") continue;
     const method = m as Record<string, unknown>;
+    const methodId = method.id;
+    const controller = method.controller;
+    if (typeof methodId !== "string") continue;
+    if (verificationMethod !== undefined && methodId !== verificationMethod) continue;
+    if (typeof controller === "string" && controller !== issuerDid) continue;
     // publicKeyMultibase (base58btc, z-prefixed, multicodec)
     const mb = method.publicKeyMultibase;
     if (typeof mb === "string" && mb.startsWith("z")) {
@@ -260,16 +301,101 @@ function publicKeyFromDidDocument(doc: { verificationMethod?: unknown[] }): Uint
   return null;
 }
 
-/** Reject did:web hosts that resolve to private/link-local/metadata IPs (SSRF). */
-function assertSafeDidWebHost(host: string): void {
-  const allowlist = (process.env.QTRUST_DID_ALLOWED_HOSTS || "")
+/** Reject malformed or private did:web hosts before any network access. */
+function isDidWebHostAllowlisted(host: string): boolean {
+  return (process.env.QTRUST_DID_ALLOWED_HOSTS || "")
     .split(",")
     .map((h) => h.trim().toLowerCase())
-    .filter(Boolean);
-  if (allowlist.includes(host.toLowerCase())) return;
-  if (host.toLowerCase() === "localhost" || host.startsWith("127.") || host.startsWith("169.254.")) {
+    .filter(Boolean)
+    .includes(host.toLowerCase());
+}
+
+function assertSafeDidWebHost(host: string): void {
+  const normalized = host.toLowerCase();
+
+  // did:web host components are DNS names, not URLs or user-controlled ports.
+  // Keep the accepted syntax deliberately narrow so URL parser edge cases
+  // cannot turn the identifier into credentials, a port, or another authority.
+  if (
+    !host ||
+    host.length > 253 ||
+    host.includes("@") ||
+    host.includes("/") ||
+    host.includes("?") ||
+    host.includes("#") ||
+    !/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(host)
+  ) {
+    throw new Error("did:web host is malformed (SSRF guard)");
+  }
+  if (isDidWebHostAllowlisted(host)) return;
+  if ((isIP(host) > 0 && isPrivateIp(host)) || normalized === "localhost" || normalized.endsWith(".local") || normalized.endsWith(".internal")) {
     throw new Error("did:web host resolves to forbidden address (SSRF guard)");
   }
+}
+
+const DID_WEB_MAX_BODY_BYTES = 1 * 1024 * 1024;
+
+/** Fetch a DID document over the already-validated HTTPS connection target. */
+async function fetchDidDocument(
+  url: URL,
+  address: string,
+  family: number,
+): Promise<{ id?: unknown; verificationMethod?: unknown[] }> {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        protocol: "https:",
+        hostname: address,
+        family,
+        port: url.port ? Number(url.port) : 443,
+        path: `${url.pathname}${url.search}`,
+        method: "GET",
+        headers: { accept: "application/json", host: url.host },
+        servername: url.hostname,
+        // The socket connects to the pinned IP, but the certificate must still
+        // authenticate the issuer's hostname rather than the numeric address.
+        checkServerIdentity: (_hostname, cert) => tls.checkServerIdentity(url.hostname, cert),
+        timeout: 10_000,
+      },
+      (resp) => {
+        const status = resp.statusCode ?? 0;
+        const declaredLength = Number(resp.headers["content-length"] ?? 0);
+        if (status < 200 || status >= 300) {
+          resp.resume();
+          reject(new Error(`did:web resolution failed: HTTP ${status} for ${url.href}`));
+          return;
+        }
+        if (Number.isFinite(declaredLength) && declaredLength > DID_WEB_MAX_BODY_BYTES) {
+          resp.resume();
+          reject(new Error("did:web document exceeds the response size limit"));
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        let received = 0;
+        resp.on("data", (chunk: Buffer) => {
+          received += chunk.length;
+          if (received > DID_WEB_MAX_BODY_BYTES) {
+            resp.destroy();
+            reject(new Error("did:web document exceeds the response size limit"));
+            return;
+          }
+          chunks.push(chunk);
+        });
+        resp.on("end", () => {
+          try {
+            resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")) as { verificationMethod?: unknown[] });
+          } catch {
+            reject(new Error("did:web resolution returned invalid JSON"));
+          }
+        });
+        resp.on("error", () => reject(new Error("did:web document read failed")));
+      },
+    );
+    req.on("timeout", () => req.destroy(new Error("did:web resolution timed out")));
+    req.on("error", reject);
+    req.end();
+  });
 }
 
 /**
@@ -277,8 +403,17 @@ function assertSafeDidWebHost(host: string): void {
  * Supports did:key (self-contained) and did:web (HTTPS fetch).
  * Throws on resolution failure; returns null when the key type is unsupported.
  */
-export async function resolveIssuerKey(issuerDid: string): Promise<Uint8Array | null> {
+export async function resolveIssuerKey(
+  issuerDid: string,
+  verificationMethod?: string,
+): Promise<Uint8Array | null> {
   if (issuerDid.startsWith("did:key:")) {
+    if (
+      typeof verificationMethod !== "string" ||
+      !verificationMethod.startsWith(`${issuerDid}#`)
+    ) {
+      throw new DidKeyBindingError("proof verificationMethod is not bound to the issuer DID");
+    }
     return didKeyToPublicKey(issuerDid);
   }
   if (issuerDid.startsWith("did:web:")) {
@@ -288,29 +423,37 @@ export async function resolveIssuerKey(issuerDid: string): Promise<Uint8Array | 
     const parts = rest.split(":");
     const host = parts[0];
     assertSafeDidWebHost(host);
-    const path = parts.length > 1 ? `${parts.slice(1).join("/")}/did.json` : ".well-known/did.json";
-    const url = `https://${host}/${path}`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10_000);
-    try {
-      const resp = await fetch(url, { signal: controller.signal, headers: { accept: "application/json" } });
-      if (!resp.ok) {
-        throw new Error(`did:web resolution failed: HTTP ${resp.status} for ${url}`);
-      }
-      const doc = (await resp.json()) as { verificationMethod?: unknown[] };
-      const key = publicKeyFromDidDocument(doc);
-      if (!key) {
-        throw new Error("DID document has no Ed25519 verification method");
-      }
-      return key;
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        throw new Error("did:web resolution timed out");
-      }
-      throw err;
-    } finally {
-      clearTimeout(timer);
+    const pathParts = parts.slice(1);
+    if (
+      pathParts.some(
+        (segment) =>
+          !segment ||
+          segment === "." ||
+          segment === ".." ||
+          segment.includes("/") ||
+          segment.includes("?") ||
+          segment.includes("#"),
+      )
+    ) {
+      throw new Error("did:web path is malformed (SSRF guard)");
     }
+    const path = pathParts.length > 0 ? `${pathParts.join("/")}/did.json` : ".well-known/did.json";
+    const url = new URL(`https://${host}/${path}`);
+    if (url.hostname !== host.toLowerCase() || url.port) {
+      throw new Error("did:web host is malformed (SSRF guard)");
+    }
+    // Resolve once and connect to the validated address directly. No redirect
+    // handling is used, so a DID document cannot redirect into a private host.
+    const { address, family } = await resolvePublicAddress(
+      url.hostname,
+      isDidWebHostAllowlisted(host),
+    );
+    const doc = await fetchDidDocument(url, address, family);
+    const key = publicKeyFromDidDocument(doc, issuerDid, verificationMethod);
+    if (!key) {
+      throw new Error("DID document has no usable Ed25519 verification method");
+    }
+    return key;
   }
   throw new Error(`Unsupported DID method: ${issuerDid.slice(0, issuerDid.indexOf(":"))}`);
 }
@@ -429,7 +572,13 @@ export async function verifyCredential(raw: Record<string, unknown>): Promise<Ve
 
   // 3. Proof present
   const proof = vc.proof as Proof | undefined;
-  const hasProof = Boolean(proof && typeof proof.proofValue === "string" && proof.proofValue.length > 0);
+  const hasProof = Boolean(
+    proof &&
+      typeof proof.proofValue === "string" &&
+      proof.proofValue.length > 0 &&
+      typeof proof.verificationMethod === "string" &&
+      proof.verificationMethod.length > 0,
+  );
   if (!hasProof) {
     return {
       valid: false,
@@ -444,10 +593,25 @@ export async function verifyCredential(raw: Record<string, unknown>): Promise<Ve
   }
 
   // 4. Resolve issuer key
+  const verificationMethod = proof!.verificationMethod;
   let publicKey: Uint8Array | null;
   try {
-    publicKey = await resolveIssuerKey(vc.issuer);
+    publicKey = await resolveIssuerKey(vc.issuer, verificationMethod);
   } catch (err) {
+    // A proof that does not bind to the issuer DID (mismatched verification
+    // method, wrong document id) is a proof failure, not a resolution failure.
+    if (err instanceof DidKeyBindingError) {
+      return {
+        valid: false,
+        reason: "invalid_signature",
+        detail: err.message,
+        issuer_did: vc.issuer,
+        subject_did: (vc.credentialSubject.id as string) ?? undefined,
+        has_proof: true,
+        checked: { structure: true, expiration: true, signature: false },
+        timestamp,
+      };
+    }
     return {
       valid: false,
       reason: "did_resolution_failed",

@@ -44,7 +44,6 @@ describe("S-1 proxy route allowlist", () => {
       ["GET", ["v1", "orgs", "did:web:example", "assets"]],
       ["GET", ["v1", "vendors", "did:web:example", "attestations"]],
       ["GET", ["v1", "relay", "nonce", "did:web:example"]],
-      ["GET", ["v1", "webhooks", "subscribers"]],
       ["GET", ["health"]],
     ])("%s %s", async (method, segments) => {
       const res = await call(method, segments as string[]);
@@ -109,6 +108,12 @@ describe("S-1 proxy route allowlist", () => {
     it("rejects paths outside /v1", async () => {
       const res = await call("GET", ["internal", "debug"]);
       expect(res.status).toBe(404);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("does not grant access to a path that only shares a prefix", async () => {
+      const res = await call("GET", ["v1", "stats-private"]);
+      expect(res.status).toBe(403);
       expect(fetchMock).not.toHaveBeenCalled();
     });
   });

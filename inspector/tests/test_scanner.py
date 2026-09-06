@@ -190,3 +190,46 @@ def test_scan_example_com_network():
     res = scanner.scan_tls("example.com", 443)
     assert res is not None
     assert res.key_size in (256, 384, 2048, 3072, 4096)
+
+
+# ---------------------------------------------------------------------------
+# CLI target-resolution regression tests: a mistyped path used to fall through
+# to the network scanner and produce a misleading "0 findings" clean scan with
+# exit 0 — dangerous for a security tool wired into CI.
+# ---------------------------------------------------------------------------
+def test_cli_rejects_missing_directory_path(tmp_path):
+    from typer.testing import CliRunner
+
+    from qtrust_inspector.cli import app
+
+    runner = CliRunner()
+    missing = tmp_path / "definitely-not-here"
+    result = runner.invoke(app, ["scan", str(missing), "--no-risk"])
+    assert result.exit_code == 2
+    assert "does not exist" in result.output
+
+
+def test_cli_rejects_bare_file_as_target(tmp_path):
+    from typer.testing import CliRunner
+
+    from qtrust_inspector.cli import app
+
+    runner = CliRunner()
+    a_file = tmp_path / "notes.txt"
+    a_file.write_text("hello")
+    result = runner.invoke(app, ["scan", str(a_file), "--no-risk"])
+    assert result.exit_code == 2
+    assert "not a directory" in result.output
+
+
+def test_cli_still_scans_real_directory(tmp_path):
+    from typer.testing import CliRunner
+
+    from qtrust_inspector.cli import app
+
+    runner = CliRunner()
+    pkg = tmp_path / "proj"
+    pkg.mkdir()
+    (pkg / "app.py").write_text("import rsa\nrsa.newkeys(2048)\n")
+    result = runner.invoke(app, ["scan", str(pkg), "--no-risk", "--no-source", "--no-manifests", "--no-binaries", "--no-ast"])
+    assert result.exit_code == 0, result.output

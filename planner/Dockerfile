@@ -18,10 +18,10 @@ COPY server.py .
 COPY data/ data/
 # Include only tracked checkpoints in the release image. The server's
 # resolution chain prefers the v3 GPU model, then DDP, then the RL model.
-COPY model_gpu_v3.pt model_ddp_v3.pt rl_agent.pt ./
+COPY model_real_v3.pt model_gpu_v3.pt model_ddp_v3.pt rl_agent.pt ./
 
-# model.pt and real-data variants remain optional operator-provided overrides;
-# the image is still functional with the tracked v3 checkpoint.
+# Operators can still override QTRUST_MODEL_PATH for rollback/canary testing;
+# the default Compose path points at the tracked real-data checkpoint.
 RUN if [ -f "model.pt" ]; then echo "model.pt present"; else echo "model.pt absent — serving v3 checkpoint"; fi
 
 # For large experimental models (>500KB), publish as GitHub Release assets with SHA256 manifest

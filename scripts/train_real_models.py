@@ -324,7 +324,7 @@ def train_gnn(real_assets: list[dict], epochs: int, synthetic_graphs: int) -> No
     train_gpu(
         n_graphs=synthetic_graphs,
         epochs=epochs,
-        model_path=str(REPO_ROOT / "planner" / "model_gpu_v3_real.pt"),
+        model_path=str(REPO_ROOT / "planner" / "model_real_v3.pt"),
         extra_graphs=real_graphs,
     )
 

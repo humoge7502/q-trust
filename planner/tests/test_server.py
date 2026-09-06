@@ -96,6 +96,22 @@ def test_health_reports_ok_and_model_mode():
     assert body["model"]["mode"] in {"heuristic_fallback", "heuristic", "gnn"}
 
 
+def test_explicit_model_override_is_authoritative():
+    model_path = PLANNER_ROOT / "model_gpu_v3.pt"
+    if not model_path.exists():
+        pytest.skip("tracked planner checkpoint is unavailable")
+    client = _make_client()
+    server_module = sys.modules["server"]
+    # Mutate the loaded configuration to model an operator-provided rollback
+    # or canary path without relying on module-cache/environment ordering.
+    server_module.MODEL_PATH = str(model_path)
+
+    resolved, variant = server_module._resolve_checkpoint_path()
+    assert resolved == str(model_path)
+    assert variant == "explicit"
+    assert client.get("/health").status_code == 200
+
+
 def test_plan_happy_path_returns_ordered_assets():
     client = _make_client()
     res = client.post("/plan", json=_cbom_payload())
@@ -140,6 +156,79 @@ def test_api_key_disabled_open_in_dev():
     client = _make_client(NODE_ENV="development")
     res = client.post("/plan", json=_cbom_payload())
     assert res.status_code != 401
+
+
+def test_plan_malformed_key_size_is_422_not_500():
+    """Regression: bad key_size used to surface as HTTP 500.
+
+    int("abc") detonated in the /plan fallback path (and identically in
+    /rl/plan) after the GNN path raised ValueError, turning malformed input
+    into a server error. It must be a 422 validation error.
+    """
+    client = _make_client()
+    res = client.post("/plan", json={
+        "cbom": {"assets": [{"asset_id": "a", "algorithm": "RSA-2048", "key_size": "abc"}]}
+    })
+    assert res.status_code == 422
+    assert "key_size" in res.json()["detail"]
+
+
+def test_plan_malformed_key_size_is_422_on_rl_plan_too():
+    """Regression: /rl/plan shared the same int() crash as /plan."""
+    client = _make_client()
+    res = client.post("/rl/plan", json={
+        "cbom": {"assets": [{"asset_id": "a", "algorithm": "RSA-2048", "key_size": "not-a-number"}]}
+    })
+    assert res.status_code == 422
+    assert "key_size" in res.json()["detail"]
+
+
+def test_plan_non_dict_asset_entry_is_422_not_500():
+    """Regression: a bare string inside cbom.assets used to 500 via a.get()."""
+    client = _make_client()
+    res = client.post("/plan", json={"cbom": {"assets": ["RSA-2048"]}})
+    assert res.status_code == 422
+    assert "assets[0]" in res.json()["detail"]
+
+
+def test_plan_assets_not_a_list_is_422():
+    client = _make_client()
+    res = client.post("/plan", json={"cbom": {"assets": {"asset_id": "a"}}})
+    assert res.status_code == 422
+    assert "must be a list" in res.json()["detail"]
+
+
+def test_plan_caps_assets_over_limit(monkeypatch):
+    """DoS guard: CBOMs above the cap are rejected 422 before any inference.
+
+    The cap is read from the module at request time so the env override stays
+    testable without re-importing the app.
+    """
+    client = _make_client()
+    server_module = sys.modules["server"]
+    monkeypatch.setattr(server_module, "MAX_CBOM_ASSETS", 3, raising=False)
+    cbom = {"cbom": {"assets": [
+        {"asset_id": f"a{i}", "algorithm": "RSA-2048", "key_size": 2048} for i in range(4)
+    ]}}
+    res = client.post("/plan", json=cbom)
+    assert res.status_code == 422
+    assert "caps planning at 3" in res.json()["detail"]
+
+    # At exactly the cap the request is accepted.
+    cbom["cbom"]["assets"].pop()
+    res = client.post("/plan", json=cbom)
+    assert res.status_code == 200
+
+
+def test_plan_key_size_numeric_string_is_coerced():
+    """Integer strings stay accepted (API tolerance), normalized to int."""
+    client = _make_client()
+    res = client.post("/plan", json={
+        "cbom": {"assets": [{"asset_id": "a", "algorithm": "RSA-2048", "key_size": "2048"}]}
+    })
+    assert res.status_code == 200
+    order = res.json()["migration_order"]
+    assert order and isinstance(order[0]["key_size"], int)
 
 
 def test_api_key_fail_closed_in_production_when_unset():

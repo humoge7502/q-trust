@@ -41,6 +41,57 @@ app = FastAPI(title="Q-Trust Planner", version="0.3.0", lifespan=lifespan)
 
 logger = logging.getLogger("qtrust_planner.server")
 
+# DoS guard: reject CBOMs above a sane asset count before any feature
+# construction or GNN forward. An authenticated client could otherwise submit
+# an arbitrarily large CBOM and pin a worker for seconds per request.
+# Override with QTRUST_MAX_CBOM_ASSETS (e.g. for batch offline jobs).
+DEFAULT_MAX_CBOM_ASSETS = 5_000
+try:
+    MAX_CBOM_ASSETS = int(os.environ.get("QTRUST_MAX_CBOM_ASSETS", DEFAULT_MAX_CBOM_ASSETS))
+except ValueError:
+    MAX_CBOM_ASSETS = DEFAULT_MAX_CBOM_ASSETS
+if MAX_CBOM_ASSETS <= 0:
+    MAX_CBOM_ASSETS = DEFAULT_MAX_CBOM_ASSETS
+
+
+def _parse_assets(cbom: dict[str, Any]) -> list[dict[str, Any]]:
+    """Validate and normalize a CBOM assets list, or raise 422.
+
+    Single gate shared by /plan and /rl/plan so that malformed entries fail
+    loudly (422) instead of detonating mid-request (500). Coercions here mirror
+    cbom_to_graph in qtrust_planner.predict; keeping them consistent means a
+    payload that passes this gate cannot crash feature construction downstream.
+    """
+    assets = cbom.get("assets", [])
+    if not isinstance(assets, list):
+        raise HTTPException(status_code=422, detail="cbom.assets must be a list")
+    if not assets:
+        raise HTTPException(status_code=422, detail="CBOM has no assets")
+    if len(assets) > MAX_CBOM_ASSETS:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"CBOM has {len(assets)} assets; the service caps planning at "
+                f"{MAX_CBOM_ASSETS} (set QTRUST_MAX_CBOM_ASSETS to adjust)"
+            ),
+        )
+    parsed: list[dict[str, Any]] = []
+    for i, a in enumerate(assets):
+        if not isinstance(a, dict):
+            raise HTTPException(
+                status_code=422,
+                detail=f"cbom.assets[{i}] must be an object, got {type(a).__name__}",
+            )
+        try:
+            key_size = int(a.get("key_size", 0) or 0)
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=422,
+                detail=f"cbom.assets[{i}].key_size must be an integer, got {a.get('key_size')!r}",
+            ) from None
+        parsed.append(a | {"key_size": key_size})
+    return parsed
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Sliding-window rate limiter backed by Redis, with in-memory fallback.
@@ -254,8 +305,8 @@ app.add_middleware(ApiKeyMiddleware)
 #
 #   Resolution priority (see _resolve_checkpoint_path):
 #       QTRUST_MODEL_PATH (explicit operator override) →
-#       model_gpu_v3.pt (best) → model_ddp_v3.pt → model.pt (v2 legacy) →
-#       heuristic fallback.
+#       model_real_v3.pt (real-data v3) → model_gpu_v3.pt (best) →
+#       model_ddp_v3.pt → model.pt (v2 legacy) → heuristic fallback.
 #   The /health endpoint reports the served ``variant`` and
 #   ``eval_metrics.kendall`` so the trade-off is always visible.
 #
@@ -263,11 +314,12 @@ app.add_middleware(ApiKeyMiddleware)
 #   "Promotion gate — v3 must beat canonical v2 before serving default"
 #   fails the build if a future checkpoint regresses below canonical v2.
 # ---------------------------------------------------------------------------
-MODEL_PATH = os.environ.get("QTRUST_MODEL_PATH", str(Path(__file__).resolve().parent / "model.pt"))
+DEFAULT_MODEL_PATH = str(Path(__file__).resolve().parent / "model.pt")
+MODEL_PATH = os.environ.get("QTRUST_MODEL_PATH", DEFAULT_MODEL_PATH)
 # P0-3: wire v3 and real variants via env vars (ship empty by default, operator sets them)
 MODEL_PATH_V3 = os.environ.get("QTRUST_MODEL_PATH_V3", str(Path(__file__).resolve().parent / "model_gpu_v3.pt"))
 MODEL_PATH_DDP = os.environ.get("QTRUST_MODEL_PATH_DDP", str(Path(__file__).resolve().parent / "model_ddp_v3.pt"))
-MODEL_PATH_REAL = os.environ.get("QTRUST_PLANNER_MODEL_REAL", str(Path(__file__).resolve().parent / "model_gpu_v3_real.pt"))
+MODEL_PATH_REAL = os.environ.get("QTRUST_PLANNER_MODEL_REAL", str(Path(__file__).resolve().parent / "model_real_v3.pt"))
 RL_MODEL_PATH = os.environ.get("QTRUST_RL_MODEL_PATH", str(Path(__file__).resolve().parent / "rl_agent.pt"))
 RL_MODEL_PATH_REAL = os.environ.get("QTRUST_RL_MODEL_REAL", str(Path(__file__).resolve().parent / "rl_agent_real.pt"))
 DEADLINES_PATH = os.environ.get(
@@ -311,18 +363,22 @@ def _resolve_checkpoint_path() -> tuple[str | None, str]:
     Priority (post LayerNorm retrain — v3 τ 0.975 beats v2 τ 0.970 on
     the canonical seed=999 split):
         QTRUST_MODEL_PATH (explicit operator override) ->
+        model_real_v3.pt (QTRUST_PLANNER_MODEL_REAL, real-data v3) ->
         model_gpu_v3.pt (LayerNorm, best) -> model_ddp_v3.pt -> model.pt (v2)
-    Also supports QTRUST_PLANNER_MODEL_REAL when it exists.
     Returns (path, variant) or (None, reason).
     """
-    # Check real variant first if operator requested
+    # An explicit operator override must win over convenience defaults,
+    # including the real-data checkpoint. This makes rollback and canary
+    # selection deterministic instead of silently serving another artifact.
+    if MODEL_PATH != DEFAULT_MODEL_PATH:
+        if os.path.exists(MODEL_PATH):
+            return MODEL_PATH, "explicit"
+        return None, f"explicit model path does not exist: {MODEL_PATH}"
+
     if os.path.exists(MODEL_PATH_REAL):
         return MODEL_PATH_REAL, "v3_real"
     v2_default = str(Path(__file__).resolve().parent / "model.pt")
     candidates = []
-    if os.environ.get("QTRUST_MODEL_PATH") is not None:
-        # Operator explicitly pinned a checkpoint — honor it above defaults.
-        candidates.append((MODEL_PATH, "v2_explicit"))
     candidates.extend([
         (MODEL_PATH_V3, "v3_gpu"),
         (MODEL_PATH_DDP, "v3_ddp"),
@@ -510,14 +566,20 @@ def plan(req: PlanRequest) -> dict[str, Any]:
     if not _model_info:
         _load_model()
 
+    # P0: validate/coerce the CBOM up front so malformed assets fail with 422
+    # instead of detonating mid-request (bad key_size used to surface as a 500
+    # via int() in the fallback path below). The normalized copy also fixes a
+    # latent NameError: when the GNN forward raised after a partial parse, the
+    # old fallback rebuilt asset_records but never the graph `data`, so the
+    # request crashed when a model was loaded.
+    asset_records = _parse_assets(req.cbom)
     try:
         from qtrust_planner.predict import cbom_to_graph
-        data, asset_records = cbom_to_graph(req.cbom, req.deps)
-    except (ImportError, ValueError) as exc:
-        # Fallback: parse CBOM directly without PyG
-        assets = req.cbom.get("assets", [])
-        if not assets:
-            raise HTTPException(status_code=422, detail="CBOM has no assets") from exc
+        data, asset_records = cbom_to_graph({**req.cbom, "assets": asset_records}, req.deps)
+    except HTTPException:
+        raise
+    except (ImportError, ValueError, TypeError, KeyError, AttributeError):
+        # Fallback: build the graph-free view from the already-validated assets
         asset_records = [
             {
                 "index": i,
@@ -525,14 +587,15 @@ def plan(req: PlanRequest) -> dict[str, Any]:
                 "algorithm": a.get("algorithm", "unknown"),
                 "host": a.get("host", ""),
                 "port": a.get("port", 0),
-                "key_size": int(a.get("key_size", 0) or 0),
+                "key_size": a["key_size"],
                 "criticality": a.get("criticality", "Medium"),
                 "pqc_ready": bool(a.get("pqc_ready", False)),
             }
-            for i, a in enumerate(assets)
+            for i, a in enumerate(asset_records)
         ]
+        data = None
 
-    use_gnn = _model is not None
+    use_gnn = _model is not None and data is not None
 
     if use_gnn:
         import torch
@@ -620,9 +683,8 @@ def _rl_migration_order(req: PlanRequest) -> tuple[list[dict[str, Any]], str] | 
     except ImportError:
         return None
 
-    assets = req.cbom.get("assets", [])
-    if not assets:
-        raise HTTPException(status_code=422, detail="CBOM has no assets")
+    # Same shared validation gate as /plan — malformed assets → 422, not 500.
+    assets = _parse_assets(req.cbom)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Audit P-08: cache the loaded agent across requests (checkpoint is read
@@ -651,7 +713,7 @@ def _rl_migration_order(req: PlanRequest) -> tuple[list[dict[str, Any]], str] | 
     features = []
     for i, a in enumerate(assets):
         algorithm = a.get("algorithm", "unknown")
-        key_size = int(a.get("key_size", 0) or 0)
+        key_size = a["key_size"]
         criticality = a.get("criticality", "Medium")
         crit = crit_map.get(str(criticality).lower(), 2)
         features.append([
@@ -744,9 +806,9 @@ def rl_plan(req: PlanRequest) -> dict[str, Any]:
     if result is not None:
         migration_order, method = result
     else:
-        assets = req.cbom.get("assets", [])
-        if not assets:
-            raise HTTPException(status_code=422, detail="CBOM has no assets")
+        # Shared gate already validated/coerced the assets (malformed → 422),
+        # so the heuristic fallback below cannot hit int() on garbage.
+        assets = _parse_assets(req.cbom)
         records = [
             {
                 "index": i,
@@ -754,7 +816,7 @@ def rl_plan(req: PlanRequest) -> dict[str, Any]:
                 "algorithm": a.get("algorithm", "unknown"),
                 "host": a.get("host", ""),
                 "port": a.get("port", 0),
-                "key_size": int(a.get("key_size", 0) or 0),
+                "key_size": a["key_size"],
                 "criticality": a.get("criticality", "Medium"),
                 "pqc_ready": bool(a.get("pqc_ready", False)),
             }

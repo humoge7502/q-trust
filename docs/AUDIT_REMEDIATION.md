@@ -234,6 +234,14 @@ exports the same day; every fix ships with a regression test.
   ceiling; wired into every broadcast path; 12 unit tests. Env:
   `QTRUST_RELAYER_MIN_BALANCE_ETH`, `QTRUST_RELAYER_DAILY_SPEND_CAP_ETH`,
   `QTRUST_RELAYER_MAX_BASE_FEE_GWEI`.
+- **S-9**: backend `did:web` resolution now resolves each issuer host once,
+  rejects private/reserved addresses, connects to the validated IP directly,
+  disables redirects, validates the original hostname for TLS, and caps the
+  DID document response at 1 MiB. DID documents must match the issuer DID and
+  the proof's exact verification method/controller; binding failures report
+  `invalid_signature` (proof failure) rather than `did_resolution_failed`.
+  Regression coverage includes DNS-resolved private hosts and malformed
+  authority inputs.
 
 ### Documentation / publication honesty
 
@@ -264,3 +272,55 @@ exports the same day; every fix ships with a regression test.
 | frontend `npm run lint` | pass |
 | `ruff check .` | pass |
 | `sha256sum -c models.sha256` | 7/7 OK |
+| VC SSRF regression (`backend/tests/vc.test.ts`) | **16/16 pass** — pinned-transport, DNS-blocked, and malformed-authority cases all green |
+
+## 10. Full verification sweep (2026-09-06)
+
+Every CI gate was re-run locally on this checkout after the S-9 pass landed.
+Two latent defects surfaced and were fixed:
+
+1. **VC verificationMethod binding changed the forged-proof failure reason.**
+   The new binding check reported `did_resolution_failed` for a proof not
+   bound to the issuer DID; a typed `DidKeyBindingError` now routes that case
+   to `invalid_signature` (it is a proof failure, not a resolution failure).
+   Genuine resolution failures keep their distinct reason code.
+2. **Contract tamper tests were a per-digest lottery.** Flipping one bit of a
+   signature's `r` word usually still recovers to a random valid address
+   (the curve order is close to 2^256), so `test_RevertWhen_TamperedSignature`
+   in Audit/VendorRegistry either reverted with `ECDSAInvalidSignature` or
+   with `NotAuditor`/`NotVendor` depending on the digest — the AuditRegistry
+   variant failed in practice. Both tests now zero the `r` word (`(r=0, y)` is
+   never a valid secp256k1 point), making the revert deterministic on any
+   digest. No production contract change: authorization checks after recovery
+   were always enforced.
+
+Also fixed during the sweep: `planner/tests/test_server.py` referenced an
+unassigned `client` in the new override test.
+
+Measured matrix for this checkout (all commands executed locally):
+
+| Check | Result |
+|---|---|
+| `forge test` (contracts/) | **211/211 pass** (19 suites; count corrected from the stale "213" in docs) |
+| backend `vitest` | **104/104 pass** |
+| backend `typecheck` + `build` | pass |
+| frontend `eslint` + `vitest` | **95/95 pass**; production build emits |
+| backend + frontend `npm audit --audit-level=high` | **0 vulnerabilities** |
+| `pytest inspector/tests/` | **228 passed, 1 skip** |
+| `pytest sdk/tests/` | **64 passed, 1 skip** |
+| `pytest planner/tests/` | **58/58 pass** |
+| `pytest qtrust_ai/tests/` | **12/12 pass** |
+| Hypothesis property tests | pass |
+| SDK `mypy qtrust` (strict) | pass |
+| `ruff check .` | pass |
+| Planner CI gates: training smoke, eval harness, provenance gate, promotion gate | all pass (promotion: v3 τ 0.9753 > v2 τ 0.9703) |
+| `mkdocs build --strict` + docs-v2 `npm run docs:build` | pass |
+| `bash scripts/check_golive_blockers.sh` | pass |
+| `sha256sum -c models.sha256` | all OK |
+
+Documentation honesty repairs in the same sweep: `docs/CHANGELOG.md` was a
+stale divergent copy of the root changelog (missing the entire 09-03 pass) and
+is now a symlink like `docs/SECURITY.md`; the docs-v2 site's false "on PyPI"
+install instructions were corrected to "pending publication" (re-verified HTTP
+404 on the PyPI API 2026-09-06); and the Halmos status was updated from
+"report-only" to the blocking check it became in §8.

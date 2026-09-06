@@ -51,7 +51,7 @@ features:
   - icon: 🐍
     title: Python SDK
     details: >
-      qtrust-sdk on PyPI — register CBOMs, pin evidence to IPFS, score trust
+      Python SDK — register CBOMs, pin evidence to IPFS, score trust
       deterministically, issue W3C Verifiable Credentials.
     link: /packages/sdk
   - icon: 🛡️

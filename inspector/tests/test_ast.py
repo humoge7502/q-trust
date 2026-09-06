@@ -364,3 +364,61 @@ class TestBackendRunner:
             f.get("metadata", {}).get("detector") != "ast-python"
             for f in payload["findings"]
         )
+
+    def test_merge_dedupes_regex_family_vs_ast_variant(self):
+        """Regression: regex 'RSA' + AST 'RSA-2048' at one call site = 2 findings.
+
+        The regex layer reports the family, the AST layer the resolved variant;
+        the exact-key dedupe kept both. The AST finding must supersede the
+        same-family regex finding whose lines it covers.
+        """
+        regex_finding = AssetFinding(
+            asset_type="source_crypto_usage",
+            host="a.py",
+            algorithm="RSA",
+            metadata={"language": "python", "lines": ["1", "2"], "total_matches": 2},
+        )
+        ast_finding = AssetFinding(
+            asset_type="source_crypto_usage",
+            host="a.py",
+            algorithm="RSA-2048",
+            metadata={"line": 2, "detector": "ast-python"},
+        )
+        merged = merge_findings_dedupe([regex_finding], [ast_finding])
+        assert len(merged) == 1
+        assert merged[0].algorithm == "RSA-2048"
+
+    def test_merge_regex_survives_when_ast_cannot_resolve_family(self):
+        """Regex findings are family-level claims; they survive when the AST
+        layer resolves nothing of that family in the file (e.g. a language
+        the AST layer does not support)."""
+        regex_finding = AssetFinding(
+            asset_type="source_crypto_usage",
+            host="a.rb",
+            algorithm="RSA",
+            metadata={"language": "ruby", "lines": ["3"], "total_matches": 1},
+        )
+        ast_finding_other_file = AssetFinding(
+            asset_type="source_crypto_usage",
+            host="a.py",
+            algorithm="RSA-2048",
+            metadata={"line": 2},
+        )
+        merged = merge_findings_dedupe([regex_finding], [ast_finding_other_file])
+        assert [f.algorithm for f in merged] == ["RSA", "RSA-2048"]
+
+    def test_merge_never_collapses_distinct_algorithms(self):
+        """Different families at the same site are never merged."""
+        f1 = AssetFinding(asset_type="source_crypto_usage", host="a.py",
+                          algorithm="MD5", metadata={"line": 1})
+        f2 = AssetFinding(asset_type="source_crypto_usage", host="a.py",
+                          algorithm="RSA-2048", metadata={"line": 1})
+        assert len(merge_findings_dedupe([f1], [f2])) == 2
+
+    def test_ast_detects_rsa_newkeys(self, tmp_path):
+        """Regression: `import rsa; rsa.newkeys(2048)` was invisible to both
+        scanner layers (no regex pattern, `rsa` not a known crypto root)."""
+        (tmp_path / "app.py").write_text("import rsa\nrsa.newkeys(2048)\n")
+        findings = scan_source_directory_ast(str(tmp_path))
+        assert any(f.algorithm == "RSA-2048" for f in findings), \
+            f"expected RSA-2048 from rsa.newkeys(2048), got {[f.algorithm for f in findings]}"

@@ -279,7 +279,14 @@ contract VendorRegistryTest is Test {
         bytes memory sig = _sign(
             signer, vendorSk, "Prod-A", "2.0", "ML-KEM-768", true, "ipfs://QmE", 0
         );
-        sig[0] ^= 0x01; // flip a bit — must break recovery
+        // Zero the r word: (r=0, y) is never a valid secp256k1 point, so
+        // ecrecover fails deterministically for every digest. A single-bit
+        // flip is NOT deterministic — a flipped r still lands on the curve
+        // with overwhelming probability and recovers to a random address,
+        // turning this test into an authorization-revert lottery.
+        assembly ("memory-safe") {
+            mstore(add(sig, 0x20), 0)
+        }
 
         vm.prank(relayer);
         vm.expectRevert(ECDSA.ECDSAInvalidSignature.selector);

@@ -12,7 +12,7 @@ import {
   getMigration,
   getOrgSummary,
 } from "../services/verify.js";
-import { isValidAddress, isValidBytes32, isZeroAddress, CONTRACTS, publicClient, PLANNER_URL, PLANNER_API_KEY } from "../config.js";
+import { isValidAddress, isValidBytes32, isZeroAddress, CONTRACTS, publicClient, PLANNER_URL, PLANNER_API_KEY, parsePagination } from "../config.js";
 import { requireApiKey } from "../middleware/auth.js"; // REG-18: prevent unauthenticated compute amplification
 import {
   RevocationAnchorAbi,
@@ -63,22 +63,20 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
   app.get("/v1/orgs/:did/assets", async (request, reply) => {
     const did = validateDid((request.params as { did: string }).did, reply);
     if (!did) return;
-    const q = request.query as { offset?: string; limit?: string };
-    const offset = Math.max(0, Number(q.offset ?? 0));
-    const limit = Math.min(200, Math.max(1, Number(q.limit ?? 50)));
-    const page = await getAssetsByOrg(did as `0x${string}`, offset, limit);
+    const pageParams = parsePagination(request.query);
+    if (!pageParams) return reply.status(400).send({ error: "offset must be a non-negative integer and limit must be 1-200" });
+    const page = await getAssetsByOrg(did as `0x${string}`, pageParams.offset, pageParams.limit);
     return { org: did, ...page };
   });
 
   app.get("/v1/orgs/:did/migrations", async (request, reply) => {
     const did = validateDid((request.params as { did: string }).did, reply);
     if (!did) return;
-    const q = request.query as { offset?: string; limit?: string };
-    const offset = Math.max(0, Number(q.offset ?? 0));
-    const limit = Math.min(200, Math.max(1, Number(q.limit ?? 50)));
+    const pageParams = parsePagination(request.query);
+    if (!pageParams) return reply.status(400).send({ error: "offset must be a non-negative integer and limit must be 1-200" });
     const [progress, migrations, latestAudit] = await Promise.all([
       getMigrationProgress(did as `0x${string}`),
-      getMigrationsByOrg(did as `0x${string}`, offset, limit),
+      getMigrationsByOrg(did as `0x${string}`, pageParams.offset, pageParams.limit),
       getLatestAudit(did as `0x${string}`),
     ]);
     return { org: did, progress, migrations, latest_audit: latestAudit };
@@ -104,10 +102,9 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
   app.get("/v1/vendors/:did/attestations", async (request, reply) => {
     const did = validateDid((request.params as { did: string }).did, reply);
     if (!did) return;
-    const q = request.query as { offset?: string; limit?: string };
-    const offset = Math.max(0, Number(q.offset ?? 0));
-    const limit = Math.min(200, Math.max(1, Number(q.limit ?? 50)));
-    const page = await getVendorAttestations(did as `0x${string}`, offset, limit);
+    const pageParams = parsePagination(request.query);
+    if (!pageParams) return reply.status(400).send({ error: "offset must be a non-negative integer and limit must be 1-200" });
+    const page = await getVendorAttestations(did as `0x${string}`, pageParams.offset, pageParams.limit);
     return { vendor: did, ...page };
   });
 

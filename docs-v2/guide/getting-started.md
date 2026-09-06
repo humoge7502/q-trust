@@ -20,10 +20,11 @@ the tour below runs offline against hosts you already control.
 
 ## 5-minute tour: scan a TLS endpoint
 
-Install the inspector from PyPI:
+Install the inspector from a monorepo checkout (pending PyPI publication):
 
 ```bash
-pip install qtrust-inspector
+git clone https://github.com/humoge7502/q-trust && cd q-trust
+pip install -e ./inspector
 ```
 
 Scan a host you own or are authorized to test — say `example.com` — exporting
@@ -60,7 +61,7 @@ crypto-inspector deep-probe example.com --port 443
 
 ## Where to go next
 
-- [Installation](/guide/installation) — PyPI packages, monorepo checkout,
+- [Installation](/guide/installation) — source install (PyPI pending), monorepo checkout,
   and the Docker Compose profile.
 - [Architecture](/architecture/overview) — how the six subsystems connect,
   from scanner to Base L2.
