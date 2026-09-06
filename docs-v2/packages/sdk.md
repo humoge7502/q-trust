@@ -9,7 +9,7 @@ Python SDK for the Q-Trust protocol: register CBOMs on Base L2, pin evidence
 to IPFS, evaluate deterministic trust assessments, and issue/verify W3C
 Verifiable Credentials.
 
-- **PyPI:** <https://pypi.org/project/qtrust-sdk/> (v1.1.0)
+- **PyPI:** pending publication — [publish workflow](https://github.com/humoge7502/q-trust/blob/main/.github/workflows/publish-pypi.yml) (verified 404 on the PyPI API, 2026-09-03)
 - **Source:** [`sdk/`](https://github.com/humoge7502/q-trust/tree/main/sdk)
   — all examples below are mirrored from `sdk/README.md` and the package's
   docstrings.
@@ -17,8 +17,9 @@ Verifiable Credentials.
 ## Install
 
 ```bash
-pip install qtrust-sdk
-# or, from the monorepo:
+# Not yet on PyPI — install from the monorepo
+pip install -e ./sdk
+# dev extras:
 pip install -e "./sdk[dev]"
 ```
 

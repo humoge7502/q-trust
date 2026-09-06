@@ -1,8 +1,23 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { EventEmitter } from "node:events";
+import * as https from "node:https";
 import { ed25519 } from "@noble/curves/ed25519";
+
+vi.mock("node:https", () => ({ request: vi.fn() }));
+vi.mock("../src/services/webhook.js", async () => {
+  const actual = await vi.importActual<typeof import("../src/services/webhook.js")>("../src/services/webhook.js");
+  return {
+    ...actual,
+    resolvePublicAddress: vi.fn(async () => ({ address: "93.184.216.34", family: 4 })),
+  };
+});
+
 import { issueCredential, verifyCredential, signCredential, canonicalJson, publicKeyToDidKey, didKeyToPublicKey } from "../src/services/vc.js";
+import { resolvePublicAddress } from "../src/services/webhook.js";
 
 afterEach(() => {
+  delete process.env.QTRUST_DID_ALLOWED_HOSTS;
+  vi.clearAllMocks();
   vi.restoreAllMocks();
 });
 
@@ -36,6 +51,12 @@ describe("did:key helpers", () => {
 });
 
 describe("issueCredential", () => {
+  it("uses one stable issuer identity for credentials issued in one process", () => {
+    const first = issueCredential({ subject_did: "did:ethr:0x1" });
+    const second = issueCredential({ subject_did: "did:ethr:0x2" });
+    expect(second.issuer).toBe(first.issuer);
+  });
+
   it("produces a signed credential with an Ed25519Signature2020 proof", () => {
     const vc = issueCredential({
       subject_did: "did:ethr:0x1234",
@@ -121,11 +142,10 @@ describe("verifyCredential — fail-closed", () => {
     expect(result.reason).toBe("did_resolution_failed");
   });
 
-  it("resolves did:web issuers via HTTPS (DID document fetch)", async () => {
+  it("resolves did:web issuers via pinned HTTPS without following redirects", async () => {
     // Deterministic key for the mock did:web document.
     const priv = ed25519.utils.randomPrivateKey();
     const pub = ed25519.getPublicKey(priv);
-    const did = publicKeyToDidKey(pub);
     const vc = signCredential(
       {
         "@context": ["https://www.w3.org/ns/credentials/v2"],
@@ -138,6 +158,7 @@ describe("verifyCredential — fail-closed", () => {
       priv,
       pub,
     );
+    vc.proof!.verificationMethod = "did:web:qtrust.example#key-1";
     const doc = {
       "@context": "https://www.w3.org/ns/did/v1",
       id: "did:web:qtrust.example",
@@ -164,25 +185,75 @@ describe("verifyCredential — fail-closed", () => {
     payload.set(pub, 2);
     doc.verificationMethod[0].publicKeyMultibase = `z${base58.encode(payload)}`;
 
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => doc,
-    })));
+    interface MockResponse extends EventEmitter {
+      statusCode: number;
+      headers: Record<string, string>;
+      resume: () => void;
+      destroy: () => void;
+    }
+    interface MockRequest extends EventEmitter {
+      end: () => void;
+      destroy: (error?: Error) => MockRequest;
+    }
+
+    const response = new EventEmitter() as MockResponse;
+    response.statusCode = 200;
+    response.headers = {};
+    response.resume = vi.fn();
+    response.destroy = vi.fn();
+
+    let requestCallback: (response: MockResponse) => void = () => {
+      throw new Error("mock request callback was not installed");
+    };
+    const request = new EventEmitter() as MockRequest;
+    request.end = vi.fn(() => {
+      requestCallback(response);
+      response.emit("data", Buffer.from(JSON.stringify(doc)));
+      response.emit("end");
+    });
+    request.destroy = vi.fn((error?: Error) => {
+      if (error) request.emit("error", error);
+      return request;
+    });
+
+    vi.mocked(https.request).mockImplementation(((_options: unknown, callback: (response: MockResponse) => void) => {
+      requestCallback = callback;
+      return request;
+    }) as never);
 
     const result = await verifyCredential(vc);
     expect(result.valid).toBe(true);
     expect(result.checked.signature).toBe(true);
-    expect((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain(
-      "https://qtrust.example/.well-known/did.json",
-    );
+    const options = vi.mocked(https.request).mock.calls[0][0] as { hostname: string; servername: string; headers: { host: string } };
+    expect(options.hostname).toBe("93.184.216.34");
+    expect(options.servername).toBe("qtrust.example");
+    expect(options.headers.host).toBe("qtrust.example");
   });
 
-  it("rejects did:web issuers on forbidden SSRF hosts", async () => {
+  it("rejects did:web issuers when DNS resolves to a private address", async () => {
+    vi.mocked(resolvePublicAddress).mockRejectedValueOnce(new Error("blocked private address"));
     const vc = issueCredential({ subject_did: "did:ethr:0xabc" });
-    (vc as Record<string, unknown>).issuer = "did:web:localhost";
+    (vc as Record<string, unknown>).issuer = "did:web:attacker.example";
     const result = await verifyCredential(vc);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("did_resolution_failed");
+    expect(https.request).not.toHaveBeenCalled();
+  });
+
+  it("rejects did:web issuers on malformed or literal private hosts", async () => {
+    const vc = issueCredential({ subject_did: "did:ethr:0xabc" });
+    process.env.QTRUST_DID_ALLOWED_HOSTS = "example.com@127.0.0.1";
+    for (const issuer of [
+      "did:web:localhost",
+      "did:web:127.0.0.1",
+      "did:web:example.com@127.0.0.1",
+      "did:web:example.com:..:keys",
+      "did:web:example.com:keys/secret",
+    ]) {
+      (vc as Record<string, unknown>).issuer = issuer;
+      const result = await verifyCredential(vc);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe("did_resolution_failed");
+    }
   });
 });

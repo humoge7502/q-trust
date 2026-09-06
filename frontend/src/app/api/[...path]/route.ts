@@ -53,7 +53,6 @@ const ROUTE_POLICY: ReadonlyArray<{ prefix: string; methods: ReadonlySet<string>
   { prefix: "/v1/relay/nonce/", methods: new Set(["GET"]) },       // :did (read-only nonce fetch)
   { prefix: "/v1/relay/cbom-nonce/", methods: new Set(["GET"]) },
   { prefix: "/v1/relay/audit-nonce/", methods: new Set(["GET"]) },
-  { prefix: "/v1/webhooks/subscribers", methods: new Set(["GET"]) },
   // Stateless compute POSTs — no backend writes, safe to expose to the UI
   { prefix: "/v1/evaluate", methods: new Set(["POST"]) },
   { prefix: "/v1/risk/score", methods: new Set(["POST"]) },
@@ -69,11 +68,14 @@ function matchPolicy(pathName: string): ReadonlySet<string> | null {
   let best: ReadonlySet<string> | null = null;
   let bestLen = -1;
   for (const rule of ROUTE_POLICY) {
-    if (pathName === rule.prefix || pathName.startsWith(rule.prefix)) {
-      if (rule.prefix.length > bestLen) {
-        best = rule.methods;
-        bestLen = rule.prefix.length;
-      }
+    // Prefixes represent route segments, not arbitrary strings. Without the
+    // boundary check, `/v1/stats-private` would inherit `/v1/stats` access.
+    const matches = rule.prefix.endsWith("/")
+      ? pathName.startsWith(rule.prefix)
+      : pathName === rule.prefix || pathName.startsWith(`${rule.prefix}/`);
+    if (matches && rule.prefix.length > bestLen) {
+      best = rule.methods;
+      bestLen = rule.prefix.length;
     }
   }
   return best;

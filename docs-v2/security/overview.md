@@ -39,13 +39,14 @@ tampering is detectable without a blockchain write per record.
 
 ## Verification & automation
 
-- **213 contract tests** pass under Foundry's strict invariant config
+- **211 contract tests** pass under Foundry's strict invariant config
   (`runs=1000, depth=100, fail_on_revert=true`), including invariant,
   fuzz, attack-scenario and upgrade state-preservation suites
   (see `CHANGELOG.md`).
-- **Symbolic execution:** Halmos runs in CI — currently in
-  *report-only* mode (the shared invariant `setUp` is not yet
-  halmos-clean; see `.github/workflows/halmos.yml`).
+- **Symbolic execution:** Halmos runs in CI as a *blocking* check on a
+  dedicated `RegistrySymbolicTest` suite (raw implementations, ~1.4 s —
+  see `.github/workflows/halmos.yml`); the proxy-based stateful fuzz
+  invariants remain covered by forge.
 - **Continuous scanning:** Slither (gated on HIGH findings), Semgrep SAST and
   CodeQL run on every push/PR plus a daily schedule
   (`.github/workflows/security.yml`), with SARIF uploaded to GitHub

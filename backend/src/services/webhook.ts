@@ -134,17 +134,22 @@ export function isPrivateIp(address: string): boolean {
 
 /**
  * Resolve the hostname ONCE and validate every returned address.
- * Returns a public IP to connect to directly (prevents DNS rebinding:
- * the connection cannot silently re-resolve to an internal address).
+ * Returns the selected address to connect to directly (prevents DNS
+ * rebinding: the connection cannot silently re-resolve to another address).
+ * `allowPrivate` is reserved for an explicit, operator-configured internal DID
+ * allowlist; webhook delivery always uses the default strict mode.
  */
-export async function resolvePublicAddress(hostname: string): Promise<{ address: string; family: number }> {
+export async function resolvePublicAddress(
+  hostname: string,
+  allowPrivate = false,
+): Promise<{ address: string; family: number }> {
   const results = await dns.promises.lookup(hostname, { all: true });
   if (!results.length) {
     throw new Error(`DNS resolution returned no addresses for ${hostname}`);
   }
   for (const { address } of results) {
-    if (isPrivateIp(address)) {
-      throw new Error(`Webhook hostname ${hostname} resolves to a blocked (private/reserved) address`);
+    if (!allowPrivate && isPrivateIp(address)) {
+      throw new Error(`Hostname ${hostname} resolves to a blocked (private/reserved) address`);
     }
   }
   return results[0];

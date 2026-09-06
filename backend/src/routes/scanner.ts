@@ -262,6 +262,19 @@ const EVIDENCE_DB_PATH =
 
 const evidenceChain: LedgerEntry[] = [];
 
+/** Keep request history bounded; the evidence ledger is the durable record. */
+const MAX_SCAN_HISTORY_LENGTH = 10_000;
+
+function recordScanHistory(
+  history: Array<{ targetHash: string; type: string; timestamp: string; count: number }>,
+  entry: { targetHash: string; type: string; timestamp: string; count: number },
+): void {
+  history.push(entry);
+  if (history.length > MAX_SCAN_HISTORY_LENGTH) {
+    history.shift();
+  }
+}
+
 /** Load persisted chain entries from the JSONL evidence log at module init. */
 function loadEvidenceChain(): void {
   if (!existsSync(EVIDENCE_DB_PATH)) {
@@ -363,21 +376,28 @@ function generateEvidenceLedger(data: {
 
 /** Re-compute every hash and validate the whole chain. Returns a reason on any mismatch/tamper. */
 function verifyEvidenceChain(entries: LedgerEntry[]): { valid: boolean; reason?: string; failedIndex?: number } {
+  if (entries.length === 0) return { valid: true };
+
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     if (typeof entry.chainIndex !== "number" || typeof entry.previousHash !== "string") {
-      return { valid: false, reason: "malformed_entry", failedIndex: i };
+      return { valid: false, reason: "malformed_entry", failedIndex: entry.chainIndex ?? i };
     }
-    const expectedPrevious = i === 0 ? GENESIS_HASH : entries[i - 1].integrityHash;
+    // The in-memory view may intentionally start after an evicted prefix. The
+    // retained first entry must still point to a valid predecessor; its own
+    // predecessor is not available for local verification.
+    const expectedPrevious = i === 0
+      ? (entry.chainIndex === 0 ? GENESIS_HASH : entry.previousHash)
+      : entries[i - 1].integrityHash;
     if (entry.previousHash !== expectedPrevious) {
-      return { valid: false, reason: "previous_hash_mismatch", failedIndex: i };
+      return { valid: false, reason: "previous_hash_mismatch", failedIndex: entry.chainIndex };
     }
-    if (entry.chainIndex !== i) {
-      return { valid: false, reason: "chain_index_mismatch", failedIndex: i };
+    if (i > 0 && entry.chainIndex !== entries[i - 1].chainIndex + 1) {
+      return { valid: false, reason: "chain_index_mismatch", failedIndex: entry.chainIndex };
     }
     const recomputed = computeIntegrityHash(entry);
     if (recomputed !== entry.integrityHash) {
-      return { valid: false, reason: "integrity_hash_mismatch", failedIndex: i };
+      return { valid: false, reason: "integrity_hash_mismatch", failedIndex: entry.chainIndex };
     }
   }
   return { valid: true };
@@ -430,7 +450,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
-    scanHistory.push({ targetHash: hashTarget(resolvedDir), type: "source", timestamp: new Date().toISOString(), count: findings.length });
+    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedDir), type: "source", timestamp: new Date().toISOString(), count: findings.length });
     return { directory: publicScanTarget(resolvedDir), findings, scanType: "source", timestamp: new Date().toISOString() };
   });
 
@@ -463,7 +483,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
-    scanHistory.push({ targetHash: hashTarget(resolvedDir), type: "manifests", timestamp: new Date().toISOString(), count: findings.length });
+    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedDir), type: "manifests", timestamp: new Date().toISOString(), count: findings.length });
     return { directory: publicScanTarget(resolvedDir), findings, scanType: "manifests", timestamp: new Date().toISOString() };
   });
 
@@ -506,7 +526,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const allFindings = Array.isArray(result.findings) ? result.findings : [];
-    scanHistory.push({ targetHash: hashTarget(resolvedTarget), type: "full", timestamp: new Date().toISOString(), count: allFindings.length });
+    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedTarget), type: "full", timestamp: new Date().toISOString(), count: allFindings.length });
     return { target: publicScanTarget(resolvedTarget), findings: allFindings, scanType: "full", timestamp: new Date().toISOString() };
   });
 
@@ -652,7 +672,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
 
     // 3. If this entry was issued by this node, confirm it still matches the
     //    chain entry at its index (detects tampering of historical entries).
-    const known = evidenceChain[ledger.chainIndex];
+    const known = evidenceChain.find((entry) => entry.chainIndex === ledger.chainIndex);
     if (known && known.integrityHash !== ledger.integrityHash) {
       return {
         valid: false,
@@ -664,7 +684,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return {
         valid: false,
         reason: "unknown_chain_index",
-        detail: `No ledger entry exists at chainIndex ${ledger.chainIndex} on this node`,
+        detail: `No retained ledger entry exists at chainIndex ${ledger.chainIndex} on this node`,
       };
     }
 

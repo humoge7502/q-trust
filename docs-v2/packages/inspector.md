@@ -10,15 +10,16 @@ discover, score, comply, plan. The CLI is `crypto-inspector` (Typer +
 Rich — every command below is the real invocation pattern from
 `inspector/qtrust_inspector/cli.py`).
 
-- **PyPI:** <https://pypi.org/project/qtrust-inspector/> (v1.1.0)
+- **PyPI:** pending publication — [publish workflow](https://github.com/humoge7502/q-trust/blob/main/.github/workflows/publish-pypi.yml) (verified 404 on the PyPI API, 2026-09-03)
 - **Source:** [`inspector/`](https://github.com/humoge7502/q-trust/tree/main/inspector)
 
 ## Install
 
 ```bash
-pip install qtrust-inspector
+# Not yet on PyPI — install from source
+pip install -e ./inspector
 # extras: [net] adds nmap network scans, [ml] adds PyTorch detectors
-pip install "qtrust-inspector[net,ml]"
+pip install -e "./inspector[net,ml]"
 ```
 
 ## Scanning

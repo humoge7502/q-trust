@@ -5,15 +5,17 @@ outline: [2, 3]
 
 # Installation
 
-Q-Trust ships as two PyPI packages plus a monorepo for contributors. Install
-the packages for scanning and on-chain work; clone the monorepo only if you
-plan to change Q-Trust itself.
+Q-Trust ships as a monorepo with two packaged Python components. The PyPI
+packages are pending publication (verified 404 on the PyPI API, 2026-09-03),
+so install from a checkout for now; clone the monorepo to change Q-Trust
+itself.
 
-## From PyPI (recommended)
+## From source (required until PyPI publication)
 
 ```bash
-pip install qtrust-inspector   # scanner CLI: crypto-inspector
-pip install qtrust-sdk         # on-chain client, trust & VC engines
+git clone https://github.com/humoge7502/q-trust && cd q-trust
+pip install -e ./inspector      # scanner CLI: crypto-inspector
+pip install -e ./sdk            # on-chain client, trust & VC engines
 ```
 
 Optional inspector extras: `qtrust-inspector[net]` adds nmap-based network

@@ -254,8 +254,8 @@ app.add_middleware(ApiKeyMiddleware)
 #
 #   Resolution priority (see _resolve_checkpoint_path):
 #       QTRUST_MODEL_PATH (explicit operator override) →
-#       model_gpu_v3.pt (best) → model_ddp_v3.pt → model.pt (v2 legacy) →
-#       heuristic fallback.
+#       model_real_v3.pt (real-data v3) → model_gpu_v3.pt (best) →
+#       model_ddp_v3.pt → model.pt (v2 legacy) → heuristic fallback.
 #   The /health endpoint reports the served ``variant`` and
 #   ``eval_metrics.kendall`` so the trade-off is always visible.
 #
@@ -263,11 +263,12 @@ app.add_middleware(ApiKeyMiddleware)
 #   "Promotion gate — v3 must beat canonical v2 before serving default"
 #   fails the build if a future checkpoint regresses below canonical v2.
 # ---------------------------------------------------------------------------
-MODEL_PATH = os.environ.get("QTRUST_MODEL_PATH", str(Path(__file__).resolve().parent / "model.pt"))
+DEFAULT_MODEL_PATH = str(Path(__file__).resolve().parent / "model.pt")
+MODEL_PATH = os.environ.get("QTRUST_MODEL_PATH", DEFAULT_MODEL_PATH)
 # P0-3: wire v3 and real variants via env vars (ship empty by default, operator sets them)
 MODEL_PATH_V3 = os.environ.get("QTRUST_MODEL_PATH_V3", str(Path(__file__).resolve().parent / "model_gpu_v3.pt"))
 MODEL_PATH_DDP = os.environ.get("QTRUST_MODEL_PATH_DDP", str(Path(__file__).resolve().parent / "model_ddp_v3.pt"))
-MODEL_PATH_REAL = os.environ.get("QTRUST_PLANNER_MODEL_REAL", str(Path(__file__).resolve().parent / "model_gpu_v3_real.pt"))
+MODEL_PATH_REAL = os.environ.get("QTRUST_PLANNER_MODEL_REAL", str(Path(__file__).resolve().parent / "model_real_v3.pt"))
 RL_MODEL_PATH = os.environ.get("QTRUST_RL_MODEL_PATH", str(Path(__file__).resolve().parent / "rl_agent.pt"))
 RL_MODEL_PATH_REAL = os.environ.get("QTRUST_RL_MODEL_REAL", str(Path(__file__).resolve().parent / "rl_agent_real.pt"))
 DEADLINES_PATH = os.environ.get(
@@ -311,18 +312,22 @@ def _resolve_checkpoint_path() -> tuple[str | None, str]:
     Priority (post LayerNorm retrain — v3 τ 0.975 beats v2 τ 0.970 on
     the canonical seed=999 split):
         QTRUST_MODEL_PATH (explicit operator override) ->
+        model_real_v3.pt (QTRUST_PLANNER_MODEL_REAL, real-data v3) ->
         model_gpu_v3.pt (LayerNorm, best) -> model_ddp_v3.pt -> model.pt (v2)
-    Also supports QTRUST_PLANNER_MODEL_REAL when it exists.
     Returns (path, variant) or (None, reason).
     """
-    # Check real variant first if operator requested
+    # An explicit operator override must win over convenience defaults,
+    # including the real-data checkpoint. This makes rollback and canary
+    # selection deterministic instead of silently serving another artifact.
+    if MODEL_PATH != DEFAULT_MODEL_PATH:
+        if os.path.exists(MODEL_PATH):
+            return MODEL_PATH, "explicit"
+        return None, f"explicit model path does not exist: {MODEL_PATH}"
+
     if os.path.exists(MODEL_PATH_REAL):
         return MODEL_PATH_REAL, "v3_real"
     v2_default = str(Path(__file__).resolve().parent / "model.pt")
     candidates = []
-    if os.environ.get("QTRUST_MODEL_PATH") is not None:
-        # Operator explicitly pinned a checkpoint — honor it above defaults.
-        candidates.append((MODEL_PATH, "v2_explicit"))
     candidates.extend([
         (MODEL_PATH_V3, "v3_gpu"),
         (MODEL_PATH_DDP, "v3_ddp"),

@@ -96,6 +96,22 @@ def test_health_reports_ok_and_model_mode():
     assert body["model"]["mode"] in {"heuristic_fallback", "heuristic", "gnn"}
 
 
+def test_explicit_model_override_is_authoritative():
+    model_path = PLANNER_ROOT / "model_gpu_v3.pt"
+    if not model_path.exists():
+        pytest.skip("tracked planner checkpoint is unavailable")
+    client = _make_client()
+    server_module = sys.modules["server"]
+    # Mutate the loaded configuration to model an operator-provided rollback
+    # or canary path without relying on module-cache/environment ordering.
+    server_module.MODEL_PATH = str(model_path)
+
+    resolved, variant = server_module._resolve_checkpoint_path()
+    assert resolved == str(model_path)
+    assert variant == "explicit"
+    assert client.get("/health").status_code == 200
+
+
 def test_plan_happy_path_returns_ordered_assets():
     client = _make_client()
     res = client.post("/plan", json=_cbom_payload())

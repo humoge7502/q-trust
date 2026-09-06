@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — verification sweep (2026-09-06)
+
+Every CI gate was re-run locally on this checkout; the failures below were
+found and fixed during that sweep, each with a regression test.
+
+- **Planner checkpoint override is authoritative.** An operator-set
+  `QTRUST_MODEL_PATH` now wins over the convenience defaults (real-data v3,
+  GPU v3, DDP, RL), making rollback/canary selection deterministic instead of
+  silently serving another artifact; a nonexistent explicit path fails loudly.
+  The Compose stack and planner image default to the tracked real-data
+  checkpoint (`model_real_v3.pt`).
+- **Backend list endpoints validate pagination.** `parsePagination` rejects
+  malformed, fractional, negative, or unsafe-integer `offset`/`limit` values
+  with a 400 instead of `Number()` coercion producing NaN/Infinity or
+  silently changing paging semantics (orgs assets/migrations, vendor
+  attestations).
+- **Scanner memory + evidence-chain verification.** The in-memory scan
+  history is bounded (10,000 entries; the JSONL evidence ledger remains the
+  durable record), and `verifyEvidenceChain`/ledger verification now handle
+  evicted chain prefixes correctly, look up entries by `chainIndex` (not
+  array position), and report the true `chainIndex` in `failedIndex`.
+- **`/health` is liveness again.** Missing relayer signing credentials no
+  longer turn startup probes into 500s; the relayer is reported as `null`
+  and transaction routes still fail closed on first use.
+- **Frontend proxy allowlist matches path segments.** `/v1/stats-private` no
+  longer inherits `/v1/stats` access, and the webhook subscriber listing was
+  removed from the public allowlist.
+- **Contract tamper tests are deterministic.** The Audit/VendorRegistry
+  tampered-signature tests zeroed the signature's `r` word instead of a
+  single-bit flip: a flipped `r` still lands on the curve with overwhelming
+  probability and recovers to a random address, which made the expected
+  revert a per-digest lottery (the AuditRegistry case failed in practice).
+  No production contract changes — authorization checks after recovery were
+  always enforced.
+
 ### Fixed — due-diligence remediation pass (2026-09-03)
 
 All findings below come from the September 2026 due-diligence report; each fix
@@ -79,6 +114,16 @@ registry CSV exports the same day.
   via `QTRUST_RELAYER_MIN_BALANCE_ETH` / `QTRUST_RELAYER_DAILY_SPEND_CAP_ETH`
   / `QTRUST_RELAYER_MAX_BASE_FEE_GWEI` (unset = disabled, so anvil dev is
   unaffected). A drained relayer now fails loudly, not silently.
+- **S-9 — backend `did:web` SSRF and key-binding hardening.** VC issuer
+  resolution now resolves DNS once, rejects private/reserved addresses, dials
+  the validated IP directly, preserves hostname-based TLS verification, follows
+  no redirects, and caps DID documents at 1 MiB. DID documents must match the
+  issuer DID and the proof's exact verification method/controller; a proof that
+  is not bound to the issuer fails under `invalid_signature`, not
+  `did_resolution_failed`. Additionally, the issuer key is resolved once per
+  process (stable identity across credentials), and production refuses to
+  start VC issuance without a 32-byte hex `QTRUST_VC_ISSUER_KEY`. Regression
+  coverage includes DNS-resolved private hosts and malformed authority inputs.
 - **D-1 — README PyPI claims corrected.** `qtrust-sdk` / `qtrust-inspector`
   were re-verified as HTTP 404 on the PyPI API (2026-09-03); the fake PyPI
   badges are replaced with an honest "pending publication" badge, and the
@@ -212,15 +257,17 @@ Principal-level audit P0: `/v1/credentials/verify` previously returned
   `@scure/base`): Ed25519Signature2020 signing, canonical payload
   byte-compatible with the Python SDK (`sort_keys` + compact separators +
   ensure_ascii — verified byte-identical), did:key (offline) and did:web
-  (HTTPS with SSRF guard) resolution.
+  (HTTPS with DNS-pinned SSRF protection) resolution.
 - **`/v1/credentials/issue`** now signs a real credential under the backend's
   did:key issuer (`QTRUST_VC_ISSUER_KEY`).
 - **`/v1/credentials/verify`** now verifies structure + expiry + signature
   against the issuer DID and returns a structured per-check result.
 - Cross-language verified both ways: backend-issued VC verifies in the Python
   SDK (`qtrust.vc.VCVerifier`) and SDK-issued VC verifies in the backend.
-- Test coverage: `backend/tests/vc.test.ts` (14 tests — round-trip, tamper,
-  forged-key, unsigned, expired, missing fields, did:web, SSRF guard).
+- Test coverage: `backend/tests/vc.test.ts` (16 tests — round-trip, tamper,
+  forged-key, unsigned, expired, missing fields, pinned did:web transport,
+  DNS-resolved SSRF, and malformed-authority guards). The forged-key case
+  surfaces as `invalid_signature` under the verificationMethod binding check.
 
 ### Security — external codebase audit remediation (2026-08-26)
 

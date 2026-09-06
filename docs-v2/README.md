@@ -29,7 +29,7 @@ docs-v2/
 ├── guide/                     # getting-started.md, installation.md
 ├── architecture/overview.md   # six subsystems + dataflow diagram
 ├── security/overview.md       # EIP-712, UUPS+timelock, testing, disclosure
-├── packages/                  # sdk.md, inspector.md (real PyPI usage)
+├── packages/                  # sdk.md, inspector.md (real CLI/SDK usage)
 ├── MIGRATION.md               # mkdocs → VitePress switchover runbook
 └── README.md                  # this file
 ```
