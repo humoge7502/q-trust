@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Improved — Design-craft pass with impeccable / taste-skill / animation skills (2026-09-06)
+
+Applied three external design-skill collections (pbakaus/impeccable,
+Leonxlnx/taste-skill, emilkowalski/skills) as audits against the frontend,
+fixing only what survived their gates.
+
+- **Essential feedback under reduced motion:** the global
+  `prefers-reduced-motion` kill-switch (0.01ms) also froze loading spinners and
+  pending indicators, making a working app look hung. They now run slowed
+  (1.5s) instead of frozen; decorative motion stays fully disabled.
+- **Button press feedback:** the `Button` primitive had no `:active` state.
+  Added `active:scale-[0.98]` at 150ms ease-out with an explicit
+  `transition-[...]` property list (no `transition: all`).
+- **Transaction status bridge:** `TxStatus` state swaps teleported. State
+  changes now crossfade via a 200ms `tx-bridge` animation (repo's own
+  `cubic-bezier(0.16, 1, 0.3, 1)` family), remount-keyed on state; reduced
+  motion gets the instant swap.
+- **Copy hygiene:** removed em-dashes from user-visible strings (page titles,
+  meta descriptions, scanner copy) and a version-suffix tell from the hero
+  eyebrow ("Q-Trust protocol / 02.0" → "Q-Trust protocol"), per the
+  taste-skill pre-flight gates.
+- **Deliberately NOT added** (restraint documented by the animation-opportunity
+  gate): motion on dashboard data panels, risk gauge, or provenance graph
+  (functional data; decoration hinders), toast enter animation (component has
+  no render site), nav/hover choreography (frequency tier too high).
+- Verified: 95 vitest, 16 Playwright (desktop + mobile + a11y), tsc, lint.
+
 ### Added — Deep verification pass (2026-09-06)
 
 Autonomous multi-agent verification cycle: ML validity audit, Docker build/run

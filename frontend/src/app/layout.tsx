@@ -9,7 +9,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Q-Trust — PQC Migration Coordinator",
+    default: "Q-Trust: PQC Migration Coordinator",
     template: "%s · Q-Trust",
   },
   description:
@@ -20,18 +20,18 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "Q-Trust — PQC Migration Coordinator",
+    title: "Q-Trust: PQC Migration Coordinator",
     description: "Scan your estate, score it against NIST and CNSA 2.0 timelines, rank migration with a GNN planner, and anchor evidence on Base L2.",
     url: "https://humoge7502.github.io/q-trust",
     siteName: "Q-Trust",
-    images: [{ url: "/assets/dashboard.png", width: 1200, height: 630, alt: "Q-Trust dashboard — risk gauge, compliance panel and provenance graph" }],
+    images: [{ url: "/assets/dashboard.png", width: 1200, height: 630, alt: "Q-Trust dashboard: risk gauge, compliance panel and provenance graph" }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Q-Trust — PQC Migration Coordinator",
-    description: "PQC migration protocol for real cryptography estates — scan, score, plan, attest on Base L2.",
+    title: "Q-Trust: PQC Migration Coordinator",
+    description: "PQC migration protocol for real cryptography estates: scan, score, plan, attest on Base L2.",
     images: ["/assets/dashboard.png"],
   },
 };
