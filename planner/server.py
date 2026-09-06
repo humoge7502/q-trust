@@ -37,7 +37,19 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Q-Trust Planner", version="0.3.0", lifespan=lifespan)
+# FASTAPI-OPENAPI-001: interactive docs and the OpenAPI schema are disabled in
+# production (they enumerate every route for anyone who can reach the service)
+# and stay available in dev for local docker-compose workflows.
+_IS_PROD_EARLY = os.environ.get("NODE_ENV", "").lower() in {"production", "prod"} or \
+    os.environ.get("QTRUST_ENV", "").lower() == "production"
+app = FastAPI(
+    title="Q-Trust Planner",
+    version="0.3.0",
+    lifespan=lifespan,
+    docs_url=None if _IS_PROD_EARLY else "/docs",
+    redoc_url=None if _IS_PROD_EARLY else "/redoc",
+    openapi_url=None if _IS_PROD_EARLY else "/openapi.json",
+)
 
 logger = logging.getLogger("qtrust_planner.server")
 

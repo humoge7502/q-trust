@@ -295,13 +295,28 @@ export function subscribeWebhook(
 /**
  * Fetch IPFS metadata (CORS-enabled public gateway by default).
  * Pass a custom gateway via NEXT_PUBLIC_IPFS_GATEWAY.
+ *
+ * SSRF hardening: metadata_uri is attacker-influenceable (it is set on-chain
+ * by the asset registrar and relayed through the read model). This function
+ * runs server-side, so the CID must be strictly validated before it is ever
+ * concatenated onto the gateway URL — anything that is not a bare CIDv0/CIDv1
+ * is rejected instead of fetched.
  */
+const CID_V0 = /^Qm[1-9A-HJ-NP-Za-km-z]{44}$/;
+const CID_V1 = /^b[a-z2-7]{58,}$/; // base32-encoded CIDv1
+
+export function isValidIpfsCid(cidOrUri: string): boolean {
+  const cid = cidOrUri.replace(/^ipfs:\/\//, "");
+  return CID_V0.test(cid) || CID_V1.test(cid);
+}
+
 export async function fetchIpfsJson(cidOrUri: string): Promise<Record<string, unknown> | null> {
   const gateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "https://ipfs.io/ipfs/";
   const cid = cidOrUri.replace(/^ipfs:\/\//, "");
+  if (!isValidIpfsCid(cid)) return null;
   const url = `${gateway}${cid}`;
   try {
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(url, { cache: "no-store", redirect: "error" });
     if (!response.ok) return null;
     return (await response.json()) as Record<string, unknown>;
   } catch {

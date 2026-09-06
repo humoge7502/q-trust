@@ -235,3 +235,22 @@ def test_api_key_fail_closed_in_production_when_unset():
     client = _make_client(QTRUST_PLANNER_API_KEY=None, NODE_ENV="production")
     res = client.post("/plan", json=_cbom_payload())
     assert res.status_code == 503
+
+
+# ---------------------------------------------------------------------------
+# FASTAPI-OPENAPI-001 (threat-model pass): docs/OpenAPI must not be exposed in
+# production. Dev keeps them for docker-compose workflows.
+# ---------------------------------------------------------------------------
+
+
+def test_docs_disabled_in_production():
+    client = _make_client(QTRUST_PLANNER_API_KEY=None, NODE_ENV="production")
+    assert client.get("/docs").status_code == 404
+    assert client.get("/redoc").status_code == 404
+    assert client.get("/openapi.json").status_code == 404
+
+
+def test_docs_available_in_dev():
+    client = _make_client(QTRUST_PLANNER_API_KEY=None)
+    assert client.get("/docs").status_code == 200
+    assert client.get("/openapi.json").status_code == 200
