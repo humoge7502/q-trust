@@ -311,7 +311,7 @@ jobs:
         env:
           NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: 00000000000000000000000000000000
           NEXT_PUBLIC_QTRUST_API_URL: http://localhost:3001
-        run: npx playwright test --project=desktop-chromium
+        run: npx playwright test --project=desktop-chromium --project=mobile-chromium
 
   abi-drift:
     name: ABI Bindings Match Forge Artifacts
