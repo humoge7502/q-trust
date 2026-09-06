@@ -71,3 +71,21 @@ Measured through the Python bridge directly (`backend/scripts/gpu_bridge.py`):
 | Shor order-finding, N=35 (18-qubit circuit, CPU Aer) | 0.78 s |
 | Quantum order-finding, N=77 (a=2, r=30 verified) | 3.0 s |
 | GNN v3 evaluation, 150 graphs | 1.6 s |
+
+## Planner microservice latency (`/plan`, 2026-09-06)
+
+Measured against the shipped `model_real_v3.pt` GNN checkpoint, single
+uvicorn worker, sequential requests (150 samples per size after 5 warmups),
+same host as the service. The validation gate (`_parse_assets`, added in the
+adversarial-API pass) runs before feature construction; no regression was
+measured from it.
+
+| CBOM assets | p50 | p95 | max |
+|---|---|---|---|
+| 50 | 28.0 ms | 43.2 ms | 50.9 ms |
+| 500 | 67.0 ms | 281.9 ms | 537.4 ms |
+| 2,000 | 123.3 ms | 337.2 ms | 346.8 ms |
+
+Reproduce: start the planner with `QTRUST_RATE_LIMIT_MAX` raised, then time
+`POST /plan` with synthetic CBOMs (see `docs/TRUTH_AUDIT.md` for the benchmark
+culture — no numbers in this repo are estimates).
