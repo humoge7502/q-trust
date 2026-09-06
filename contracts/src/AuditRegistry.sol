@@ -9,12 +9,13 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "./MigrationRegistry.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title AuditRegistry — third-party audit attestations
 /// @notice Auditors post attestations that they reviewed an organization's PQC
 ///         migration posture. Supports EIP-712 gasless posting and UUPS proxy
 ///         upgradeability.
-contract AuditRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract AuditRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error AuditNotFound(bytes32 auditId);
     error DuplicateAudit(bytes32 auditId);

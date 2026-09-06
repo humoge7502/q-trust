@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title SchemaRegistry — register and query credential schemas
 /// @notice Issuers and verifiers reference schemas by URN. The registry resolves
 ///         schemas to their JSON Schema documents and tracks versions.
 ///         Schemas can have cross-domain equivalence mappings.
 ///         Supports UUPS proxy upgradeability.
-contract SchemaRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract SchemaRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error SchemaNotFound(string schemaId);
     error SchemaAlreadyExists(string schemaId);

@@ -8,15 +8,7 @@ import {AssetRegistry} from "./AssetRegistry.sol";
 import {VendorRegistry} from "./VendorRegistry.sol";
 import {MigrationRegistry} from "./MigrationRegistry.sol";
 import {AuditRegistry} from "./AuditRegistry.sol";
-
-/**
- * @title IPausable
- * @notice Minimal interface for pausable contracts used by governance.
- */
-interface IPausable {
-    function pause() external;
-    function unpause() external;
-}
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /**
  * @title QTrustGovernance

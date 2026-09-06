@@ -8,7 +8,7 @@ import { createPublicClient, http, type Address, type Chain } from "viem";
 import { baseSepolia, base } from "viem/chains";
 import * as dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 export class ConfigError extends Error {
   constructor(message: string) {

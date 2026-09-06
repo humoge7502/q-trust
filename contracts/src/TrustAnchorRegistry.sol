@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "./lib/StringBounds.sol";
+import {IPausable} from "./interfaces/IPausable.sol";
 
 /// @title TrustAnchorRegistry — issuer accreditation and trust anchor management
 /// @notice Trust anchors (governance multisig) accredit issuers. VCs issued by
 ///         non-accredited issuers are rejected by verifiers. The registry tracks
 ///         which issuers are accredited, their scope, and revocation status.
 ///         Supports UUPS proxy upgradeability.
-contract TrustAnchorRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable {
+contract TrustAnchorRegistry is AccessControl, ReentrancyGuard, Pausable, Initializable, UUPSUpgradeable, IPausable {
 
     error IssuerNotAccredited(address issuer);
     error IssuerAlreadyAccredited(address issuer);

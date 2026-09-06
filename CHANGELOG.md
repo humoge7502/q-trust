@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Deep verification pass (2026-09-06)
+
+Autonomous multi-agent verification cycle: ML validity audit, Docker build/run
+validation, and static analysis of the smart contracts.
+
+- **Contracts (hardening):** extracted `IPausable` into
+  `src/interfaces/IPausable.sol`; all 10 governable registries now inherit it,
+  so the governance↔registry pause contract is checked by the compiler instead
+  of by convention (resolves Slither `missing-inheritance` for all project
+  sources; remaining Slither findings are in vendored OpenZeppelin or are
+  intentional zero-value sentinel patterns). New invariant test
+  `PausabilityInvariant.t.sol` pins every governable contract to the interface.
+- **Backend (log hygiene):** all five `dotenv.config()` calls now use
+  `{ quiet: true }`, removing dotenv v17's promotional "tip" banners from
+  production container logs.
+- **Docs (evidence):** `docs/TRUTH_AUDIT.md` discovery row corrected to the
+  empirically verified split (38 repos → 30 train / 8 eval, seed 42;
+  11,558 / 2,415 files — reproduced by re-running `_code_splits`), and the
+  unverifiable "4-epoch" qualifier replaced with the script default
+  (`--hf-epochs 2`). New recorded leakage audit: repo-level split integrity
+  confirmed, zero repo overlap; cross-repo exact duplicates affect 58/13,973
+  files (0.4%), full-record train/eval overlap 11 files (0.46% of eval) —
+  organic, bounded well below the claimed 0.11 F1 gain.
+- **Validation performed (no code change):** planner Docker image built and
+  probed live (health, `/plan`, 422 validation, auth); backend Docker image
+  built and run through its fail-closed startup gates (CORS, relayer key,
+  scan roots) to a healthy `/health`; no critical/high Slither findings in
+  project sources; vendor dataset duplicate scan (16 records, 0 dupes).
+
 ### Added — Hallmark UX audit pass (2026-09-06)
 
 A design-system audit of the marketing pages against the anti-AI-slop
