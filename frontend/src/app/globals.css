@@ -54,7 +54,13 @@ html {
 }
 
 body {
-  overflow-x: hidden;
+  /* clip (not hidden): prevents horizontal scroll without turning the body
+     into a scroll container, which would break position: sticky children. */
+  overflow-x: clip;
+}
+
+html {
+  overflow-x: clip;
 }
 
 html, body {

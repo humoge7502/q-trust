@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — deep adversarial pass + docs-contract lock (2026-09-06)
+
+Third verification pass: live probing of the backend API (36 malformed-input,
+auth, SSRF, prototype-pollution, path-traversal and oversize-payload probes),
+the Python risk heuristics with garbage inputs, and a full on-chain SDK E2E
+(anvil → deploy → register/attest/migrate/audit → integrity guards). The
+backend surfaced **zero** exploitable defects — every probe returned a clean
+400/401/413/422 with a precise message.
+
+- **README SDK quick-start documented a fictional API.** `QTrustClient(base_url=...)`,
+  `client.verify(asset_id=...)` and `engine.score("cbom.json")` do not exist
+  anywhere in the SDK; the only remaining copy was the top-level README
+  (`docs-v2` and `sdk/README.md` were already correct). Replaced with verified
+  examples (`verify_asset`, `RiskScoringEngine.calculate`, real constructor
+  kwargs) that were executed against the SDK before landing.
+- **New: SDK docs-contract test** (`sdk/tests/test_readme_contract.py`) parses
+  the README's Python code blocks and asserts every documented constructor
+  kwarg, method call, and model field exists on the real SDK objects — docs
+  can no longer silently drift from the code.
+- **Frontend: `overflow-x: hidden` → `clip`** on html/body (prevents horizontal
+  scroll without turning the body into a scroll container, which would break
+  `position: sticky` children).
+
 ### Fixed — adversarial API surface pass (2026-09-06)
 
 A second verification sweep probed the live HTTP/CLI surfaces with malformed

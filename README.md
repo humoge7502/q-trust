@@ -477,17 +477,17 @@ cd frontend && npm install && npm run dev
 <br/>
 
 ```python
-from qtrust import QTrustClient, RiskScoringEngine, ComplianceEngine
+from qtrust import QTrustClient, CBOM, CBOMEntry, RiskScoringEngine
 
-client = QTrustClient(base_url="http://localhost:3001")
+client = QTrustClient(rpc_url="https://sepolia.base.org")
 
-# Verify an on-chain attestation from any chain
-result = client.verify(asset_id="...")
-print(result.risk_score, result.compliance)
+# Verify an on-chain CBOM registration
+exists, active, org_did = client.verify_asset("0x...")
 
-# Score a CBOM locally
+# Score a finding locally
 engine = RiskScoringEngine()
-report = engine.score("cbom.json")
+score = engine.calculate({"algorithm": "RSA-2048", "hndl_exposure_score": 0.5})
+print(score.risk_level, score.overall_risk_score)
 ```
 
 </details>
