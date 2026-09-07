@@ -9,7 +9,7 @@
 # Webhook fan-out is owned by the API indexer process; there is no separate
 # webhook worker entrypoint in this image.
 
-FROM node:20-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 WORKDIR /app
 
 # Install tini and curl for signal handling and healthchecks.
