@@ -16,7 +16,7 @@
   "dependencies": {
     "@fastify/cors": "^11.3.0",
     "@noble/curves": "^1.8.1",
-    "@scure/base": "^1.2.6",
+    "@scure/base": "^2.4.0",
     "@fastify/helmet": "^13.1.1",
     "@fastify/rate-limit": "^11.2.0",
     "@fastify/swagger": "^9.8.1",
