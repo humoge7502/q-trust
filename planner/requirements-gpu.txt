@@ -2,7 +2,7 @@
 # These are ADDITIONAL to the existing requirements in planner/requirements.txt
 
 # GNN training (already installed, but pin for GPU)
-torch>=2.5,<3.0
+torch>=2.13.0,<3.0
 torch-geometric>=2.5.0
 
 # Quantum simulation
