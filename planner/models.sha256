@@ -1,0 +1,12 @@
+# SHA256 manifest for the planner checkpoints baked into the planner image
+# (COPY models.sha256 ./ in planner/Dockerfile). This is the planner-relative
+# image copy of the planner/* entries in the repo-root models.sha256 (the
+# single source of truth for the whole repo) — test_checkpoint_manifest.py
+# asserts the two never drift. Verification runs at server startup (TM-PL-02):
+# a swapped checkpoint fails closed.
+# Re-generate with:
+#   sha256sum model_real_v3.pt model_gpu_v3.pt model_ddp_v3.pt rl_agent.pt > models.sha256
+20978344fc06f72f74f11723ed1de21d7ec9df2abb60332cf9083347d7b0ef2a  model_real_v3.pt
+eaba1e60817df522b8adc654a084cd633e69c5c2aae878c185bcc3d147bf4d02  model_gpu_v3.pt
+2f2f9c8abcc813adeba4c7c2ad656c87aafedae26b912e9b22b95f127b6b51ec  model_ddp_v3.pt
+cffd9383b0cfa3ddd0ceec0926e09a6682a142ae4f13b79355bc8925422f6ecd  rl_agent.pt

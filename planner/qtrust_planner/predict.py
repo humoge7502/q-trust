@@ -74,6 +74,40 @@ def _load_trained_model(model_path: str) -> tuple[Any, dict[str, Any]]:
     v3 checkpoints (hidden_dim 256 / embedding_dim 128 / conv4 layer) are
     loaded into :class:`MigrationGNNv3`; everything else loads as v2.
     """
+    # TM-PL-02: verify the checkpoint against the pinned models.sha256 manifest
+    # before deserialization. A mismatch raises (fail closed); an unlisted
+    # operator-selected artifact warns and proceeds.
+    try:
+        if __package__ in (None, ""):
+            from checkpoint_manifest import (  # type: ignore
+                CheckpointVerificationError,
+                verify_checkpoint,
+            )
+        else:
+            from .checkpoint_manifest import (
+                CheckpointVerificationError,
+                verify_checkpoint,
+            )
+    except ImportError:
+        CheckpointVerificationError = RuntimeError
+        verify_checkpoint = None
+    if verify_checkpoint is not None:
+        try:
+            result = verify_checkpoint(model_path)
+        except CheckpointVerificationError as exc:
+            logger.error(
+                json.dumps({"event": "planner_checkpoint_integrity_failed", "level": "ERROR", "message": str(exc)})
+            )
+            raise
+        if result["status"] == "unlisted":
+            logger.warning(
+                json.dumps({"event": "planner_checkpoint_unlisted", "message": f"{model_path} is not pinned in models.sha256 — loading operator-selected artifact without a hash pin (TM-PL-02)"})
+            )
+        elif result["status"] == "no-manifest":
+            logger.warning(
+                json.dumps({"event": "planner_checkpoint_no_manifest", "message": f"no models.sha256 found for {model_path} — integrity pin skipped"})
+            )
+
     # nosemgrep — torch.load with weights_only=True: safe deserialization
     checkpoint = torch.load(model_path, map_location="cpu", weights_only=True)
     config = checkpoint.get("model_config", {}) if isinstance(checkpoint, dict) else {}

@@ -19,6 +19,9 @@ COPY data/ data/
 # Include only tracked checkpoints in the release image. The server's
 # resolution chain prefers the v3 GPU model, then DDP, then the RL model.
 COPY model_real_v3.pt model_gpu_v3.pt model_ddp_v3.pt rl_agent.pt ./
+# TM-PL-02: bake the pinned SHA-256 manifest so the server verifies every
+# checkpoint at startup and refuses to boot on a mismatch (fail closed).
+COPY models.sha256 ./
 
 # Operators can still override QTRUST_MODEL_PATH for rollback/canary testing;
 # the default Compose path points at the tracked real-data checkpoint.

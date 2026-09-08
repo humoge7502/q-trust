@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — checkpoint SHA-256 pinning at startup (TM-PL-02) (2026-09-08)
+
+- **Added:** `planner/qtrust_planner/checkpoint_manifest.py` — parses the
+  `models.sha256` manifest and verifies a checkpoint's SHA-256 before it is
+  deserialized. Contracts: listed basename must match its pinned hash or
+  verification raises (callers fail closed); an unlisted operator-selected
+  artifact is reported and allowed with a warning; a missing manifest is
+  reported (and refused under `QTRUST_ENFORCE_MODEL_MANIFEST=1`).
+- **Server:** `planner/server.py` verifies the resolved GNN checkpoint and the
+  RL agent at startup, BEFORE `torch.load` — a mismatch aborts boot instead of
+  degrading into heuristic mode; `/health` now reports the checkpoint's
+  integrity status. `planner/qtrust_planner/predict.py` verifies in
+  `_load_trained_model` (the documented control anchor).
+- **Image/deploy:** `planner/models.sha256` (planner-relative copy of the
+  canonical root manifest) is baked into the planner image
+  (`planner/Dockerfile`), and compose sets `QTRUST_ENFORCE_MODEL_MANIFEST=1`
+  so a tampered checkpoint fails closed at startup.
+- **Tests:** 8 new tests in `planner/tests/test_checkpoint_manifest.py`
+  (verified/unlisted/no-manifest resolution, tamper → fail-closed on the real
+  server startup path, and a planner↔root manifest drift guard).
+
+### Improved — Core Web Vitals budget in the e2e job (TD-06) (2026-09-08)
+
+- **Added:** `frontend/e2e/cwv-budget.spec.ts` — Playwright-driven regression
+  gate measuring Largest Contentful Paint (≤ 2.5 s) and Cumulative Layout
+  Shift (≤ 0.1) on the home page with PerformanceObserver, in the existing
+  e2e job (desktop project; warm-up navigation first so the measured paint is
+  runtime, not dev-server first-compile). Budgets overridable via
+  `QTRUST_CWV_LCP_BUDGET_MS` / `QTRUST_CWV_CLS_BUDGET`.
+
 ### Security — threat model, audit dossier, and SSRF hardening (2026-09-06)
 
 Applied skills curated from VoltAgent/awesome-agent-skills:
