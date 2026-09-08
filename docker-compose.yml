@@ -80,6 +80,9 @@ services:
       - QTRUST_REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env}@redis:6379
       - QTRUST_MODEL_PATH=/app/model_real_v3.pt
       - QTRUST_DEADLINES_PATH=/app/data/algorithms.json
+      # TM-PL-02: fail closed when the served checkpoint's SHA-256 does not match
+      # the pinned models.sha256 baked into the image (mismatch aborts startup).
+      - QTRUST_ENFORCE_MODEL_MANIFEST=1
       # GPU features (RL agent). Set to "auto" to use the A100 when present;
       # the planner falls back to CPU transparently when no device is exposed.
       - QTRUST_DEVICE=auto

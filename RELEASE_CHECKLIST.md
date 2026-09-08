@@ -37,7 +37,7 @@ Re-run each gate before tagging a release; do not check boxes from memory.
 - [x] Planner OpenAPI/docs disabled in production (FASTAPI-OPENAPI-001, PR #57)
 - [x] Constant-time review of secret comparisons — clean (PR #57)
 - [x] External-audit dossier prepared — `docs/audit/DOSSIER.md`
-- [ ] Pin SHA256 of model checkpoints at deploy (TM-PL-02 recommendation)
+- [x] Pin SHA256 of model checkpoints at deploy (TM-PL-02) — startup verification vs `models.sha256` (image-baked), fail closed under `QTRUST_ENFORCE_MODEL_MANIFEST=1` (2026-09-08)
 
 ## Model & data
 - [x] Checkpoints load; `/health` reports model provenance (variant, config, eval metrics)
@@ -47,7 +47,7 @@ Re-run each gate before tagging a release; do not check boxes from memory.
 
 ## Performance
 - [x] Planner `/plan` p50/p95 measured and recorded (`docs/PERFORMANCE.md`)
-- [ ] Lighthouse/CWV budget in CI (TD-06)
+- [x] Core Web Vitals budget (LCP ≤ 2.5 s, CLS ≤ 0.1) in the e2e job (TD-06) — Playwright-driven, same metrics/budgets Lighthouse audits (2026-09-08)
 
 ## API & UX
 - [x] Planner `/health`, `/plan`, `/plan/deadline`, `/rl/plan` probed (happy + malformed + auth paths)

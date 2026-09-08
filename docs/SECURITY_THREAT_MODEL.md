@@ -140,7 +140,7 @@ flowchart TD
 | TM-BE-02 | Internet attacker | Backend exposed directly (assumption: not) | Abuse relay/plans endpoints at volume | Cost + noise | Relayer budget, planner | API-key routes; CORS fail-closed; rate limiting | Public read endpoints are open by design | If exposed: edge rate limiting at proxy | 4xx/5xx dashboards | Low | Medium | Medium |
 | TM-BE-03 | Internet attacker | Backend exposed directly | Probe scanner route with hostile archives | Parser DoS; potential parser bugs | Availability | Root allowlist + traversal 400 + subprocess isolation | Regex/AST parser DoS on pathological inputs | Cap scan size/time; run scanner with resource limits (ulimit/cgroups) | Scan-duration metrics | Medium | Medium | Medium |
 | TM-PL-01 | Malicious insider (S2S) | Valid planner API key | Feed adversarial CBOMs to skew rankings | Corrupt migration priorities | Planner output | Input schema + validation gate (PR #51) + cap | Ranking robustness unquantified | Adversarial-input eval suite for ranking stability | Track plan churn per asset | Low | Medium | Low |
-| TM-PL-02 | Supply chain | Write access to artifacts | Poison checkpoint | Corrupt rankings / RCE-pickle | Planner integrity | `weights_only=True` (`predict.py:78`); CI builds images from lockfiles | Checkpoint hashes not pinned at deploy | Pin SHA256 of checkpoints at deploy (files exist in repo) | Verify hash at startup, fail-closed | Low | High | Medium |
+| TM-PL-02 | Supply chain | Write access to artifacts | Poison checkpoint | Corrupt rankings / RCE-pickle | Planner integrity | `weights_only=True` (`predict.py:78`); **startup SHA-256 pin vs `models.sha256` — implemented 2026-09-08** (`planner/qtrust_planner/checkpoint_manifest.py`, verified before `torch.load` in `server.py` + `predict.py`; image-baked manifest; compose `QTRUST_ENFORCE_MODEL_MANIFEST=1`) | Closed (was: hashes not pinned at deploy) | **Implemented** — pin SHA256 of checkpoints at deploy (files exist in repo) | Startup integrity check: mismatch aborts boot, fail-closed | Low | High | Medium |
 | TM-FE-01 | On-chain attacker | Asset registered | SSRF via `metadata_uri` server-side fetch | Internal service read | Frontend server trust | **FIXED**: `isValidIpfsCid` + `redirect:"error"` (`api.ts`), 8 regression tests | Gateway itself could be hostile (config) | Pin gateway + allowlist via env; consider CSP `connect-src` | — | — | — | Closed |
 | TM-FE-02 | Vendor | Vendor-controlled `evidence_uri` | XSS via rendered link | Session theft (browser) | Users | `sanitizeUri` allowlist (FE-3 fix, `sanitize-uri.ts`); zero `dangerouslySetInnerHTML` | — | — | — | — | — | Closed |
 | TM-OPS-01 | Config error | Operator misconfiguration | Start with permissive defaults | Varies | All | Fail-closed startup gates verified live (CORS/relayer/scan roots) | None noted | — | Startup-refusal is itself the alarm | Low | Medium | Low |
@@ -168,6 +168,9 @@ flowchart TD
 Produced autonomously; §Scope and assumptions lists the three questions whose answers
 would re-rank priorities. The two findings actionable without that context (TM-FE-01,
 TM-PL-02 hardening) were implemented during this pass: TM-FE-01 fixed with tests;
-TM-PL-02 recommendation (checkpoint SHA pinning at deploy) is recorded for the release
-checklist. Update this document after any architecture change or when the three open
-questions are answered.
+TM-PL-02 (checkpoint SHA pinning at deploy) is now implemented (2026-09-08):
+the resolved GNN + RL checkpoints are verified against `models.sha256` at
+startup before `torch.load`, mismatches abort boot, and compose enforces the
+pin (`QTRUST_ENFORCE_MODEL_MANIFEST=1`). 8 regression tests cover the
+manifest contracts. Update this document after any architecture change or when
+the three open questions are answered.

@@ -362,6 +362,51 @@ def _warn_heuristic_mode(reason: str) -> None:
         })
     )
 
+
+# TM-PL-02: checkpoints are pinned by SHA-256 in models.sha256 (repo root +
+# image-baked planner copy). Every resolved model artifact is verified at
+# startup and a mismatch aborts the process — a swapped/poisoned checkpoint
+# must never be served, and an integrity failure must never degrade silently
+# into heuristic mode.
+_last_integrity: dict[str, str] = {}
+
+
+def _verify_checkpoint_integrity(path: str, *, kind: str) -> dict[str, str]:
+    """Verify one checkpoint against models.sha256; raise to fail closed."""
+    from qtrust_planner.checkpoint_manifest import (
+        CheckpointVerificationError,
+        enforce_manifest,
+        verify_checkpoint,
+    )
+
+    try:
+        result = verify_checkpoint(path)
+    except CheckpointVerificationError as exc:
+        logger.error(
+            json.dumps({"event": "planner_checkpoint_integrity_failed", "level": "ERROR", "kind": kind, "message": str(exc)})
+        )
+        raise
+    status = result["status"]
+    if status == "verified":
+        logger.info(
+            json.dumps({"event": "planner_checkpoint_verified", "kind": kind, "path": str(path), "sha256": result.get("sha256")})
+        )
+    elif status == "unlisted":
+        logger.warning(
+            json.dumps({"event": "planner_checkpoint_unlisted", "kind": kind, "message": f"{path} is not pinned in models.sha256 — serving operator-selected artifact without a hash pin (TM-PL-02)"})
+        )
+    else:  # no-manifest
+        if enforce_manifest():
+            raise CheckpointVerificationError(
+                f"no model integrity manifest found for {path} and QTRUST_ENFORCE_MODEL_MANIFEST=1 — refusing to start (TM-PL-02)"
+            )
+        logger.warning(
+            json.dumps({"event": "planner_checkpoint_no_manifest", "kind": kind, "message": f"no models.sha256 found for {path} — integrity pin skipped (set QTRUST_ENFORCE_MODEL_MANIFEST=1 to fail closed)"})
+        )
+    _last_integrity[kind] = status
+    return result
+
+
 try:
     with open(DEADLINES_PATH, encoding="utf-8") as f:
         _deadlines = json.load(f).get("algorithm_profiles", {})
@@ -463,6 +508,15 @@ def _load_model() -> None:
         _model_info = {"mode": "heuristic", "reason": "no checkpoint found", "candidates": candidates_status, "tried": list(_MODEL_CANDIDATES.values())}
         return
 
+    # TM-PL-02: verify the resolved GNN checkpoint before torch.load — a
+    # mismatch raises (fail closed) and is never caught into heuristic mode.
+    _verify_checkpoint_integrity(resolved_path, kind="gnn")
+    # The RL agent is loaded lazily per /rl/plan request; pin it at startup so
+    # a swapped agent aborts boot instead of failing mid-request.
+    rl_resolved = _resolve_rl_model_path()
+    if rl_resolved is not None:
+        _verify_checkpoint_integrity(str(rl_resolved), kind="rl")
+
     try:
         # nosemgrep — torch.load with weights_only=True: safe deserialization
         checkpoint = torch.load(resolved_path, map_location="cpu", weights_only=True)
@@ -488,6 +542,7 @@ def _load_model() -> None:
             "config": cfg,
             "eval_metrics": eval_metrics,
             "candidates": candidates_status,
+            "integrity": _last_integrity.get("gnn", "no-manifest"),
             "served": True,
         }
         logger.info(json.dumps({"event": "planner_model_loaded", "path": resolved_path, "arch": arch, "variant": variant}))
