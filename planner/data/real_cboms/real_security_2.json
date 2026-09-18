@@ -1,0 +1,132 @@
+{
+ "schema_version": "qtrust.cbom.v1",
+ "target": "acme-security.example",
+ "industry": "security",
+ "assets": [
+  {
+   "asset_type": "tls_certificate",
+   "host": "tutanota.com",
+   "port": 443,
+   "algorithm": "ECDSA-P256",
+   "key_type": "ECPublicKey",
+   "key_size": 256,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "3c21cbd1abb9b441722ad83187b75337bab41575c3ad0adaba3bd9e7c58a9077",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=YE2,O=Let's Encrypt,C=US",
+    "subject": "CN=tutanota.com",
+    "serial": "596369042880234273229526409342609026613518"
+   },
+   "issuer": "CN=YE2,O=Let's Encrypt,C=US",
+   "subject": "CN=tutanota.com",
+   "serial_number": "596369042880234273229526409342609026613518",
+   "not_before": "2026-07-30T10:28:16+00:00",
+   "not_after": "2026-10-28T10:28:15+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "ecdsa-with-SHA384"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "duo.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "b24b429b62d52e6d6b4073f78469def076230f74b1d2687ea13160913401f731",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=Amazon RSA 2048 M04,O=Amazon,C=US",
+    "subject": "CN=www.duosecurity.com",
+    "serial": "1429196828721010523400537549145116954"
+   },
+   "issuer": "CN=Amazon RSA 2048 M04,O=Amazon,C=US",
+   "subject": "CN=www.duosecurity.com",
+   "serial_number": "1429196828721010523400537549145116954",
+   "not_before": "2026-05-22T00:00:00+00:00",
+   "not_after": "2026-12-05T23:59:59+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "expressvpn.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "a054aba48270773c1a30de547b7f612b42ec2d1fccbab3a04f450b5417992401",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=Amazon RSA 2048 M01,O=Amazon,C=US",
+    "subject": "CN=expressvpn.com",
+    "serial": "8188693013605097551854022883695150833"
+   },
+   "issuer": "CN=Amazon RSA 2048 M01,O=Amazon,C=US",
+   "subject": "CN=expressvpn.com",
+   "serial_number": "8188693013605097551854022883695150833",
+   "not_before": "2026-08-14T00:00:00+00:00",
+   "not_after": "2027-02-27T23:59:59+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "1password.com",
+   "port": 443,
+   "algorithm": "ECDSA-P256",
+   "key_type": "ECPublicKey",
+   "key_size": 256,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "f4545e422fd16bae00e7c2d2a50ac38eb680a8005dfbaf6e5e9d1e7b21a413ff",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=YE1,O=Let's Encrypt,C=US",
+    "subject": "CN=1password.com",
+    "serial": "577986241197054520527359189452388376477514"
+   },
+   "issuer": "CN=YE1,O=Let's Encrypt,C=US",
+   "subject": "CN=1password.com",
+   "serial_number": "577986241197054520527359189452388376477514",
+   "not_before": "2026-08-26T13:40:39+00:00",
+   "not_after": "2026-11-24T13:40:38+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "ecdsa-with-SHA384"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "bitwarden.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "e1bddf58a7e105acdd6fca865f91abfe6bfd8fd533100eb1b14af5a1fe55b67c",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=YR1,O=Let's Encrypt,C=US",
+    "subject": "CN=bitwarden.com",
+    "serial": "446684344162896549035508889928649750237177"
+   },
+   "issuer": "CN=YR1,O=Let's Encrypt,C=US",
+   "subject": "CN=bitwarden.com",
+   "serial_number": "446684344162896549035508889928649750237177",
+   "not_before": "2026-07-09T04:13:14+00:00",
+   "not_after": "2026-10-07T04:13:13+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  }
+ ]
+}

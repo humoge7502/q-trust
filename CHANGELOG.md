@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — host-disjoint 42-CBOM real-estate corpus committed (2026-09-18)
+
+- **Replaced** the hand-packed 40-file `planner/data/real_cboms/` (280 assets
+  over only 269 unique hosts — 11 cross-CBOM duplicates, i.e. train/eval
+  leakage) with the deterministic builder output: **42 CBOMs, 277 unique
+  hosts, 0 overlaps**, byte-identical to
+  `python scripts/build_real_cboms.py --hosts-per-cbom 7 --seed 42` run
+  against the 277-finding TLS scan (verified by regeneration + `diff -rq`).
+- **Fixed** the `.gitignore` `data/` pattern that silently swallowed both this
+  corpus (making the `!planner/data/real_cboms/` exception dead) and the real
+  `qtrust/data/*.py` split-lineage sources; scoped to `/data/` (root runtime
+  dir only). Both paths are now tracked — a fresh clone reproduces the
+  real-CBOM numbers without re-scanning.
+- Historical 40-fold LOO result files (`real_cbom_loo_40.json`, …) are
+  untouched records of that campaign; a 42-fold re-run needs GPU time (R-03).
+
 ### Fixed — roadmap dropped MEDIUM findings, dead planner lookup, dashboard onboarding unreachable (2026-09-18)
 
 - **Roadmap (R2).** `POST /v1/roadmap/generate` bucketed findings into
