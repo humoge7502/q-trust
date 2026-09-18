@@ -7,6 +7,333 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — roadmap dropped MEDIUM findings, dead planner lookup, dashboard onboarding unreachable (2026-09-18)
+
+- **Roadmap (R2).** `POST /v1/roadmap/generate` bucketed findings into
+  CRITICAL/HIGH/(NONE|LOW) only, so MEDIUM findings (the typical landing zone
+  for WEAKENED crypto: penalty 25 + HNDL exposure) were silently dropped while
+  `summary.totalFindings` still counted them. They now get their own phase 3
+  ("Medium: Review Weakened Cryptography"); every scored finding appears in
+  exactly one phase. Locked by `backend/tests/risk-roadmap.test.ts`.
+- **Dead planner lookup (R1).** `GET /v1/plans/:did` proxied to
+  `GET ${PLANNER_URL}/plans/:did`, an endpoint the stateless planner never
+  implemented — the route could never return data. It now returns
+  `410 code: plans_lookup_retired` with a `POST /v1/plans` hint, and the
+  frontend proxy no longer exposes it (default-deny 403). Proxy + policy
+  contract tests updated.
+- **Dashboard onboarding (P1).** The outer gate blocked `role === "none"`,
+  so every connected-but-new wallet saw "Connect a wallet" instead of the
+  onboarding (`DashboardInner`'s "Run your first scan"). The outer gate now
+  checks connection only; role stays a UI hint inside, matching `/vendors`.
+- **Planner reliability.** `POST /v1/plans` forwards planner 429s with
+  `Retry-After` instead of masking backpressure as 422 (R6); the in-memory
+  rate-limit fallback drops empty buckets and bounds the table at 10k entries
+  (R5); `_build_schedule` clamps window starts at today and reports
+  `overflow_days` + per-window `clamped_to_today` instead of emitting past
+  dates as actionable work (R7). Covered by `planner/tests/test_reliability.py`.
+- **Throttling (R4).** `POST /v1/credentials/verify` (CPU-heavy signature
+  verification, previously anonymous and unthrottled) gets the same 30/min
+  budget as `/v1/evaluate`.
+- **Risk-parity lock.** Backend `/v1/risk/score` golden vectors (RSA-2048 →
+  84/CRITICAL, AES-128 → MEDIUM) pin the TS mirror of
+  `inspector/qtrust_inspector/risk_engine.py` so the copies cannot drift.
+- **Honesty + a11y.** Scanner page states web scans cover server-mounted
+  directories (TLS host scans via CLI); signal-strip marquee duplicate is
+  `aria-hidden`; product preview badge reads "Preview · sample data".
+
+### Changed — application layer unified onto the design-token layer (2026-09-12)
+
+- **Problem.** The product had three visual languages. The marketing pages used a slate/cyan
+  editorial palette; the app layer used raw Tailwind palette classes
+  (`text-slate-500`, `border-slate-200`, `bg-slate-50`) alongside ad-hoc shadcn tokens
+  (`bg-card`, `border-border`); and the status colours were per-file inventions. "Success" was
+  `emerald-50/700` in the dashboard, `green-500` in the compliance score bar, and
+  `green-600` on `green-500/15` in the compliance chips — the same meaning rendered three ways
+  depending on which file you opened.
+- **Fixed:** the compliance chips were not merely inconsistent but a real WCAG AA failure.
+  A 600-level foreground on a 15% tint of its own hue measures ~**2.8:1** against the 4.5:1
+  minimum. The status palette in `globals.css` now pairs each foreground with a surface that
+  was measured **against that surface**, not just against white:
+  `success #15803d on #f0fdf4 = 4.79:1`, `danger #b91c1c on #fef2f2 = 5.98:1`,
+  `warning #a16207 on #fffbeb = 4.74:1`, `info #1d4ed8 on #eff6ff = 6.23:1`,
+  `neutral #475569 on #f1f5f9 = 6.82:1`.
+- **Added:** `components/ui/status-pill.tsx` (one chip for every state, with a `data-tone`
+  contract so tests assert semantics rather than a hex value), `components/ui/panel.tsx` and
+  `components/ui/state.tsx` (shared empty/error states). `severityTone()` / `complianceTone()`
+  replace the per-file `severityColor()` / `complianceColor()` helpers that returned raw class
+  strings.
+- **Migrated:** the scanner dashboard, dashboard, vendor portal, attestation form,
+  operator-access, planning panel, and the anomaly / quantum-threat / side-channel / RL-plan /
+  compliance panels. `scanner-dashboard.tsx` goes from 101 raw palette utilities to 4 — the
+  four that remain are inside a comment describing the old behaviour
+- **Added:** a named type scale (`--text-label` 10px, `--text-micro` 11px) replacing 43 raw
+  `text-[10px]` / `text-[11px]` literals, so the small-text roles are one definition
+- **Unchanged on purpose:** the marketing layer keeps its own slate/cyan palette. The intended
+  shape is two complementary layers — expressive in public, dense and focused in the
+  application — and the semantic tokens are now what makes the application layer coherent on
+  its own terms. Migrating the marketing pages onto the same tokens is *not* done: they still
+  use raw palette classes by design, because their colour choices carry the brand identity
+  rather than a state meaning
+
+### Fixed — `text-muted-foreground` on `bg-muted` failed WCAG AA (52 nodes) (2026-09-12)
+
+- **Found by:** the new populated-surface a11y gate below. It was not introduced by the token
+  migration: the pre-migration pair was `text-slate-500` on `bg-slate-100`, which measures
+  **4.35:1** — the same failure, in the same places.
+- **Root cause:** `--color-muted-foreground` took the conventional shadcn value `#64748b`,
+  which is checked against **white** (4.76:1, a pass). The token is also used as the foreground
+  for content sitting on `--color-muted` — metadata chips, table headers, the evidence and
+  roadmap detail rows — where it measures **4.34:1**, under the 4.5:1 minimum at 10–11px.
+  This is the identical "check the pair, not just the colour" mistake the status palette was
+  written to avoid.
+- **Fixed:** `--color-muted-foreground: #475569` — measured 6.92:1 on `--color-muted`,
+  7.02:1 on `--color-canvas`, 7.58:1 on white.
+
+### Added — the a11y gate now audits the populated, authorized application surface (2026-09-12)
+
+- **Gap (TD-09):** `a11y.spec.ts` audited each route in the state it renders on arrival. Every
+  scanner and dashboard panel is empty on arrival and only fills after a privileged round trip,
+  so the gate had never once scanned the result tables, status pills, score bars, roadmap
+  timeline or evidence ledger — the densest, most colour-bearing UI in the product, and the
+  likeliest place for a contrast regression to land.
+- **Added:** `frontend/e2e/a11y-app.spec.ts` mocks the backend, seeds an operator key, drives a
+  scan, and audits all five tabs at both configured viewports (1280px and 375px — the scanner
+  renders tables above `md` and card lists below it, so one viewport alone audits half the UI).
+- **Anti-vacuity:** each test asserts its panel actually rendered the fixture data before
+  running axe. Auditing an empty state while claiming to audit the populated one is the same
+  false-green class this suite has already been burned by twice.
+- **Refactor:** the audit logic is extracted to `frontend/e2e/axe-audit.ts`, so the public and
+  app-surface specs cannot drift into scanning different rule sets.
+- **Result:** 6 tests (5 tabs × 2 viewports) that immediately found the 52-node AA failure above.
+
+### Fixed — `/v/[id]` returned a 500 on every request (2026-09-12)
+
+- **Root cause:** `frontend/src/lib/api.ts` built every request URL from `API_BASE_URL`,
+  which is relative (`/api`) because browser calls must go through the same-origin proxy.
+  `v/[id]/page.tsx` is a **server component** and imports the same module; Node's `fetch`
+  cannot parse a relative URL and throws `TypeError: Failed to parse URL`. The page rethrew
+  anything that was not a 404, so the public verification page — the product's headline
+  "anyone can check the record" claim — failed before rendering, in every environment.
+- **Why it went unnoticed:** `frontend/e2e/a11y.spec.ts` wrapped this route in
+  `test.skip(process.env.QTRUST_E2E_PUBLIC_PAGE !== "1")` and then skipped again whenever the
+  response was not `200`. The enabling variable was set nowhere in the repository, so the
+  spec never ran; had it run, it would have skipped precisely because the page was broken.
+- **Fixed:** `resolveApiRequest()` now resolves per runtime — same-origin `/api` proxy in the
+  browser, the backend origin directly on the server (mirroring `backendUrl()` in the proxy
+  route, so both paths reach the same upstream). The server-only admin key is attached on the
+  server and the caller's operator key in the browser, never swapped.
+- **Added:** `VerificationUnavailable` state. An unreachable backend is now distinguished from
+  both "no such record" (404) and a crash, and says that it says nothing about validity.
+- **Tests:** `lib/__tests__/api-url-resolution.test.ts` pins both branches (server URLs are
+  absolute; the admin key never leaves the server); a smoke test asserts `/v/[id]` returns
+  `< 500`; the a11y spec now scans the route unconditionally and fails on 5xx.
+- **Verified in a production build** (`next start`): `/`, `/scanner`, `/dashboard`,
+  `/vendors`, `/v` and `/v/<asset-id>` all return `200`.
+
+### Fixed — the primary navigation did not exist outside the landing page (2026-09-12)
+
+- **Root cause:** `SiteHeader` and the footer were rendered by `app/page.tsx` only. Every
+  other route (`/scanner`, `/dashboard`, `/vendors`, `/v`, `/v/[id]`) shipped with no
+  navigation, no footer and no skip link, so a visitor who arrived on the landing page and
+  clicked through could only get back via the browser button.
+- **Fixed:** the shell moved to `app/layout.tsx` (`components/site-header.client.tsx`,
+  `components/site-footer.tsx`, `components/skip-link.tsx`), so `#main-content`, the
+  `<footer>` landmark and a route back exist on every page by construction. `body` is now
+  `flex min-h-screen flex-col` so a short page pins the footer instead of stranding it.
+- **Fixed:** the header's "Protocol" item pointed at `/#protocol`, an id that exists nowhere
+  on the page (the sections are `#why`, `#product`, `#workflow`) — a dead link. It now points
+  at `/#workflow`, the section that actually describes the protocol.
+- **Added:** active-route indication (`aria-current="page"`) and a Vendors destination.
+- **Tests:** a smoke test walks every route and asserts navigation is present in the form the
+  viewport actually uses (inline nav on desktop, menu control on mobile).
+
+### Fixed — the scanner's tabs were unreachable on a phone (2026-09-12)
+
+- **Root cause:** the tab list rendered five labelled tabs in a single `flex` row with no
+  wrapping. At 375px the trailing tabs (Evidence, Side channel) overflowed, and the
+  document's `overflow-x: clip` cut them off — no scrollbar, no scroll affordance, no way to
+  open them. `mobile-layout.spec.ts` asserts `scrollWidth <= viewport`, which cannot detect
+  this: `overflow-x: clip` keeps `scrollWidth` equal to the viewport *because* the content is
+  clipped.
+- **Fixed:** the tab list wraps.
+- **Added:** a `mobile layout safety` test asserting every `[role="tab"]` sits inside the
+  viewport, with a guard that fails if zero tabs were found (so it cannot pass vacuously).
+- **Found because of:** a footer contrast fix. Axe samples rendered pixels, and the clipped
+  tabs fell back to the page background — which was light before this change and is dark now.
+  The dark shell did not create the defect; it made an existing one measurable.
+
+### Added — self-hosted typography and design tokens (2026-09-12)
+
+- **No web font was loaded anywhere in the product.** Every surface rendered in the OS
+  default UI stack, so the editorial typography the design depends on (very tight tracking on
+  very large headings) rendered differently on every platform and the intent did not land.
+- **Added** `frontend/src/lib/fonts.ts` — `next/font` self-hosted **Inter Tight** (display),
+  **Inter** (body/UI) and **JetBrains Mono** (technical labels, hashes, IDs). Fonts are
+  downloaded at build time and served from `/_next`, so no request leaves the origin on the
+  critical path and the CSP's `font-src 'self'` stays sufficient. `preload` is enabled only
+  for the two faces that paint above the fold.
+- **Added** design tokens to `@theme` in `globals.css`: `--font-sans` / `--font-display` /
+  `--font-mono`, one motion easing family (`--ease-brand`, `--ease-brand-in`), and semantic
+  surface colours (`--color-canvas`, `--color-canvas-raised`) so route files stop hardcoding
+  `bg-slate-50`. Headings take the display face from a base layer, so hierarchy is a
+  property of the document rather than something each section must remember to opt into.
+- **Measured:** LCP stays under 1.5 s on the home page with the new fonts (the e2e CWV gate
+  passes with `QTRUST_CWV_LCP_BUDGET_MS=1500`); CLS within the existing `0.1` budget.
+
+### Added — SEO surfaces (2026-09-12)
+
+- **Added** `app/robots.ts`, `app/sitemap.ts` and `app/manifest.ts`. Public routes are listed;
+  `/dashboard`, `/vendors` and `/v/[id]` are excluded and marked `noindex` at the route level
+  (a wallet gate and unbounded per-record URLs are not useful index entries) — the two
+  settings are meant to be read together.
+- **Added** `components/json-ld.tsx` — `WebSite` + `SoftwareApplication` structured data,
+  scope limited to claims the repository can substantiate. `JSON.stringify` output is escaped
+  (`<` → `\u003c`) so structured data cannot become a script-injection sink.
+- **Added** `lib/site.ts` as the single canonical origin, consumed by `metadataBase`,
+  `robots.ts`, `sitemap.ts` and the JSON-LD graph so they cannot drift apart.
+- **Fixed:** the dashboard and vendor portal are client components, which cannot export
+  `metadata`, so both inherited the site-wide default `<title>` — every app surface shared one
+  identical title. Both now have a `layout.tsx` providing their own.
+- **Fixed:** titles that already contained the brand rendered it twice, because the root
+  layout's `title.template` appends `· Q-Trust` to every child segment
+  ("PQC Migration Scanner: Q-Trust · Q-Trust", "Q-Trust — Asset 0x7b52… · Q-Trust").
+- **Added** canonical URLs and a title regression test asserting no two routes share a title
+  and none repeats the brand suffix.
+
+### Changed — `/v` performs the lookup instead of describing how to (2026-09-12)
+
+- `/v` is the destination of the "Verify" item in the primary navigation and contained no
+  input at all; it instructed visitors to paste an asset ID into the browser address bar and
+  otherwise linked home. The product's most-advertised capability was a dead end.
+- **Added** `components/verify-form.client.tsx` and `hooks/use-verify-asset.ts`. The form uses
+  a native `<form>` with `onSubmit` so the browser owns implicit submission and Enter-to-submit;
+  the landing page's `VerifyBox` was converted from a click handler plus `onKeyDown` to the
+  same pattern. Both surfaces share the hook, so the validation rule (`parseAssetId`'s
+  hardened 0x+64-hex check) and the error copy cannot drift apart.
+
+### Fixed — accessibility (2026-09-12)
+
+- **Scrollable code blocks were not keyboard-reachable** (`scrollable-region-focusable`,
+  serious): five `<pre>` regions scroll their content, which a mouse user can drag but a
+  keyboard-only user cannot. Added `components/ui/code-block.tsx` (`tabIndex={0}`,
+  `role="region"`, `aria-label`) and moved all five onto it.
+- **Footer contrast:** the new footer's `text-slate-500` on `#020618` measured 4.23:1 against
+  the required 4.5:1. Fixed to `text-slate-400` (7.66:1) — caught by the existing gate.
+- **Now audited:** `/v/[id]` had never been through the a11y gate (see the 500 above); it is
+  scanned on every run and currently clean.
+
+### Fixed — gates that could not fail (2026-09-12)
+
+Three separate cases where a green result did not mean what it appeared to mean.
+
+- **A spec that disabled itself when the page broke.** The `/v/[id]` a11y test skipped on any
+  non-200 response, and its enabling env var was set nowhere — so the route was never
+  audited, and the one condition that would have revealed the 500 was also the condition that
+  silenced the test.
+- **An assertion blind to the failure mode.** `mobile-layout.spec.ts` checked `scrollWidth`,
+  which cannot see content hidden by `overflow-x: clip`. Added an explicit reachability
+  assertion with a non-vacuity guard.
+- **A flaky console-error filter.** The smoke test counted any console error whose source URL
+  was not a wallet endpoint, so sandbox network noise (`net::ERR_NETWORK_CHANGED`, browser
+  COOP probes) failed it intermittently. The filter is now a narrow, documented allowlist.
+  Verified stable: 4 consecutive full-suite runs, 33 passed each time.
+
+### Tests — totals after the above
+
+- Frontend unit/integration: **143** (was 137) across 17 files.
+- Frontend e2e: **33 passed, 1 skipped** (was 27 passed, 3 skipped) — the skipped test is the
+  intentional mobile opt-out in the CWV budget spec. Four consecutive full runs, no flakes.
+- Backend: 104 unchanged. Verification gates re-run against a production build.
+
+### Fixed — privileged UI surface was unreachable through the same-origin proxy (2026-09-12)
+
+- **Root cause:** the dashboard proxy (`frontend/src/app/api/[...path]/route.ts`) is
+  default-deny after the S-1 fix, but its policy lived inline and the UI had no way to
+  consult it. The scanner dashboard, the four GPU panels, the planner panel and the
+  vendor attestation form all called privileged routes the proxy refuses, so those
+  controls returned `403` in every deployment using the same-origin proxy. Component
+  tests stubbed `fetch` and passed; proxy tests asserted the denials and passed; nothing
+  compared the two lists.
+- **Added:** `frontend/src/lib/api-route-policy.ts` — one exported source of truth
+  classifying every endpoint as `public-read`, `public-compute` or `operator`, consumed
+  by both the proxy (enforcement) and the UI (honest states).
+- **Added:** operator access path. `operator` routes are authorized with the caller's own
+  API key sent as `x-qtrust-api-key`, forwarded upstream as `x-api-key`. The proxy never
+  attaches the server-side admin key to those routes, and anonymous callers still get
+  `403 operator_key_required`. Local development with no server key configured mirrors
+  the backend's existing dev-open policy; production does not.
+- **Added:** `frontend/src/lib/operator-key.ts` (sessionStorage-scoped key store),
+  `frontend/src/hooks/use-operator-key.ts`, and `frontend/src/components/operator-access.tsx`
+  (proactive panel + in-context prompt). Wired into the scanner tabs, GPU panels,
+  planner panel and attestation form.
+- **Added:** `apiPostJson` / `apiGetJson` request helpers plus a typed
+  `OperatorKeyRequiredError`, so callers react to an authorization denial instead of
+  rendering an opaque error.
+- **Changed:** `dashboard/page.tsx` sample-verification button now performs and displays
+  the verification (it previously re-fetched and discarded the result, leaving the label
+  permanently stuck on "Verify on-chain").
+- **Tests:** +34 frontend tests (103 → 137). New `lib/__tests__/api-route-policy.test.ts`
+  scans UI source for `/v1/...` literals and fails if any endpoint is unclassified, so the
+  UI and the proxy cannot drift apart again; `lib/__tests__/operator-key.test.ts` covers
+  the key store and typed error; `app/api/[...path]/route.test.ts` now asserts anonymous
+  denial, caller-key forwarding, admin-key isolation and the production/dev distinction.
+- **Verified live** against a production build with a stub upstream: anonymous privileged
+  call → `403 operator_key_required` with zero upstream requests; keyed privileged call →
+  upstream observed the caller's key; public route with a caller key present → upstream
+  still observed the admin key; the caller's header never leaked under its own name.
+- **Docs:** TM-FE-03 added to `docs/SECURITY_THREAT_MODEL.md` with the new trust boundary
+  and its accepted residual risk (a browser-held key is XSS-equivalent, hence per-operator
+  keys so one can be revoked independently).
+
+### Fixed — e2e harness could test the wrong app, and its a11y gate was flaky (2026-09-12)
+
+Both were found while validating the change above, and both had been invisible because the
+suite reported green.
+
+- **Wrong-target risk (HIGH for test trust).** `playwright.config.ts` ran on port 3000 with
+  `reuseExistingServer: true`. On any machine where another app already served 3000,
+  Playwright reused it and the suite silently tested *that* app: the smoke specs reported six
+  false failures against an unrelated service, and specs asserting only generic properties
+  (axe violations, horizontal overflow, an LCP budget) could equally have reported false
+  **passes**. The dev server now runs on a dedicated port (`QTRUST_E2E_PORT`, default 3020)
+  with an explicit `baseURL` kept on `localhost` (Next 16 blocks cross-origin dev resources,
+  so a raw-IP baseURL silently breaks hydration), and `e2e/app-identity.ts` lets any spec
+  prove it reached Q-Trust instead of inferring it from a port.
+- **Flaky a11y gate (MEDIUM for test trust).** The home-page axe scan intermittently failed
+  with up to 58 `color-contrast` nodes, including the hero's `bg-cyan-300 text-slate-950`
+  Verify button sampled mid `hero-enter` animation at ~47% opacity (ratio 3.62 against 4.5;
+  its settled frame is ~13:1). Axe folds opacity and filter into the colours it samples, so
+  any scan landing mid-animation reports a frame no user sees. The spec now audits the
+  reduced-motion rendering — which `globals.css` already collapses to its final state — and
+  waits for all *finite* animations to settle (infinite decorative motion is ignored, so the
+  gate cannot hang). Verified deterministic over five consecutive runs where it previously
+  passed roughly half the time.
+- **Added:** `/scanner` a11y coverage (desktop + mobile), including the new operator-access
+  panel, which had none.
+- **e2e result:** 19 passed, 3 skipped (was 16 passed, with the counts above being
+  environmental).
+
+### Fixed — real WCAG 2 AA contrast failures the flaky gate had been masking (2026-09-12)
+
+Once the a11y gate above became deterministic it failed immediately, on genuine violations
+that the intermittent scans had been skipping: the offending sections reveal below the fold,
+so a scan that never settled them excluded them from the audit. Measured against WCAG 2 AA
+(4.5:1 for normal text):
+
+| Element | Colours | Ratio | Fix |
+|---|---|---|---|
+| `#product` `<h2>` "One system for the whole migration." | `#ffffff` on `#f4f5f2` | **1.09** | The section sat inside a wrapper that set `text-white` and never reset it, so its heading inherited white on a near-white background and was **effectively invisible**. The section now sets `text-slate-950` |
+| `#why` card index + "Outcome / visible by design" | `slate-400` on `#f4f5f2` | 2.40 | `text-slate-600` |
+| `#workflow` step labels (Scan / Plan / Attest) | `slate-600` on `#020618` | 2.65 | `text-slate-400` |
+| Product preview "Preview" badge | `slate-500` on `slate-200` | 3.86 | `text-slate-700` |
+| Product preview inactive tabs | `slate-500` on `slate-200/70` | 4.08 | `text-slate-700` |
+| Product preview dark-panel meta text | `slate-500` on `#0c1424` | 3.86 | `text-slate-400` |
+| Scanner/dashboard/vendor secondary notes (post-scan states the gate cannot reach) | `slate-400` on white | 2.64 | `text-slate-500` |
+
+**Verified:** `/` and `/scanner` pass axe (`wcag2a` + `wcag2aa` + `best-practice`) with zero
+critical or serious violations across four consecutive runs, where the gate had previously
+been roughly 50% flaky and, once made deterministic, failing.
+
 ### Security — checkpoint SHA-256 pinning at startup (TM-PL-02) (2026-09-08)
 
 - **Added:** `planner/qtrust_planner/checkpoint_manifest.py` — parses the

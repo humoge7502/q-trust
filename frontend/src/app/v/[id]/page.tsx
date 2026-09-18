@@ -16,6 +16,7 @@
 import { notFound } from "next/navigation";
 import { ArrowTopRightOnSquareIcon, ShieldCheckIcon, XCircleIcon, ClockIcon } from "@/app/icons";
 import { ProvenanceGraph } from "@/components/provenance-graph";
+import { CodeBlock } from "@/components/ui/code-block";
 
 import { fetchAsset, fetchAssetVerification, fetchIpfsJson, type AssetInfo, type AssetVerification } from "@/lib/api";
 import { parseAssetId } from "@/lib/config";
@@ -35,10 +36,16 @@ export default async function VerificationPage({ params }: Props) {
     asset = await fetchAsset(id);
     verification = await fetchAssetVerification(id);
   } catch (err) {
+    // A missing record is an ordinary 404. Anything else — backend down,
+    // upstream 5xx, timeout — is an availability problem, and rethrowing it
+    // produced a blank 500 on the one page whose entire purpose is to let a
+    // third party check a claim. "The record could not be reached" has to be
+    // stated as such; failing silently or generically undermines the trust the
+    // page exists to establish.
     if (err instanceof Error && err.message.includes("404")) {
       notFound();
     }
-    throw err;
+    return <VerificationUnavailable assetId={id} />;
   }
 
   // Fetch IPFS metadata in parallel (non-blocking — page renders without it).
@@ -65,7 +72,7 @@ export default async function VerificationPage({ params }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="flex-1 bg-canvas text-slate-900">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -116,9 +123,12 @@ export default async function VerificationPage({ params }: Props) {
             <h2 className="mb-4 text-lg font-semibold text-slate-800">
               IPFS metadata
             </h2>
-            <pre className="max-h-96 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">
+            <CodeBlock
+              label="IPFS metadata JSON"
+              className="max-h-96 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100"
+            >
               <code>{JSON.stringify(ipfsMetadata, null, 2)}</code>
-            </pre>
+            </CodeBlock>
           </section>
         )}
 
@@ -129,7 +139,10 @@ export default async function VerificationPage({ params }: Props) {
             Anyone can verify this attestation without trusting Q-Trust. Run the CLI:
           </p>
           {safeAssetId ? (
-            <pre className="overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">
+            <CodeBlock
+              label="Independent verification commands"
+              className="overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100"
+            >
               <code>{`# Install the Q-Trust SDK
 pip install qtrust-sdk
 
@@ -138,7 +151,7 @@ python -c "from qtrust import QTrustClient; print(QTrustClient().verify_asset('$
 
 # Or use the scanner CLI
 crypto-inspector verify ${safeAssetId}`}</code>
-            </pre>
+            </CodeBlock>
           ) : (
             <p className="rounded-lg bg-amber-50 p-4 text-xs text-amber-800 ring-1 ring-inset ring-amber-600/20">
               The asset ID for this record is not in the expected format, so the
@@ -174,6 +187,50 @@ crypto-inspector verify ${safeAssetId}`}</code>
 // ------------------------------------------------------------------
 // Sub-components
 // ------------------------------------------------------------------
+
+/**
+ * Shown when the record itself cannot be fetched. Deliberately distinct from
+ * both the 404 page ("no such record") and a crash ("something went wrong"):
+ * this is "unknown", and conflating it with either would misrepresent what the
+ * chain says.
+ */
+function VerificationUnavailable({ assetId }: { assetId: string }) {
+  return (
+    <main className="flex-1 bg-canvas text-slate-900">
+      <div className="mx-auto max-w-2xl px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-risk-medium">
+          Record unreachable
+        </p>
+        <h1 className="mt-6 text-4xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl">
+          We could not read this attestation.
+        </h1>
+        <p className="mt-5 text-sm leading-7 text-slate-600">
+          The verification service is not responding. This is an availability
+          failure on our side — it says nothing about whether the record is
+          valid, so please do not read it as one.
+        </p>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
+            Asset ID
+          </p>
+          <p className="mt-2 break-all font-mono text-xs text-slate-900">{assetId}</p>
+        </div>
+
+        <p className="mt-8 text-sm leading-7 text-slate-600">
+          Retry in a moment, or verify the same record without this deployment:
+        </p>
+        <CodeBlock
+          label="Independent verification command"
+          className="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100"
+        >
+          <code>crypto-inspector verify {assetId}</code>
+        </CodeBlock>
+      </div>
+    </main>
+  );
+}
+
 function StatusBadge({ status }: { status: "VALID" | "REVOKED" }) {
   if (status === "VALID") {
     return (
@@ -222,7 +279,12 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   return {
-    title: `Q-Trust — Asset ${id.slice(0, 10)}...`,
-    description: "Public verification of a Q-Trust attestation on Base.",
+    // The brand is omitted deliberately — the root layout's `title.template`
+    // appends `· Q-Trust`, so writing it here produced a doubled suffix.
+    title: `Asset ${id.slice(0, 10)}…`,
+    description: `Public verification of Q-Trust attestation ${id.slice(0, 10)}… on Base.`,
+    // One page per attestation ID: unbounded, low-value URLs. Kept out of the
+    // index for the same reason `sitemap.ts` does not enumerate them.
+    robots: { index: false, follow: true },
   };
 }

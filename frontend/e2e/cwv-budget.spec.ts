@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { expectQTrustApp } from "./app-identity";
 
 /**
  * TD-06 — Core Web Vitals budget in the e2e job.
@@ -74,6 +75,8 @@ test.describe("core web vitals budget (TD-06)", () => {
     await installVitalsObserver(page);
     // Warm-up navigation (dev-server compile of the route).
     await page.goto("/", { waitUntil: "load" });
+    // A budget measured against the wrong app would be a meaningless green.
+    await expectQTrustApp(page);
     await page.getByRole("heading", { level: 1 }).waitFor({ timeout: 30_000 });
 
     // Measured navigation.

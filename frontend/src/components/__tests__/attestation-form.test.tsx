@@ -35,14 +35,20 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
-vi.mock("@/lib/api", () => ({
-  fetchVendorNonce: (...a: unknown[]) => mocks.fetchVendorNonce(...a),
-  relayAttestation: (...a: unknown[]) => mocks.relayAttestation(...a),
-  PQC_ALGORITHMS: [
-    { value: "ML-KEM-768", label: "ML-KEM-768" },
-    { value: "ML-DSA-65", label: "ML-DSA-65" },
-  ],
-}));
+// Partial mock: the real module (and its OperatorKeyRequiredError class) is
+// kept so the component's error handling is exercised, not a stand-in.
+vi.mock("@/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/api")>();
+  return {
+    ...actual,
+    fetchVendorNonce: (...a: unknown[]) => mocks.fetchVendorNonce(...a),
+    relayAttestation: (...a: unknown[]) => mocks.relayAttestation(...a),
+    PQC_ALGORITHMS: [
+      { value: "ML-KEM-768", label: "ML-KEM-768" },
+      { value: "ML-DSA-65", label: "ML-DSA-65" },
+    ],
+  };
+});
 
 vi.mock("@/lib/config", () => ({
   CHAIN: { id: 84532 },

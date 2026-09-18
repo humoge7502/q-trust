@@ -47,9 +47,13 @@ describe("CompliancePanel", () => {
     expect(screen.getAllByText("NIST-1")[0]).toBeInTheDocument();
     expect(screen.getAllByText("NIST-2")[0]).toBeInTheDocument();
     expect(screen.getAllByText("No quantum-vulnerable key exchange")[0]).toBeInTheDocument();
-    const badges = screen.getAllByText("Non-Compliant");
-    expect(badges[0].className).toContain("text-red-600");
-    expect(screen.getAllByText("Compliant")[0].className).toContain("text-green-600");
+    // Assert the semantic tone, not a literal colour. The previous assertions
+    // pinned `text-red-600` / `text-green-600`, which is exactly how two defects
+    // survived: those classes rendered "compliant" in a different green than the
+    // rest of the app used, and measured ~2.8:1 against the 4.5:1 AA minimum.
+    // A tone survives a palette change; a hex-hardcoded class asserts the bug.
+    expect(screen.getAllByText("Non-Compliant")[0].getAttribute("data-tone")).toBe("danger");
+    expect(screen.getAllByText("Compliant")[0].getAttribute("data-tone")).toBe("success");
   });
 
   it("expands a rule to show its evidence and recommendation", () => {

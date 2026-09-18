@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { API_BASE_URL } from "@/lib/api";
+import { apiPostJson, OperatorKeyRequiredError } from "@/lib/api";
+import { OperatorAccessInline } from "@/components/operator-access";
+import { StatusPill } from "@/components/ui/status-pill";
+import { ErrorState } from "@/components/ui/state";
 
 interface AnomalousAsset {
   asset_index: number;
@@ -63,11 +66,13 @@ export default function AnomalyPanel() {
   const [cbomText, setCbomText] = useState<string>(DEMO_CBOM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [operatorEndpoint, setOperatorEndpoint] = useState<string | null>(null);
   const [result, setResult] = useState<AnomalyResponse | null>(null);
 
   const run = async () => {
     setLoading(true);
     setError(null);
+    setOperatorEndpoint(null);
     setResult(null);
     try {
       let cbom: unknown;
@@ -76,23 +81,23 @@ export default function AnomalyPanel() {
       } catch {
         throw new Error("CBOM is not valid JSON");
       }
-      const res = await fetch(`${API_BASE_URL}/v1/gpu/anomaly/score`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cbom }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        if (res.status === 409) {
+      try {
+        setResult(await apiPostJson<AnomalyResponse>("/v1/gpu/anomaly/score", { cbom }));
+      } catch (e) {
+        if (e instanceof OperatorKeyRequiredError) throw e;
+        if (e instanceof Error && e.message.startsWith("API 409")) {
           throw new Error(
             "Detector not trained yet. Train it via `make -f Makefile.gpu anomaly-train` and set QTRUST_ANOMALY_MODEL.",
           );
         }
-        throw new Error(`API ${res.status}: ${body.error ?? "scoring failed"}`);
+        throw e;
       }
-      setResult(await res.json());
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (e instanceof OperatorKeyRequiredError) {
+        setOperatorEndpoint(e.endpoint);
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -104,9 +109,7 @@ export default function AnomalyPanel() {
         <h3 className="text-lg font-semibold text-foreground">
           CBOM Anomaly Detection
         </h3>
-        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600">
-          VAE
-        </span>
+        <StatusPill tone="accent">VAE</StatusPill>
       </div>
       <p className="mb-3 text-sm text-muted-foreground">
         Scores a CBOM against a variational autoencoder trained on normal
@@ -119,56 +122,53 @@ export default function AnomalyPanel() {
         onChange={(e) => setCbomText(e.target.value)}
         rows={6}
         aria-label="CBOM JSON"
-        className="mb-3 w-full rounded-md border border-border bg-background p-2 font-mono text-xs text-foreground"
+        className="mb-3 w-full rounded-md border border-border bg-muted p-2 font-mono text-micro text-foreground transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25"
       />
 
       <button
         type="button"
         onClick={run}
         disabled={loading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="w-full rounded-md bg-qtrust-600 px-4 py-2 text-micro font-semibold text-white transition hover:bg-qtrust-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
       >
         {loading ? "Scoring..." : "Score CBOM"}
       </button>
 
       {error && (
-        <div
-          role="alert"
-          className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600"
-        >
-          {error}
+        <div className="mt-3">
+          <ErrorState description={error} />
         </div>
+      )}
+
+      {operatorEndpoint && (
+        <OperatorAccessInline endpoint={operatorEndpoint} onSaved={() => void run()} />
       )}
 
       {result && (
         <div
           className={`mt-4 rounded-md border p-3 ${
             result.is_anomalous
-              ? "border-red-500/40 bg-red-500/10"
-              : "border-green-500/40 bg-green-500/10"
+              ? "border-danger-border bg-danger-surface"
+              : "border-success-border bg-success-surface"
           }`}
         >
-          <div className="flex items-center justify-between">
-            <span
-              className={`text-sm font-semibold ${
-                result.is_anomalous ? "text-red-600" : "text-green-600"
-              }`}
-            >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <StatusPill tone={result.is_anomalous ? "danger" : "success"}>
               {result.is_anomalous ? "ANOMALY DETECTED" : "Normal"}
-            </span>
-            <span className="font-mono text-xs text-muted-foreground">
+            </StatusPill>
+            <span className="font-mono text-micro text-muted-foreground">
               score {result.anomaly_score.toFixed(3)} / thr{" "}
               {result.threshold.toFixed(3)}
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-2 text-micro text-muted-foreground">
             {result.asset_count} assets · evidence{" "}
             <span className="font-mono">{result.evidence_hash.slice(0, 14)}…</span>
           </p>
           {result.top_anomalous_assets.length > 0 && (
             <ul className="mt-2 space-y-1">
               {result.top_anomalous_assets.slice(0, 3).map((a) => (
-                <li key={a.asset_index} className="text-xs">
+                <li key={a.asset_index} className="text-micro">
                   <span className="font-mono text-foreground">
                     {a.location || `#${a.asset_index}`}
                   </span>{" "}

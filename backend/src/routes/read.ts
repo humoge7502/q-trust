@@ -134,6 +134,13 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
       });
       if (!res.ok) {
         request.log.warn({ status: res.status }, "Planner service rejected plan request");
+        // R6 fix: a planner 429 carries Retry-After that the UI can honor.
+        // Mapping it to a bare 422 hid backpressure as a validation error.
+        if (res.status === 429) {
+          const retryAfter = res.headers.get("retry-after");
+          if (retryAfter) reply.header("retry-after", retryAfter);
+          return reply.status(429).send({ error: "Planner service rate-limited — retry after the indicated delay" });
+        }
         return reply.status(res.status >= 500 ? 503 : 422).send({ error: "Planner service rejected the request" });
       }
       return res.json();
@@ -142,22 +149,21 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
+  // R1 fix: the planner is stateless — it exposes POST /plan, POST
+  // /plan/deadline and POST /rl/plan, but never implemented GET /plans/:did.
+  // Proxying to it returned the planner's bare 404 verbatim, so this route
+  // could never return data. Retired with 410 + a migration hint instead of
+  // a misleading upstream passthrough. Use POST /v1/plans for fresh plans.
   app.get("/v1/plans/:did", { preHandler: requireApiKey }, async (request, reply) => {
-    try {
-      const did = (request.params as { did: string }).did;
-      const q = request.query as { deadline?: string };
-      const url = `${PLANNER_URL}/plans/${encodeURIComponent(did)}${q.deadline ? `?deadline=${encodeURIComponent(q.deadline)}` : ""}`;
-      const res = await fetch(url, {
-        signal: AbortSignal.timeout(30_000),
-        ...(PLANNER_API_KEY ? { headers: { "x-api-key": PLANNER_API_KEY } as Record<string, string> } : {}),
-      });
-      if (!res.ok) {
-        return reply.status(res.status).send({ error: `Planner service error: ${res.status}` });
-      }
-      return res.json();
-    } catch {
-      return reply.status(503).send({ error: "Planner service unavailable — start it with: docker compose up planner" });
-    }
+    request.log.warn(
+      { did: (request.params as { did: string }).did },
+      "retired GET /v1/plans/:did called",
+    );
+    return reply.status(410).send({
+      error: "GET /v1/plans/:did is retired — the planner is stateless and stores no plans",
+      code: "plans_lookup_retired",
+      hint: "POST /v1/plans with { cbom, deadline } to compute a fresh plan",
+    });
   });
 
   app.get("/v1/revocation/:issuer", async (request, reply) => {

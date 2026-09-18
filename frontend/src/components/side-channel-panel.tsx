@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { API_BASE_URL } from "@/lib/api";
+import { apiPostJson, OperatorKeyRequiredError } from "@/lib/api";
+import { OperatorAccessInline } from "@/components/operator-access";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
+import { ErrorState } from "@/components/ui/state";
 
 type Verdict = "SIDE_CHANNEL_VERIFIED" | "SIDE_CHANNEL_LOW_RISK" | "SIDE_CHANNEL_HIGH_RISK";
 
@@ -15,44 +18,18 @@ interface SideChannelResponse {
   gpu_used: boolean;
 }
 
-const VERDICT_CONFIG: Record<Verdict, { label: string; text: string; bg: string }> = {
-  SIDE_CHANNEL_VERIFIED: {
-    label: "Side-Channel Verified",
-    text: "text-green-600",
-    bg: "bg-green-500/15",
-  },
-  SIDE_CHANNEL_LOW_RISK: {
-    label: "Low Risk",
-    text: "text-amber-600",
-    bg: "bg-amber-500/15",
-  },
-  SIDE_CHANNEL_HIGH_RISK: {
-    label: "High Risk",
-    text: "text-red-600",
-    bg: "bg-red-500/15",
-  },
+/**
+ * Verdict → semantic tone.
+ *
+ * The raw pairs here (`text-green-600` on `bg-green-500/15`) were the same shape
+ * as the compliance panel's chips, which measured ~2.8:1 and failed WCAG AA.
+ * Tones are measured against their own surfaces; see `globals.css`.
+ */
+const VERDICT_CONFIG: Record<Verdict, { label: string; tone: StatusTone }> = {
+  SIDE_CHANNEL_VERIFIED: { label: "Side-Channel Verified", tone: "success" },
+  SIDE_CHANNEL_LOW_RISK: { label: "Low Risk", tone: "warning" },
+  SIDE_CHANNEL_HIGH_RISK: { label: "High Risk", tone: "danger" },
 };
-
-async function analyze(
-  body: Record<string, unknown>,
-): Promise<SideChannelResponse> {
-  const res = await fetch(`${API_BASE_URL}/v1/gpu/side-channel/analyze`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    let detail = "";
-    try {
-      const errBody = await res.json();
-      detail = errBody.error ?? JSON.stringify(errBody);
-    } catch {
-      detail = await res.text();
-    }
-    throw new Error(`API ${res.status}: ${detail}`);
-  }
-  return res.json();
-}
 
 export default function SideChannelPanel() {
   const [mode, setMode] = useState<"simulated" | "real">("simulated");
@@ -60,11 +37,13 @@ export default function SideChannelPanel() {
   const [command, setCommand] = useState("./ml_dsa_sign input.hex");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [operatorEndpoint, setOperatorEndpoint] = useState<string | null>(null);
   const [result, setResult] = useState<SideChannelResponse | null>(null);
 
   const run = async () => {
     setLoading(true);
     setError(null);
+    setOperatorEndpoint(null);
     setResult(null);
     try {
       const body =
@@ -75,9 +54,16 @@ export default function SideChannelPanel() {
               implementation_cmd: command.trim().split(/\s+/).filter(Boolean),
               n_traces: 10_000,
             };
-      setResult(await analyze(body));
+      setResult(
+        await apiPostJson<SideChannelResponse>("/v1/gpu/side-channel/analyze", body),
+      );
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (e instanceof OperatorKeyRequiredError) {
+        setOperatorEndpoint(e.endpoint);
+        setError(null);
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -91,9 +77,7 @@ export default function SideChannelPanel() {
         <h3 className="text-lg font-semibold text-foreground">
           PQC Side-Channel Analysis
         </h3>
-        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600">
-          GPU-accelerated
-        </span>
+        <StatusPill tone="accent">GPU-accelerated</StatusPill>
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
         Collects timing traces from a PQC implementation and classifies them
@@ -138,7 +122,7 @@ export default function SideChannelPanel() {
             step={0.05}
             value={leakageProb}
             onChange={(e) => setLeakageProb(Number(e.target.value))}
-            className="mt-2 w-full accent-blue-600"
+            className="mt-2 w-full accent-qtrust-600"
             aria-label="Injected leakage probability"
           />
         </label>
@@ -149,7 +133,7 @@ export default function SideChannelPanel() {
           onChange={(e) => setCommand(e.target.value)}
           placeholder="./pqc_binary args..."
           aria-label="Implementation command"
-          className="mb-4 w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground"
+          className="mb-4 w-full rounded-md border border-border bg-muted px-3 py-2 font-mono text-micro text-foreground transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25"
         />
       )}
 
@@ -157,20 +141,25 @@ export default function SideChannelPanel() {
         type="button"
         onClick={run}
         disabled={loading || (mode === "real" && command.trim().length === 0)}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="w-full rounded-md bg-qtrust-600 px-4 py-2 text-micro font-semibold text-white transition hover:bg-qtrust-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
       >
         {loading ? "Analyzing 10,000 traces..." : "Run analysis"}
       </button>
 
       {error && (
-        <div
-          role="alert"
-          className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600"
-        >
-          {error.includes("409")
-            ? "Detector not trained yet. Train it via `make -f Makefile.gpu side-channel-train` and set QTRUST_SIDE_CHANNEL_MODEL."
-            : error}
+        <div className="mt-3">
+          <ErrorState
+            description={
+              error.includes("409")
+                ? "Detector not trained yet. Train it via `make -f Makefile.gpu side-channel-train` and set QTRUST_SIDE_CHANNEL_MODEL."
+                : error
+            }
+          />
         </div>
+      )}
+
+      {operatorEndpoint && (
+        <OperatorAccessInline endpoint={operatorEndpoint} onSaved={() => void run()} />
       )}
 
       {result && config && (
@@ -187,11 +176,7 @@ export default function SideChannelPanel() {
           <div className="flex items-center justify-between">
             <dt className="text-muted-foreground">Verdict</dt>
             <dd>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${config.bg} ${config.text}`}
-              >
-                {config.label}
-              </span>
+              <StatusPill tone={config.tone}>{config.label}</StatusPill>
             </dd>
           </div>
           <div className="flex items-center justify-between">

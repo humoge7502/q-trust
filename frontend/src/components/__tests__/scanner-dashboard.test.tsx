@@ -26,9 +26,8 @@ const SCAN_RESPONSE = {
 
 const fetchMock = vi.fn();
 
-vi.mock("@/lib/api", () => ({
-  API_BASE_URL: "http://api.test",
-}));
+// No `@/lib/api` mock: the component talks to the real request helper so this
+// test also exercises the same-origin proxy path the browser actually uses.
 
 function okResponse(body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -78,7 +77,7 @@ describe("ScannerDashboard", () => {
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0];
-    expect(String(url)).toBe("http://api.test/v1/scan/full");
+    expect(String(url)).toBe("/api/v1/scan/full");
     expect((init as RequestInit).method).toBe("POST");
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({
       target: "/repo",
@@ -109,7 +108,7 @@ describe("ScannerDashboard", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /run scan/i }));
 
-    expect(await screen.findByText("scanner offline")).toBeInTheDocument();
+    expect(await screen.findByText(/scanner offline/)).toBeInTheDocument();
     expect(screen.queryByText("Results")).not.toBeInTheDocument();
   });
 });

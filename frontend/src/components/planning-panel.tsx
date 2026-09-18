@@ -8,7 +8,11 @@
  * get the GNN-ranked migration order + a deadline feasibility schedule.
  */
 import { useMemo, useState } from "react";
-import { fetchMigrationPlan } from "@/lib/api";
+import { fetchMigrationPlan, OperatorKeyRequiredError } from "@/lib/api";
+import { OperatorAccessInline } from "@/components/operator-access";
+import { PanelTitle } from "@/components/ui/panel";
+import { StatusPill } from "@/components/ui/status-pill";
+import { ErrorState } from "@/components/ui/state";
 
 const SAMPLE_CBOM = JSON.stringify(
   {
@@ -50,6 +54,7 @@ export function PlanningPanel() {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [plan, setPlan] = useState<PlanResult | null>(null);
   const [error, setError] = useState("");
+  const [operatorEndpoint, setOperatorEndpoint] = useState<string | null>(null);
 
   const cbom = useMemo(() => {
     if (!cbomText.trim()) return null;
@@ -67,22 +72,29 @@ export function PlanningPanel() {
       return;
     }
     setError("");
+    setOperatorEndpoint(null);
     setState("loading");
     try {
       const result = await fetchMigrationPlan({ cbom, deadline: deadline || undefined });
       setPlan(result);
       setState("done");
     } catch (err) {
+      if (err instanceof OperatorKeyRequiredError) {
+        // `/v1/plans` is a privileged route: prompt for the caller's own key.
+        setOperatorEndpoint(err.endpoint);
+        setState("idle");
+        return;
+      }
       setState("error");
       setError(err instanceof Error ? err.message : String(err));
     }
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-800">AI migration planner</h3>
-      <p className="mt-1 text-xs text-slate-500">
-        Paste a CBOM JSON (from <code className="rounded bg-slate-100 px-1">crypto-inspector scan</code>)
+    <div className="mt-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+      <PanelTitle>AI migration planner</PanelTitle>
+      <p className="mt-1.5 text-micro leading-6 text-muted-foreground">
+        Paste a CBOM JSON (from <code className="rounded bg-neutral-surface px-1">crypto-inspector scan</code>)
         and optionally a deadline. The GNN ranks assets by migration priority and estimates feasibility.
       </p>
 
@@ -92,46 +104,56 @@ export function PlanningPanel() {
           onChange={(e) => setCbomText(e.target.value)}
           placeholder='{"assets": [{"asset_id": "…", "algorithm": "RSA-2048", "key_size": 2048, "criticality": "Critical"}]}'
           rows={6}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 font-mono text-micro text-foreground transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25"
         />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button
           onClick={() => setCbomText(SAMPLE_CBOM)}
-          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:border-qtrust-500"
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-micro font-medium text-neutral transition hover:border-qtrust-500 hover:text-qtrust-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
         >
           Load sample CBOM
         </button>
-        <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+        <label className="flex items-center gap-2 text-micro font-medium text-neutral">
           Deadline
           <input
             type="date"
             value={deadline}
             onChange={(e) => setDeadline(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs"
+            className="rounded-lg border border-border bg-card px-3 py-1.5 text-micro text-foreground transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25"
           />
         </label>
         <button
           onClick={() => void run()}
           disabled={state === "loading"}
-          className="ml-auto rounded-lg bg-qtrust-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-qtrust-700 disabled:opacity-50"
+          className="ml-auto rounded-lg bg-qtrust-600 px-4 py-2 text-micro font-semibold text-white transition hover:bg-qtrust-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
         >
           {state === "loading" ? "Planning…" : "Generate plan"}
         </button>
       </div>
 
       {state === "error" && error ? (
-        <p className="mt-3 text-xs text-rose-600">{error}</p>
+        <div className="mt-3">
+          <ErrorState
+            title="The planner could not produce a plan"
+            description={error}
+            onRetry={() => void run()}
+          />
+        </div>
+      ) : null}
+
+      {operatorEndpoint ? (
+        <OperatorAccessInline endpoint={operatorEndpoint} onSaved={() => void run()} />
       ) : null}
 
       {state === "done" && plan ? (
         <PlanView plan={plan} />
       ) : state === "loading" ? (
-        <div className="mt-4 space-y-2">
-          <div className="h-4 w-1/3 animate-pulse rounded bg-slate-100" />
-          <div className="h-8 w-full animate-pulse rounded bg-slate-100" />
-          <div className="h-8 w-full animate-pulse rounded bg-slate-100" />
+        <div className="mt-4 animate-pulse space-y-2" aria-hidden="true">
+          <div className="h-4 w-1/3 rounded bg-neutral-surface" />
+          <div className="h-8 w-full rounded bg-neutral-surface" />
+          <div className="h-8 w-full rounded bg-neutral-surface" />
         </div>
       ) : null}
     </div>
@@ -144,8 +166,11 @@ function PlanView({ plan }: { plan: PlanResult }) {
     <div className="mt-4">
       {sched ? (
         <div
-          className={`mb-3 rounded-lg px-4 py-3 text-xs ${
-            sched.feasible ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"
+          data-tone={sched.feasible ? "success" : "danger"}
+          className={`mb-3 rounded-lg border px-4 py-3 text-micro font-medium ${
+            sched.feasible
+              ? "border-success-border bg-success-surface text-success"
+              : "border-danger-border bg-danger-surface text-danger"
           }`}
         >
           {sched.feasible
@@ -162,7 +187,7 @@ function PlanView({ plan }: { plan: PlanResult }) {
         <table className="w-full text-left text-xs">
           <caption className="sr-only">Migration plan — ranked assets</caption>
           <thead>
-            <tr className="border-b border-slate-200 text-slate-500">
+            <tr className="border-b border-border text-muted-foreground">
               <th scope="col" className="py-2 pr-2 font-medium">Rank</th>
               <th scope="col" className="py-2 pr-2 font-medium">Asset</th>
               <th scope="col" className="py-2 pr-2 font-medium">Algorithm</th>
@@ -175,22 +200,22 @@ function PlanView({ plan }: { plan: PlanResult }) {
             {plan.migration_order.map((a) => {
               const window = sched?.windows.find((w) => w.asset_id === a.asset_id);
               return (
-                <tr key={a.asset_id} className="border-b border-slate-100">
-                  <td className="py-2 pr-2 font-mono text-slate-400">#{a.rank}</td>
-                  <td className="py-2 pr-2 font-mono text-slate-800">{a.asset_id}</td>
-                  <td className="py-2 pr-2 text-slate-600">{a.algorithm}</td>
+                <tr key={a.asset_id} className="border-b border-border">
+                  {/* `text-muted-foreground`, not `text-slate-400`: slate-400 on
+                      white measures 2.64:1 and fails WCAG AA outright. */}
+                  <td className="py-2 pr-2 font-mono text-muted-foreground">#{a.rank}</td>
+                  <td className="py-2 pr-2 font-mono text-foreground">{a.asset_id}</td>
+                  <td className="py-2 pr-2 text-neutral">{a.algorithm}</td>
                   <td className="py-2 pr-2">
                     {a.pqc_ready ? (
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">
-                        PQC-ready
-                      </span>
+                      <StatusPill tone="success">PQC-ready</StatusPill>
                     ) : (
-                      <span className="text-slate-600">{a.criticality}</span>
+                      <span className="text-neutral">{a.criticality}</span>
                     )}
                   </td>
-                  <td className="py-2 pr-2 text-slate-600">{a.migrate_days}d</td>
+                  <td className="py-2 pr-2 text-neutral">{a.migrate_days}d</td>
                   {window ? (
-                    <td className="py-2 pr-2 font-mono text-xs text-slate-500">
+                    <td className="py-2 pr-2 font-mono text-micro text-muted-foreground">
                       {window.start.slice(0, 10)} → {window.end.slice(0, 10)}
                     </td>
                   ) : null}
@@ -205,21 +230,21 @@ function PlanView({ plan }: { plan: PlanResult }) {
         {plan.migration_order.map((a) => {
           const window = sched?.windows.find((w) => w.asset_id === a.asset_id);
           return (
-            <div key={a.asset_id} className="rounded-lg border border-slate-200 bg-slate-50 p-3" role="listitem">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-medium text-slate-500">#{a.rank} · {a.asset_id}</span>
-                <span className="text-xs text-slate-600">{a.migrate_days}d</span>
+            <div key={a.asset_id} className="rounded-lg border border-border bg-muted p-3" role="listitem">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-micro font-medium text-muted-foreground">#{a.rank} · {a.asset_id}</span>
+                <span className="text-micro text-neutral">{a.migrate_days}d</span>
               </div>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                <span className="rounded bg-white px-2 py-1 font-medium text-slate-700 ring-1 ring-slate-200">{a.algorithm}</span>
+              <div className="mt-2 flex flex-wrap gap-2 text-micro">
+                <span className="rounded bg-card px-2 py-1 font-medium text-foreground ring-1 ring-border">{a.algorithm}</span>
                 {a.pqc_ready ? (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">PQC-ready</span>
+                  <StatusPill tone="success">PQC-ready</StatusPill>
                 ) : (
-                  <span className="rounded-full bg-white px-2 py-0.5 text-slate-600 ring-1 ring-slate-200">{a.criticality}</span>
+                  <span className="rounded-full bg-card px-2 py-0.5 text-neutral ring-1 ring-border">{a.criticality}</span>
                 )}
               </div>
               {window ? (
-                <div className="mt-2 font-mono text-[11px] text-slate-500">
+                <div className="mt-2 font-mono text-micro text-muted-foreground">
                   {window.start.slice(0, 10)} → {window.end.slice(0, 10)}
                 </div>
               ) : null}
