@@ -362,6 +362,8 @@ flowchart LR
 | Contract tests | **211** — unit + invariant (1000 runs) + fuzz + attack | [`CHANGELOG.md`](CHANGELOG.md) |
 | Scanner coverage | **12+** source languages · **10+** manifest formats | [`inspector/`](inspector/) |
 | Side-channel detector | **54/54 clean traces → VERIFIED/LOW_RISK (0 false alarms)** · **51/54 leak-injected → HIGH_RISK** (3 misses, all low-sample keygen ops) — trained on 54 real liboqs trace sets (PQC + RSA/ECC baselines), loss 0.178→0.080, calibration anchors 0.000/1.000 | [`inspector/side_channel_model_real.pt`](inspector/) · `scripts/train_real_side_channel.py` |
+| Crypto discovery head-to-head | CryptoAPI-Bench: usage recall **164/187 = 0.877**, file-level misuse precision **0.932** · ApacheCryptoAPI-Bench (71/121 mapped): **R 0.971 / P 0.532 / F1 0.688** — usage discovery, not misuse detection; no superiority claim over misuse SOTA | [`benchmarks/external/HEAD-TO-HEAD.md`](benchmarks/external/HEAD-TO-HEAD.md) |
+| ACVP known-answer vectors | ECDSA-SigVer **196/196** · RSA-SigVer **126** (+144 oracle-skipped XOF) · EdDSA **10** (+10 preHash skipped) · SHA2-256 **516** (+1 MCT skipped) · HMAC **150** — verified against independent stack; liboqs KATs **6/6 PQC match** published hashes | [`inspector/tests/test_acvp_vectors.py`](inspector/tests/test_acvp_vectors.py) · [`inspector/data/acvp/`](inspector/data/acvp/) |
 
 > **Validation status (honest scope):** the **flagship planner is now trained and
 > evaluated on real data**: a **real code corpus of 13,973 files** (incl. 915

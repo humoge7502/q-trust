@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — external benchmarks, ACVP vectors, estate expansion list (2026-09-18)
+
+- **Placed (verified, byte-checked):** `benchmarks/external/` (CryptoAPI-Bench
+  203 cases + ApacheCryptoAPI-Bench jars), `inspector/data/acvp/` (34 NIST
+  families), `qtrust_data/raw/popularity-list-top1k.csv` (1,000 domains for
+  the scan_hosts expansion loop). Stale bundle parts (37-CBOM corpus, 5 old
+  traces, duplicate artifacts/submodules) deliberately **not** installed.
+- **Head-to-head measured:** CryptoAPI-Bench usage recall 0.877, file-level
+  misuse precision 0.932; Apache file-level P 0.532 / R 0.971 / F1 0.688 on
+  71 mapped cases (50 files absent from shipped jars — unevaluable, stated;
+  line-level scoring rejected after proving version drift). Report:
+  `benchmarks/external/HEAD-TO-HEAD.md` — usage discovery framing, no SOTA
+  superiority claim.
+- **ACVP oracle verification (new tests, all green):** ECDSA 196/196, RSA
+  126 (+144 XOF oracle-skips), EdDSA 10 (+10 preHash skips), SHA2-256 516
+  (+1 MCT skip, chaining unidentified after exhaustive search), HMAC 150;
+  liboqs KATs 6/6 PQC match published hashes (binaries built from pinned
+  source; tests skip cleanly without them).
+
 ### Added — 42-fold LOO on GPU + side-channel retrain on 54 trace sets (2026-09-18)
 
 - **42-fold LOO (2× A100, 30-epoch fine-tune, seed 42):** model **τ-b 0.7168**

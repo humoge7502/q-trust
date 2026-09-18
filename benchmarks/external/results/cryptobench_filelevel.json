@@ -1,0 +1,2083 @@
+[
+ {
+  "file": "BrokenCryptoABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase10.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase11.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase12.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase13.java",
+  "secure": false,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase14.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase15.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase5.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase6.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase7.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase8.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABICase9.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMC2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMC3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMC4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMC5.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMCCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMCCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMCCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 6,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMCCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 6,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABMCCase5.java",
+  "secure": false,
+  "flagged": true,
+  "n": 6,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABPSCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABPSCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABPSCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABPSCase5.java",
+  "secure": false,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABSCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABSCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABSCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoABSCase5.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoBBCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoBBCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoBBCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoBBCase5.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenCryptoCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "DATAFLOW",
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase10.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "DATAFLOW",
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase11.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase12.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "DATAFLOW",
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "DATAFLOW",
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase5.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase6.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "DATAFLOW",
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase7.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase8.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "DATAFLOW",
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABICase9.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMC2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "DATAFLOW",
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMC3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMC4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMCCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMCCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMCCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABMCCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "RSA",
+   "SHA-256"
+  ]
+ },
+ {
+  "file": "BrokenHashABPSCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "RSA",
+   "SHA",
+   "SHA-256"
+  ]
+ },
+ {
+  "file": "BrokenHashABPSCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "RSA",
+   "SHA-256"
+  ]
+ },
+ {
+  "file": "BrokenHashABPSCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "RSA",
+   "SHA",
+   "SHA-256"
+  ]
+ },
+ {
+  "file": "BrokenHashABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "SHA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenHashABSCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "SHA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenHashABSCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "SHA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenHashABSCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 9,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "BrokenHashBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "RSA",
+   "SHA"
+  ]
+ },
+ {
+  "file": "BrokenHashBBCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashBBCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashBBCase4.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenHashCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "RSA",
+   "SHA",
+   "SHA-256"
+  ]
+ },
+ {
+  "file": "BrokenMacBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 6,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenMacBBCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 6,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "BrokenMacCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "AES-256",
+   "DATAFLOW"
+  ]
+ },
+ {
+  "file": "CredentialInStringABHCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "CredentialInStringABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "CredentialInStringABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "CredentialInStringABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "CredentialInStringABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES",
+   "AES-256"
+  ]
+ },
+ {
+  "file": "CredentialInStringABMCCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "CredentialInStringABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "CredentialInStringBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "CredentialInStringCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "DummyCertValidationCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "DummyCertValidationCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "DummyCertValidationCase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "DummyHostNameVerifierCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "DummyHostNameVerifierCorrected.java",
+  "secure": true,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "EcbInSymmCryptoABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoABMCCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 14,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "EcbInSymmCryptoCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 13,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "HttpProtocolABICase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "HttpProtocolABICase2.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "HttpProtocolABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "HttpProtocolABMC1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "HttpProtocolABMCCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "HttpProtocolABPSCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "HttpProtocolABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "HttpProtocolBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "HttpProtocolCase1Corrected.java",
+  "secure": true,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "HttpProtocolCase2Corrected.java",
+  "secure": true,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "ImproperSocketManualHostBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "InsecureAsymmetricCipherABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 15,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "InsecureAsymmetricCipherABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 15,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "InsecureAsymmetricCipherABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "InsecureAsymmetricCipherABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 12,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "InsecureAsymmetricCipherABMCCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 8,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "InsecureAsymmetricCipherABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "InsecureAsymmetricCipherBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 15,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEABHCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEABMCCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "LessThan1000IterationPBEABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 6,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBEBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "LessThan1000IterationPBECorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABHCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES",
+   "AES-256",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABMCCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 13,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 4,
+  "algos": [
+   "AES",
+   "AES-256",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableCryptographicKeyCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordABHCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordABHCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordABMC1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableKeyStorePasswordABMCCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableKeyStorePasswordABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "PredictableKeyStorePasswordCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABHCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABHCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABMCCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictablePBEPasswordABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordBBCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "PredictablePBEPasswordCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableSeedsABHCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableSeedsABHCase4.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABICase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "PredictableSeedsABICase3.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABICase4.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABICase5.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABICase6.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABMC1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABMC2.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABMCCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABMCCase2.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABPSCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABPSCase2.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "PredictableSeedsABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableSeedsABSCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 5,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "PredictableSeedsBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "RSA"
+  ]
+ },
+ {
+  "file": "PredictableSeedsBBCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "PredictableSeedsCorrected.java",
+  "secure": true,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "StaticInitializationVectorABHCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABHCase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 10,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 9,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 9,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABMCCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 7,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 9,
+  "algos": [
+   "AES",
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticInitializationVectorCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 11,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticSaltsABHCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "StaticSaltsABICase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "StaticSaltsABICase2.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "StaticSaltsABICase3.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "StaticSaltsABMC1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "StaticSaltsABMCCase1.java",
+  "secure": false,
+  "flagged": false,
+  "n": 0,
+  "algos": []
+ },
+ {
+  "file": "StaticSaltsABPSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 2,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "StaticSaltsABSCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256",
+   "DATAFLOW",
+   "WRAPPER"
+  ]
+ },
+ {
+  "file": "StaticSaltsBBCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 3,
+  "algos": [
+   "AES-256",
+   "RSA"
+  ]
+ },
+ {
+  "file": "StaticSaltsCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "UntrustedPRNGCase1.java",
+  "secure": false,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ },
+ {
+  "file": "UntrustedPRNGCorrected.java",
+  "secure": true,
+  "flagged": true,
+  "n": 1,
+  "algos": [
+   "AES-256"
+  ]
+ }
+]
