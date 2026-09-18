@@ -1,0 +1,57 @@
+{
+ "schema_version": "qtrust.cbom.v1",
+ "target": "acme-gov-edu.example",
+ "industry": "gov_edu",
+ "assets": [
+  {
+   "asset_type": "tls_certificate",
+   "host": "cdc.gov",
+   "port": 443,
+   "algorithm": "ECDSA-P256",
+   "key_type": "ECPublicKey",
+   "key_size": 256,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "3e906dc05000b11d597252833d5609a5eb4b7cbb72c424fc1bd5a0d3a7c5b485",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=DigiCert Global G3 TLS ECC SHA384 2020 CA1,O=DigiCert Inc,C=US",
+    "subject": "CN=*.cdc.gov,O=Centers for Disease Control and Prevention,L=Atlanta,ST=Georgia,C=US",
+    "serial": "13380927722180221924868768395779809681"
+   },
+   "issuer": "CN=DigiCert Global G3 TLS ECC SHA384 2020 CA1,O=DigiCert Inc,C=US",
+   "subject": "CN=*.cdc.gov,O=Centers for Disease Control and Prevention,L=Atlanta,ST=Georgia,C=US",
+   "serial_number": "13380927722180221924868768395779809681",
+   "not_before": "2026-04-16T00:00:00+00:00",
+   "not_after": "2026-10-31T23:59:59+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "ecdsa-with-SHA384"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "fda.gov",
+   "port": 443,
+   "algorithm": "ECDSA-P256",
+   "key_type": "ECPublicKey",
+   "key_size": 256,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "7e1eaf673afe23a62ae743d7d85c8ca92a5a4aea0020c9b294b3f8b0d2719944",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=HydrantID Server CA O1,OU=HydrantID Trusted Certificate Service,O=IdenTrust,C=US",
+    "subject": "CN=www.fda.gov,O=US Department of Health and Human Services,L=Washington,ST=District of Columbia,C=US",
+    "serial": "85078954233498764816617840135253512496"
+   },
+   "issuer": "CN=HydrantID Server CA O1,OU=HydrantID Trusted Certificate Service,O=IdenTrust,C=US",
+   "subject": "CN=www.fda.gov,O=US Department of Health and Human Services,L=Washington,ST=District of Columbia,C=US",
+   "serial_number": "85078954233498764816617840135253512496",
+   "not_before": "2026-02-11T16:55:46+00:00",
+   "not_after": "2027-03-13T16:54:46+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  }
+ ]
+}

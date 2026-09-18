@@ -1,0 +1,107 @@
+{
+ "schema_version": "qtrust.cbom.v1",
+ "target": "acme-mixed.example",
+ "industry": "mixed",
+ "assets": [
+  {
+   "asset_type": "tls_certificate",
+   "host": "target.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "e72198a3036498fe897e3fb43ae469c9251dc15b99e35b7dafb7f8fa92914573",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=GlobalSign Atlas R46 OV TLS CA 2026 Q3,O=GlobalSign nv-sa,C=BE",
+    "subject": "CN=sites.target.com,O=Target Corporation,L=Minneapolis,ST=Minnesota,C=US",
+    "serial": "1540315699032283496676251459472830981"
+   },
+   "issuer": "CN=GlobalSign Atlas R46 OV TLS CA 2026 Q3,O=GlobalSign nv-sa,C=BE",
+   "subject": "CN=sites.target.com,O=Target Corporation,L=Minneapolis,ST=Minnesota,C=US",
+   "serial_number": "1540315699032283496676251459472830981",
+   "not_before": "2026-08-24T13:56:33+00:00",
+   "not_after": "2027-03-11T12:56:33+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "uber.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "96b57f0fc1da412a47e45bd9d3d762bbb2ff18045cf0bbd152b0912f3bea709a",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1,O=DigiCert Inc,C=US",
+    "subject": "CN=*.uber.com,O=Uber Technologies\\, Inc.,L=San Francisco,ST=California,C=US",
+    "serial": "5974400139839356468336461313998801502"
+   },
+   "issuer": "CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1,O=DigiCert Inc,C=US",
+   "subject": "CN=*.uber.com,O=Uber Technologies\\, Inc.,L=San Francisco,ST=California,C=US",
+   "serial_number": "5974400139839356468336461313998801502",
+   "not_before": "2026-02-15T00:00:00+00:00",
+   "not_after": "2027-02-16T23:59:59+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "doordash.com",
+   "port": 443,
+   "algorithm": "ECDSA-P256",
+   "key_type": "ECPublicKey",
+   "key_size": 256,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "e37b050cb5a43e349cc899789b5ed16cf49fbdd3e851ec0a8cb516deaa49b0eb",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=WE1,O=Google Trust Services,C=US",
+    "subject": "CN=doordash.com",
+    "serial": "251651613358233999083477370627611082046"
+   },
+   "issuer": "CN=WE1,O=Google Trust Services,C=US",
+   "subject": "CN=doordash.com",
+   "serial_number": "251651613358233999083477370627611082046",
+   "not_before": "2026-07-05T08:44:37+00:00",
+   "not_after": "2026-10-03T09:44:30+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "ecdsa-with-SHA256"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "robinhood.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "1e87619196db53d22ebb981fcf165d218557813838ff0c166d9a72e433ffb57b",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=Amazon RSA 2048 M01,O=Amazon,C=US",
+    "subject": "CN=robinhood.com",
+    "serial": "10384306925542902529806023633361648807"
+   },
+   "issuer": "CN=Amazon RSA 2048 M01,O=Amazon,C=US",
+   "subject": "CN=robinhood.com",
+   "serial_number": "10384306925542902529806023633361648807",
+   "not_before": "2025-12-09T00:00:00+00:00",
+   "not_after": "2027-01-07T23:59:59+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  }
+ ]
+}

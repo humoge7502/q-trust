@@ -168,7 +168,15 @@ exports/
 # ─── Runtime artifacts produced by the pilot/notebook pipeline ────────────────
 # data/cbom_for_planner.json is written by pilot/run_pilot.py on each run (it
 # embeds a scan timestamp), so it is regenerated and must not be committed.
-data/
+# Root-anchored on purpose: a bare `data/` pattern also swallowed
+# `planner/data/real_cboms/` (making the `!...` exception below dead — a
+# parent dir exclusion cannot be re-included) and `qtrust/data/*.py` (real
+# split-lineage sources). Scoping to `/data/` keeps those committable.
+/data/
+
+# User-supplied dataset bundle tarball (extracted contents live in their
+# canonical paths; the archive itself is not a build input).
+q-trust-datasets-bundle.tar.gz
 
 # Real-data benchmark fixtures ARE committed (they back README/CHANGELOG
 # claims and are small): the host-disjoint real-CBOM corpus used by the

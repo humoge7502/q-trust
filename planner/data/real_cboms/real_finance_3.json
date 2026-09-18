@@ -1,0 +1,82 @@
+{
+ "schema_version": "qtrust.cbom.v1",
+ "target": "acme-finance.example",
+ "industry": "finance",
+ "assets": [
+  {
+   "asset_type": "tls_certificate",
+   "host": "wellsfargoadvisors.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "3dc9103e8e0975c8c9769abb4583abe55170aed7c4ddfc43ee4bcc91cffea2e0",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=Wells Fargo Public Trust Certification Authority 01 G2,OU=Organization Validated TLS,O=Wells Fargo & Company,C=US",
+    "subject": "CN=www.wellsfargoadvisors.com,O=Wells Fargo & Company,L=San Francisco,ST=California,C=US",
+    "serial": "21156380417363043769743063064008034275"
+   },
+   "issuer": "CN=Wells Fargo Public Trust Certification Authority 01 G2,OU=Organization Validated TLS,O=Wells Fargo & Company,C=US",
+   "subject": "CN=www.wellsfargoadvisors.com,O=Wells Fargo & Company,L=San Francisco,ST=California,C=US",
+   "serial_number": "21156380417363043769743063064008034275",
+   "not_before": "2025-11-17T00:00:00+00:00",
+   "not_after": "2026-12-18T23:59:59+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "starlingbank.com",
+   "port": 443,
+   "algorithm": "ECDSA-P256",
+   "key_type": "ECPublicKey",
+   "key_size": 256,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "d0a9adfdf2c112558372005951cbfadffcd16c8c605efa4ecbf0764dc87f42ed",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=WE1,O=Google Trust Services,C=US",
+    "subject": "CN=starlingbank.com",
+    "serial": "116845879918984285787772446699286885563"
+   },
+   "issuer": "CN=WE1,O=Google Trust Services,C=US",
+   "subject": "CN=starlingbank.com",
+   "serial_number": "116845879918984285787772446699286885563",
+   "not_before": "2026-07-11T05:38:42+00:00",
+   "not_after": "2026-10-09T06:38:32+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "ecdsa-with-SHA256"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "citi.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "26da43d7ad4d4dd53ba8830f0443d45bc65d9cd58929324571e973254cd4fe82",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=DigiCert EV RSA CA G2,O=DigiCert Inc,C=US",
+    "subject": "CN=www.citi.com,O=Citigroup Inc.,L=New York,ST=New York,C=US,2.5.4.5=2154254,2.5.4.15=Private Organization,1.3.6.1.4.1.311.60.2.1.2=Delaware,1.3.6.1.4.1.311.60.2.1.3=US",
+    "serial": "16410011292755102482336947183260160552"
+   },
+   "issuer": "CN=DigiCert EV RSA CA G2,O=DigiCert Inc,C=US",
+   "subject": "CN=www.citi.com,O=Citigroup Inc.,L=New York,ST=New York,C=US,2.5.4.5=2154254,2.5.4.15=Private Organization,1.3.6.1.4.1.311.60.2.1.2=Delaware,1.3.6.1.4.1.311.60.2.1.3=US",
+   "serial_number": "16410011292755102482336947183260160552",
+   "not_before": "2026-04-10T00:00:00+00:00",
+   "not_after": "2026-10-08T23:59:59+00:00",
+   "expired": false,
+   "cipher": "ECDHE-RSA-AES256-GCM-SHA384",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  }
+ ]
+}

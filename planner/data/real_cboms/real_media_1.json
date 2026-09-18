@@ -1,0 +1,107 @@
+{
+ "schema_version": "qtrust.cbom.v1",
+ "target": "acme-media.example",
+ "industry": "media",
+ "assets": [
+  {
+   "asset_type": "tls_certificate",
+   "host": "bbc.co.uk",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "4fe2799f2e3d4fbae8769de9747db046c21ed04481eb1e1cfc3852d7937fa275",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=GlobalSign GCC R46 OV TLS CA 2025,O=GlobalSign nv-sa,C=BE",
+    "subject": "CN=www.bbc.com,O=BRITISH BROADCASTING CORPORATION,L=London,ST=London,C=GB",
+    "serial": "34190963914933566318619885744"
+   },
+   "issuer": "CN=GlobalSign GCC R46 OV TLS CA 2025,O=GlobalSign nv-sa,C=BE",
+   "subject": "CN=www.bbc.com,O=BRITISH BROADCASTING CORPORATION,L=London,ST=London,C=GB",
+   "serial_number": "34190963914933566318619885744",
+   "not_before": "2026-08-21T11:32:02+00:00",
+   "not_after": "2027-01-24T05:46:23+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "wsj.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "2392498372e3f6959d4caf2a4464a78336ef9aeb28d8e3cfb43ee4ba6a27ff22",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=Amazon RSA 2048 M04,O=Amazon,C=US",
+    "subject": "CN=online.wsj.com",
+    "serial": "1411335208000611826250966184366691691"
+   },
+   "issuer": "CN=Amazon RSA 2048 M04,O=Amazon,C=US",
+   "subject": "CN=online.wsj.com",
+   "serial_number": "1411335208000611826250966184366691691",
+   "not_before": "2026-06-05T00:00:00+00:00",
+   "not_after": "2026-12-19T23:59:59+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_128_GCM_SHA256",
+   "_sig_algorithm": "sha256WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "microsoft.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "1e16fa37bf143e7ad494aa2ee922846a6d02434f1fdca413b78097a31c7b77f5",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=Microsoft TLS G2 RSA CA OCSP 04,O=Microsoft Corporation,C=US",
+    "subject": "CN=microsoft.com,O=Microsoft Corporation,L=Redmond,ST=WA,C=US",
+    "serial": "1494185073477467730131572356474851318374549578"
+   },
+   "issuer": "CN=Microsoft TLS G2 RSA CA OCSP 04,O=Microsoft Corporation,C=US",
+   "subject": "CN=microsoft.com,O=Microsoft Corporation,L=Redmond,ST=WA,C=US",
+   "serial_number": "1494185073477467730131572356474851318374549578",
+   "not_before": "2026-06-23T09:04:17+00:00",
+   "not_after": "2026-12-20T09:04:17+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "sha384WithRSAEncryption"
+  },
+  {
+   "asset_type": "tls_certificate",
+   "host": "azure.microsoft.com",
+   "port": 443,
+   "algorithm": "RSA-2048",
+   "key_type": "RSAPublicKey",
+   "key_size": 2048,
+   "vendor": null,
+   "criticality": "medium",
+   "fingerprint_sha256": "750a1e95de398a7b69c61505286b0cd4dcdb56dae06d75fcca643052bda56034",
+   "first_seen": null,
+   "metadata": {
+    "issuer": "CN=Microsoft TLS G2 RSA CA OCSP 04,O=Microsoft Corporation,C=US",
+    "subject": "CN=azure.microsoft.com,O=Microsoft Corporation,L=Redmond,ST=WA,C=US",
+    "serial": "1494153688269160189535955780090635473960766639"
+   },
+   "issuer": "CN=Microsoft TLS G2 RSA CA OCSP 04,O=Microsoft Corporation,C=US",
+   "subject": "CN=azure.microsoft.com,O=Microsoft Corporation,L=Redmond,ST=WA,C=US",
+   "serial_number": "1494153688269160189535955780090635473960766639",
+   "not_before": "2026-03-10T22:04:48+00:00",
+   "not_after": "2026-09-24T22:04:48+00:00",
+   "expired": false,
+   "cipher": "TLS_AES_256_GCM_SHA384",
+   "_sig_algorithm": "sha384WithRSAEncryption"
+  }
+ ]
+}
