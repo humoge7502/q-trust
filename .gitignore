@@ -178,6 +178,7 @@ exports/
 # canonical paths; the archives themselves are not build inputs).
 q-trust-datasets-bundle.tar.gz
 q-trust-complete-data-bundle.tar.gz
+q-trust-datasets-bundle (1).tar.gz
 
 # Real-data benchmark fixtures ARE committed (they back README/CHANGELOG
 # claims and are small): the host-disjoint real-CBOM corpus used by the
