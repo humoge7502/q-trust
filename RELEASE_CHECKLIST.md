@@ -2,6 +2,7 @@
 
 All boxes below reflect the verified state at the merge of PR #55 (2026-09-06).
 Re-run each gate before tagging a release; do not check boxes from memory.
+Addendum 2026-09-18: model retrain (E-06/E-07), external head-to-head (E-08), ACVP oracle tests (E-09), 42-CBOM corpus (42/277/0-overlap), and 323+1 pytest re-run verified on branch `data/external-benchmarks-acvp-estates` (unmerged — open PR to `main` before tagging).
 
 ## Build
 - [x] `forge build` — clean (contracts)
@@ -18,7 +19,7 @@ Re-run each gate before tagging a release; do not check boxes from memory.
 ## Tests
 - [x] `forge test -C contracts` — 213 passed (incl. invariant + adversarial suites)
 - [x] `pytest planner/tests inspector/tests sdk/tests qtrust_ai/tests` — 378 passed, 2 skipped
-- [x] `pytest planner inspector` re-run 2026-09-12 — 309 passed, 1 skipped
+- [x] `pytest planner inspector` re-run 2026-09-18 — 323 passed, 1 skipped (was 309+1 on 2026-09-12; +12 ACVP/liboqs oracle tests +2 corpus tests, all green)
 - [x] Hypothesis property tests (`sdk/tests/test_properties.py`) — 15 passed
 - [x] `cd backend && npm test` — 104 passed
 - [x] `cd frontend && npm test` — 143 passed (was 103 before 2026-09-12; includes the
@@ -58,7 +59,7 @@ Re-run each gate before tagging a release; do not check boxes from memory.
 - [x] Checkpoints load; `/health` reports model provenance (variant, config, eval metrics)
 - [x] Dataset split reproduction: seed 42 → 30/8 repos, 11,558/2,415 files, zero overlap
 - [x] Leakage audit recorded in `docs/TRUTH_AUDIT.md`
-- [ ] Full from-scratch retrain (BLOCKED on 4×GPU reservation — see RISK_REGISTER R-03)
+- [x] Full retrain executed 2026-09-18 (CLOSED R-03): CodeBERTa CUDA fine-tune F1 0.9525; GNN 42-fold LOO τ-b 0.7168 on 2×A100 (42 CBOMs / 277 hosts, 0 overlaps); side-channel retrain on 54 trace sets — see EXPERIMENTS.md E-06/E-07
 
 ## Performance
 - [x] Planner `/plan` p50/p95 measured and recorded (`docs/PERFORMANCE.md`)

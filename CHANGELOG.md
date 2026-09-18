@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — governance sync with Sep-18 training evidence (2026-09-18)
+
+- `EXPERIMENTS.md`: E-06 (42-fold LOO τ-b 0.7168), E-07 (side-channel
+  54-set retrain), E-08 (external head-to-head), E-09 (ACVP oracle tests).
+- `RISK_REGISTER.md`: R-03 ACCEPTED → CLOSED (retrain executed).
+- `PROJECT_SCORECARD.md`: ML + Competitive Differentiation PARTIAL → PASS
+  (MLOps stays PARTIAL — experiment tracker unused).
+- `RELEASE_CHECKLIST.md`: retrain box checked, pytest 323+1 re-run recorded.
+
 ### Added — external benchmarks, ACVP vectors, estate expansion list (2026-09-18)
 
 - **Placed (verified, byte-checked):** `benchmarks/external/` (CryptoAPI-Bench

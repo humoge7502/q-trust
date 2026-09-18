@@ -7,7 +7,7 @@ Every PASS cites executed verification from this engagement (PRs #51–#55, all 
 |---|---|---|---|
 | Architecture | PASS | `docs/ARCHITECTURE.md` + 7 ADRs; component boundaries verified by live cross-service test (backend→planner 401/200/422 chain) | None blocking |
 | Code Quality | PASS | ruff clean (repo-wide); sdk mypy strict clean; backend tsc + eslint clean; frontend tsc + eslint clean | Large files remain (scanner-dashboard.tsx ~1.2k lines) — tracked in TECHNICAL_DEBT.md |
-| ML | PARTIAL | GNN GPU train smoke validated (val τ 0.922→0.927); RL train + CUDA checkpoint load validated; leakage audit recorded (repo-level split integrity holds, 0.4% cross-repo dupes) | Full from-scratch retrain of all models not re-run; metrics rest on shipped artifacts |
+| ML | PASS | CodeBERTa fine-tune re-ran on CUDA (4 epochs, F1 0.9525, `qtrust_ai/artifacts/training_report_real.json`); GNN 42-fold LOO re-ran on 2×A100 (τ-b 0.7168 vs heuristic 0.7210, honest tie, `planner/results/real_cbom_loo_42.json`, E-06); side-channel retrained on 54 trace sets (E-07); RL train + CUDA checkpoint load validated; leakage audit holds (0.4% cross-repo dupes) | Near-duplicate (fuzzy) scan beyond exact hashes |
 | Dataset | PASS | code_corpus.json 13,973 files / 38 repos audited: split reproduced (seed 42 → 30/8 repos, 11,558/2,415 files); vendor dataset 16 records, 0 duplicates | Near-duplicate (fuzzy) scan beyond exact hashes |
 | Evaluation | PASS | `benchmark_comparison.json` internally coherent (seed, baselines, n=2415); dvc evaluate stage honestly reports `not_available` on empty splits (verified) | Calibration curve analysis for CodeBERTa confidence |
 | Explainability | PASS | Inspector emits evidence-backed findings (exact key sizes from AST); planner returns model provenance in `/health` and `/plan` (variant, path, config, eval metrics) | Per-asset feature attribution for GNN ranking |
@@ -23,7 +23,7 @@ Every PASS cites executed verification from this engagement (PRs #51–#55, all 
 | Documentation | PASS | README claims traced to artifacts (F1 0.952 → `benchmark_comparison.json`); SDK quick-start fixed + docs-contract test prevents drift; mkdocs strict + docs-v2 build pass | None blocking |
 | Dependencies | PASS | npm audits clean (both packages); pip audit in CI green (one transient network failure re-run green); no unused-dependency removal needed | Quarterly review cadence |
 | Deployment | PASS | `scripts/verify_all.sh` 12 steps pass; go-live preflight passes; compose config supplies all fail-closed env vars via `.env.example` | Production TLS/Basescan checks skip by design (need prod secrets) |
-| Competitive Differentiation | PARTIAL | Differentiators verified: on-chain evidence anchoring (EIP-712 gasless), CycloneDX-native scanner, GNN-ranked migration ordering with LOO out-of-sample validation, hash-only privacy model | Formal competitive benchmark against named external systems |
+| Competitive Differentiation | PASS | Differentiators verified: on-chain evidence anchoring (EIP-712 gasless), CycloneDX-native scanner, GNN-ranked migration ordering with 42-fold LOO out-of-sample validation, hash-only privacy model; formal head-to-head vs named external systems measured 2026-09-18 (`benchmarks/external/HEAD-TO-HEAD.md`, E-08: CryptoAPI-Bench usage recall 0.877, Apache F1 0.688 — usage-discovery framing, no superiority claim) | None blocking |
 
 ## Follow-up audit — 2026-09-12
 
