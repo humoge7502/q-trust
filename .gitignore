@@ -174,9 +174,10 @@ exports/
 # split-lineage sources). Scoping to `/data/` keeps those committable.
 /data/
 
-# User-supplied dataset bundle tarball (extracted contents live in their
-# canonical paths; the archive itself is not a build input).
+# User-supplied dataset bundle tarballs (extracted contents live in their
+# canonical paths; the archives themselves are not build inputs).
 q-trust-datasets-bundle.tar.gz
+q-trust-complete-data-bundle.tar.gz
 
 # Real-data benchmark fixtures ARE committed (they back README/CHANGELOG
 # claims and are small): the host-disjoint real-CBOM corpus used by the
