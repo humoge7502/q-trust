@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — 42-fold LOO on GPU + side-channel retrain on 54 trace sets (2026-09-18)
+
+- **42-fold LOO (2× A100, 30-epoch fine-tune, seed 42):** model **τ-b 0.7168**
+  vs doctrine heuristic **0.7210** (Δ **−0.0042**, medians identical 0.7237) —
+  **0 wins / 41 ties / 1 loss**, model top-10 1.0 on all 42 folds, +0.687 vs
+  random. Report: `planner/results/real_cbom_loo_42.json` (+2 shard files);
+  the 40-fold files stay as historical records.
+- **Side-channel retrain** (`train_real_side_channel.py --traces-dir
+  /tmp/real_data`, 54 sets, loss 0.178→0.080, anchors 0.000/1.000): clean
+  **46 VERIFIED + 8 LOW_RISK (0 false alarms)**; leak-injected **51/54
+  HIGH_RISK** (misses: FALCON1024/FALCON512/SLH-256s keygen, n≤200). New
+  weights in `inspector/side_channel_model_real.pt` (previous backed up
+  before overwriting).
+
 ### Added — host-disjoint 42-CBOM real-estate corpus committed (2026-09-18)
 
 - **Replaced** the hand-packed 40-file `planner/data/real_cboms/` (280 assets
