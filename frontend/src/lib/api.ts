@@ -4,9 +4,211 @@
  * Browser requests go through the same-origin Next.js proxy. The proxy forwards
  * to the Fastify backend using server-only configuration.
  */
-// Browser API calls use the same-origin Next.js proxy. The proxy injects the
-// server-only QTRUST_API_KEY before forwarding to Fastify.
+import {
+  OPERATOR_KEY_HEADER,
+  OPERATOR_KEY_REQUIRED_CODE,
+  classifyEndpoint,
+} from "@/lib/api-route-policy";
+import { getOperatorKey } from "@/lib/operator-key";
+
+// Browser API calls use the same-origin Next.js proxy. For public routes the
+// proxy attaches the server-only QTRUST_API_KEY; for operator routes it forwards
+// the caller's own key instead (see lib/api-route-policy.ts).
 export const API_BASE_URL = "/api";
+
+/**
+ * Thrown when an endpoint requires the caller's own operator key and none —
+ * or an invalid one — was presented. Callers should render an operator-access
+ * prompt rather than a generic error.
+ */
+export class OperatorKeyRequiredError extends Error {
+  readonly endpoint: string;
+
+  constructor(endpoint: string, message?: string) {
+    super(
+      message ??
+        `Operator access required for ${endpoint}. Add your Q-Trust API key to continue.`,
+    );
+    this.name = "OperatorKeyRequiredError";
+    this.endpoint = endpoint;
+  }
+}
+
+/** Headers carrying the caller's operator key, when one is stored. */
+export function operatorHeaders(): Record<string, string> {
+  const key = getOperatorKey();
+  return key ? { [OPERATOR_KEY_HEADER]: key } : {};
+}
+
+/** True when this path+method is on the privileged (operator) surface. */
+export function endpointNeedsOperatorKey(path: string, method: string): boolean {
+  return classifyEndpoint(path, method) === "operator";
+}
+
+async function readErrorMessage(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { error?: string; detail?: string };
+    return body.detail ?? body.error ?? "";
+  } catch {
+    try {
+      return await response.text();
+    } catch {
+      return "";
+    }
+  }
+}
+
+/**
+ * Shared response handling: turns the proxy's operator-key rejection into a
+ * typed error so UI can react, and keeps other failures as plain Errors.
+ */
+async function handleResponse<T>(response: Response, path: string): Promise<T> {
+  if (response.ok) return (await response.json()) as T;
+
+  if (response.status === 403) {
+    let code: string | undefined;
+    try {
+      code = ((await response.clone().json()) as { code?: string }).code;
+    } catch {
+      code = undefined;
+    }
+    if (code === OPERATOR_KEY_REQUIRED_CODE) {
+      throw new OperatorKeyRequiredError(`${path}`);
+    }
+  }
+
+  const detail = await readErrorMessage(response);
+  throw new Error(`API ${response.status}: ${detail || "request failed"}`);
+}
+
+
+const DEFAULT_BACKEND_ORIGIN = "http://localhost:3001";
+
+/**
+ * Backend origin for server-side calls. Mirrors `backendUrl()` in
+ * `app/api/[...path]/route.ts` so a server-rendered request and a proxied
+ * browser request reach the same upstream.
+ */
+function backendOrigin(): string {
+  return (
+    process.env.QTRUST_BACKEND_URL ??
+    process.env.NEXT_PUBLIC_QTRUST_API_URL ??
+    DEFAULT_BACKEND_ORIGIN
+  ).replace(/\/$/, "");
+}
+
+/** Server-side admin key — same resolution order as the proxy route. */
+function serverApiKey(): string | undefined {
+  const single = process.env.QTRUST_API_KEY?.trim();
+  if (single) return single;
+  return process.env.QTRUST_API_KEYS?.split(",")[0]?.trim() || undefined;
+}
+
+/**
+ * Build the URL and auth headers for a backend path, per runtime.
+ *
+ * There are two callers of this module and they need different things:
+ *
+ *   - Browser: the same-origin `/api` proxy. The server-only key never reaches
+ *     the client bundle and the CSP's `connect-src 'self'` stays sufficient.
+ *
+ *   - Server (RSC / SSR): the backend origin directly. `API_BASE_URL` is
+ *     relative (`/api`), and Node's `fetch` cannot parse a relative URL — it
+ *     throws `TypeError: Failed to parse URL`. Because this module is imported
+ *     by server components (`/v/[id]` is one), the relative form was the only
+ *     strategy available and every server render of those routes died with a
+ *     500 before it could render anything.
+ *
+ * Resolving to the backend origin on the server also avoids a self-request back
+ * through our own proxy, which would require the deployment to know its own
+ * public origin during SSR.
+ */
+export type ApiRuntime = "browser" | "server";
+
+/**
+ * Pure URL/header construction for a backend path.
+ *
+ * Split out from the runtime detection below so both branches are directly
+ * unit-testable — the server branch is the one that broke `/v/[id]`, and it is
+ * unreachable from a jsdom test (which always has a `window`).
+ *
+ * The two invariants worth asserting:
+ *   - server URLs are absolute (relative ones throw in Node's `fetch`); and
+ *   - the server-only admin key is used on the server and the caller's operator
+ *     key in the browser, never swapped.
+ */
+export function resolveApiRequest(
+  path: string,
+  runtime: ApiRuntime,
+  options: {
+    backendOrigin: string;
+    serverApiKey?: string;
+    operatorKey?: string | null;
+  },
+): { url: string; headers: Record<string, string> } {
+  if (runtime === "browser") {
+    return {
+      url: `${API_BASE_URL}${path}`,
+      headers: options.operatorKey
+        ? { [OPERATOR_KEY_HEADER]: options.operatorKey }
+        : {},
+    };
+  }
+  return {
+    url: `${options.backendOrigin.replace(/\/$/, "")}${path}`,
+    headers: options.serverApiKey ? { "x-api-key": options.serverApiKey } : {},
+  };
+}
+
+function resolveRequest(path: string): {
+  url: string;
+  headers: Record<string, string>;
+} {
+  return resolveApiRequest(
+    path,
+    typeof window === "undefined" ? "server" : "browser",
+    {
+      backendOrigin: backendOrigin(),
+      serverApiKey: serverApiKey(),
+      // `getOperatorKey` is a no-op on the server (it guards on `window`).
+      operatorKey: getOperatorKey(),
+    },
+  );
+}
+
+/** POST JSON to the backend, attaching the operator key if set. */
+export async function apiPostJson<T>(
+  path: string,
+  body: unknown,
+  init?: RequestInit,
+): Promise<T> {
+  const { url, headers } = resolveRequest(path);
+  const response = await fetch(url, {
+    method: "POST",
+    ...init,
+    headers: {
+      "content-type": "application/json",
+      ...headers,
+      ...(init?.headers ?? {}),
+    },
+    body: JSON.stringify(body),
+  });
+  return handleResponse<T>(response, path);
+}
+
+/** GET JSON from the backend, attaching the operator key if set. */
+export async function apiGetJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const { url, headers } = resolveRequest(path);
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      accept: "application/json",
+      ...headers,
+      ...(init?.headers ?? {}),
+    },
+  });
+  return handleResponse<T>(response, path);
+}
 
 // Documentation is a public resource and can remain on the direct API origin.
 export const API_DOCS_URL =
@@ -107,28 +309,22 @@ export interface ProductSupportInfo {
   attestation_id: string | null;
 }
 
+/**
+ * Shared request helper for the typed read endpoints. Uses `resolveRequest`
+ * because several of these are called from server components as well as from
+ * the browser.
+ */
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
+  const { url, headers } = resolveRequest(path);
   const response = await fetch(url, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...headers,
       ...(init?.headers ?? {}),
     },
   });
-
-  if (!response.ok) {
-    let detail = "";
-    try {
-      const body = await response.json();
-      detail = body.detail ?? body.error ?? JSON.stringify(body);
-    } catch {
-      detail = await response.text();
-    }
-    throw new Error(`API ${response.status}: ${detail}`);
-  }
-
-  return (await response.json()) as T;
+  return handleResponse<T>(response, path);
 }
 
 /** Fetch an asset by ID (read-only, cacheable). */
@@ -229,19 +425,13 @@ export async function relayAttestation(payload: {
   nonce: number;
   signature: string;
 }): Promise<{ txHash: string; vendorDid: string; attestationId: string }> {
-  // The same-origin proxy adds X-Api-Key on the server. Never read a public
-  // NEXT_PUBLIC_* API key here: anything in this module is browser-visible.
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  const res = await fetch(`${API_BASE_URL}/v1/relay/attestation`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  const json = await res.json();
-  if (!res.ok) {
-    throw new Error(json.error ?? `Relay failed with status ${res.status}`);
-  }
-  return json;
+  // The same-origin proxy authorizes this route with the caller's own key
+  // (see lib/api-route-policy.ts): it never attaches the server-side admin key
+  // to relayer submissions. `apiPostJson` supplies the operator key when set.
+  return apiPostJson<{ txHash: string; vendorDid: string; attestationId: string }>(
+    "/v1/relay/attestation",
+    payload,
+  );
 }
 
 /** Request a migration plan from the AI planner (via the backend proxy). */
@@ -267,16 +457,25 @@ export async function fetchMigrationPlan(payload: {
   } | null;
   total_assets: number;
 }> {
-  const res = await fetch(`${API_BASE_URL}/v1/plans`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const json = await res.json();
-  if (!res.ok) {
-    throw new Error(json.error ?? `Planner request failed with status ${res.status}`);
-  }
-  return json;
+  return apiPostJson<{
+    migration_order: Array<{
+      rank: number;
+      asset_id: string;
+      algorithm: string;
+      criticality: string;
+      pqc_ready: boolean;
+      risk_score: number;
+      migrate_days: number;
+    }>;
+    schedule?: {
+      feasible: boolean;
+      days_available: number;
+      total_effort_days: number;
+      suggested_daily_rate: number | null;
+      windows: Array<{ asset_id: string; start: string; end: string }>;
+    } | null;
+    total_assets: number;
+  }>("/v1/plans", payload);
 }
 
 /** Subscribe to webhook notifications. */

@@ -218,11 +218,24 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def _memory_check(self, client_ip: str, now: float) -> tuple[bool, int]:
         """Original in-memory sliding window (per-worker fallback)."""
         cutoff = now - self.window_seconds
-        self._requests[client_ip] = [t for t in self._requests[client_ip] if t > cutoff]
-        if len(self._requests[client_ip]) >= self.max_requests:
-            oldest = min(self._requests[client_ip])
+        # R5 fix: the fallback dict grew with distinct client IPs while Redis
+        # was down — stale keys were never deleted because trimming only ran
+        # for the IP making the current request. Drop empty buckets and bound
+        # the table so a scan of spoofed IPs cannot grow memory unboundedly.
+        trimmed = [t for t in self._requests.get(client_ip, []) if t > cutoff]
+        if trimmed:
+            self._requests[client_ip] = trimmed
+        else:
+            self._requests.pop(client_ip, None)
+            trimmed = []
+        if len(self._requests) > 10_000:
+            # Evict the oldest buckets first; this path only runs in fallback.
+            for stale_ip in list(self._requests)[: len(self._requests) - 10_000]:
+                self._requests.pop(stale_ip, None)
+        if len(trimmed) >= self.max_requests:
+            oldest = min(trimmed)
             return False, max(1, int(oldest + self.window_seconds - now))
-        self._requests[client_ip].append(now)
+        self._requests.setdefault(client_ip, []).append(now)
         return True, 0
 
     async def dispatch(self, request: Request, call_next):
@@ -935,16 +948,23 @@ def _build_schedule(migration_order: list[dict[str, Any]], deadline: date) -> di
     total_effort = sum(float(a["migrate_days"]) for a in migration_order)
     feasible = total_effort <= max(days_available, 1)
 
+    # R7 fix: when total_effort exceeds days_available the backfill pushed
+    # the earliest windows before today, emitting past dates as actionable
+    # work. Clamp starts at today and surface the overflow explicitly so
+    # callers can see what does not fit instead of scheduling time travel.
+    overflow_days = max(0.0, total_effort - max(days_available, 1))
     cursor = deadline
     windows: list[dict[str, Any]] = []
     for asset in reversed(migration_order):
         effort = timedelta(days=float(asset["migrate_days"]))
         start = cursor - effort
+        clamped_start = max(start, today)
         windows.append({
             "asset_id": asset["asset_id"],
-            "start": start.isoformat(),
+            "start": clamped_start.isoformat(),
             "end": cursor.isoformat(),
             "migrate_days": asset["migrate_days"],
+            "clamped_to_today": clamped_start != start,
         })
         cursor = start
 
@@ -956,6 +976,7 @@ def _build_schedule(migration_order: list[dict[str, Any]], deadline: date) -> di
         "days_available": days_available,
         "total_effort_days": total_effort,
         "feasible": feasible,
+        "overflow_days": round(overflow_days, 2),
         "suggested_daily_rate": round(daily_rate, 2) if daily_rate else None,
         "windows": windows,
     }

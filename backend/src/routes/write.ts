@@ -92,7 +92,13 @@ export async function registerWriteRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
-  app.post("/v1/credentials/verify", { schema: { body: CredentialVerifySchema } }, async (request, reply) => {
+  app.post("/v1/credentials/verify", {
+    // R4 fix: signature verification is CPU work. Without a per-route throttle
+    // an anonymous caller gets unbounded compute amplification — the same
+    // pattern REG-18 fixed for /v1/evaluate (30/min). Same budget here.
+    config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    schema: { body: CredentialVerifySchema },
+  }, async (request, reply) => {
     const { presentation } = request.body as { presentation: Record<string, unknown> };
     const result = await verifyCredential(presentation);
     return result;

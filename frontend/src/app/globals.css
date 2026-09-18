@@ -17,7 +17,68 @@
   --color-risk-medium: #a16207;
   --color-risk-low: #15803d;
   --color-risk-none: #64748b;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* Semantic state palette — the app layer's STATUS vocabulary.
+     Before this existed, "success" rendered as `emerald-50/700` in the
+     dashboard, `green-500/15` + `green-600` in the compliance panel, and
+     `green-500` in its score bar; "failure" was variously `rose-50/700` and
+     `red-500/15` + `red-600`. Same meaning, different hue depending on which
+     file you were in — and the compliance variants measured ~2.8:1, well under
+     the 4.5:1 AA minimum, because they sat a 600-level foreground on a 15%
+     tint of the same hue.
+
+     Each foreground below is checked against its OWN surface (not just
+     against white), which is the mistake the old pairs made:
+       success  #15803d on #f0fdf4 = 4.79:1
+       danger   #b91c1c on #fef2f2 = 5.98:1
+       warning  #a16207 on #fffbeb = 4.74:1
+       info     #1d4ed8 on #eff6ff = 6.23:1
+       neutral  #475569 on #f1f5f9 = 6.82:1
+     The `-border` values are decorative separators and carry no text. */
+  --color-success: #15803d;
+  --color-success-surface: #f0fdf4;
+  --color-success-border: #bbf7d0;
+  --color-danger: #b91c1c;
+  --color-danger-surface: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-warning: #a16207;
+  --color-warning-surface: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-info: #1d4ed8;
+  --color-info-surface: #eff6ff;
+  --color-info-border: #bfdbfe;
+  --color-neutral: #475569;
+  --color-neutral-surface: #f1f5f9;
+  --color-neutral-border: #e2e8f0;
+
+  /* Named small sizes. The app layer had 43 raw `text-[10px]` / `text-[11px]`
+     literals, which is a type scale expressed as magic numbers: no single place
+     to change, and no way to see that `text-[11px]` and `text-xs` (12px) were
+     being used interchangeably for the same role. */
+  --text-label: 0.625rem; /* 10px — mono metadata chips */
+  --text-label--line-height: 1rem;
+  --text-micro: 0.6875rem; /* 11px — dense secondary labels */
+  --text-micro--line-height: 1.125rem;
+
+  /* Typography roles (see src/lib/fonts.ts). The literal stacks after each
+     var() are a real fallback, not decoration: they are what renders during
+     the font swap and in environments where the font module is bypassed. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo,
+    Monaco, Consolas, "Liberation Mono", monospace;
+
+  /* Motion — one easing family for the whole product. Tailwind exposes these
+     as `ease-brand` / `ease-brand-in`. */
+  --ease-brand: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-brand-in: cubic-bezier(0.7, 0, 0.84, 0);
+
+  /* Application surface (light). Named once so route files stop hardcoding
+     `bg-slate-50` and the light layer can be retuned in a single place. */
+  --color-canvas: #f6f7f5;
+  --color-canvas-raised: #ffffff;
 
   /* shadcn/ui design tokens (audit Critical #4). GPU/analytics panels use
      bg-card, text-foreground, border-border, etc. — without these the
@@ -27,7 +88,17 @@
   --color-card: #ffffff;
   --color-card-foreground: #0f172a;
   --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
+  /* #475569, not the conventional shadcn #64748b.
+     The conventional value was measured against WHITE (4.76:1, a pass), but
+     this token is also used as the foreground for content sitting on
+     `--color-muted` — `bg-muted text-muted-foreground` chips, table headers,
+     the evidence/roadmap metadata rows — where it measures 4.34:1 against the
+     4.5:1 AA minimum. That is the same "check the pair, not just the colour"
+     mistake the status palette below was written to avoid, and it is invisible
+     until a populated surface is actually audited.
+     Measured: #475569 on #f1f5f9 = 6.92:1, on --color-canvas = 7.02:1,
+     on white = 7.58:1 — AA at every surface this token is used on. */
+  --color-muted-foreground: #475569;
   --color-border: #e2e8f0;
   --color-input: #e2e8f0;
   --color-ring: #14b8a6;
@@ -47,6 +118,29 @@
 :root {
   color-scheme: light;
   --scroll-progress: 0;
+}
+
+/* Base typography roles. Headings take the display face so the editorial
+   hierarchy is a property of the document rather than something each section
+   has to remember to opt into. Utilities (font-sans/font-display/font-mono)
+   still win, so a component can override per instance. */
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-mono);
+  }
 }
 
 html {

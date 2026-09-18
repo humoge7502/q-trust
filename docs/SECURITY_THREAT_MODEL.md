@@ -143,7 +143,31 @@ flowchart TD
 | TM-PL-02 | Supply chain | Write access to artifacts | Poison checkpoint | Corrupt rankings / RCE-pickle | Planner integrity | `weights_only=True` (`predict.py:78`); **startup SHA-256 pin vs `models.sha256` — implemented 2026-09-08** (`planner/qtrust_planner/checkpoint_manifest.py`, verified before `torch.load` in `server.py` + `predict.py`; image-baked manifest; compose `QTRUST_ENFORCE_MODEL_MANIFEST=1`) | Closed (was: hashes not pinned at deploy) | **Implemented** — pin SHA256 of checkpoints at deploy (files exist in repo) | Startup integrity check: mismatch aborts boot, fail-closed | Low | High | Medium |
 | TM-FE-01 | On-chain attacker | Asset registered | SSRF via `metadata_uri` server-side fetch | Internal service read | Frontend server trust | **FIXED**: `isValidIpfsCid` + `redirect:"error"` (`api.ts`), 8 regression tests | Gateway itself could be hostile (config) | Pin gateway + allowlist via env; consider CSP `connect-src` | — | — | — | Closed |
 | TM-FE-02 | Vendor | Vendor-controlled `evidence_uri` | XSS via rendered link | Session theft (browser) | Users | `sanitizeUri` allowlist (FE-3 fix, `sanitize-uri.ts`); zero `dangerouslySetInnerHTML` | — | — | — | — | — | Closed |
+| TM-FE-03 | Browser user / operator | Operator reaches the dashboard and performs a privileged action | XSS on this origin can read the browser-held operator key (key disclosure → privileged API access until revoked). Pre-fix variant: the proxy denied every privileged route, so those controls were permanently dead | Privileged API access with the operator's own key; previously a functional outage of the scan/planner/GPU/attestation surface | Operator API key; scanner, relayer and GPU surface | Policy is a single exported source of truth (`lib/api-route-policy.ts`); the proxy **never attaches the server-side admin key to operator routes** and rejects anonymous callers (`app/api/[...path]/route.ts`, verified live 2026-09-12); key lives in `sessionStorage` per tab, is never logged and never rendered in full (`lib/operator-key.ts`, `components/operator-access.tsx`); production CSP forbids inline/remote scripts | XSS on this origin is equivalent to key disclosure; a browser key is inherently less protected than a server-held one | Issue a distinct key per operator so one can be revoked independently; keep the length/control-char validation; consider short-lived key exchange if the operator surface grows | Proxy 403 `operator_key_required` rate; backend 401 rate per key | Low | Medium | Low |
 | TM-OPS-01 | Config error | Operator misconfiguration | Start with permissive defaults | Varies | All | Fail-closed startup gates verified live (CORS/relayer/scan roots) | None noted | — | Startup-refusal is itself the alarm | Low | Medium | Low |
+
+### Same-origin proxy authorization (2026-09-12)
+
+The browser reaches the backend only through `frontend/src/app/api/[...path]/route.ts`.
+A single policy module (`lib/api-route-policy.ts`) classifies every endpoint:
+
+| Class | Example routes | Server-side admin key attached? | Caller requirement |
+|---|---|---|---|
+| `public-read` | `GET /v1/assets/:id`, `/v1/orgs/:did/*`, `/v1/relay/nonce/:did` | Yes (when configured) | None |
+| `public-compute` | `POST /v1/risk/score`, `/v1/compliance/evaluate`, `/v1/evidence/verify` | Yes (when configured) | None (stateless, no writes) |
+| `operator` | `POST /v1/scan/full`, `/v1/plans`, `/v1/evidence/create`, `/v1/relay/attestation`, `/v1/gpu/*`, `/v1/webhooks/*` | **Never** | Caller's own key in `x-qtrust-api-key`; otherwise `403 operator_key_required` |
+
+Verified live against a running production build (stub upstream echoing the received
+key): anonymous privileged call → `403 operator_key_required` with no upstream request;
+keyed privileged call → upstream saw `x-api-key: <caller key>`, never the admin key;
+public route with a caller key present → upstream still saw the admin key. The caller's
+`x-qtrust-api-key` header is never forwarded under its own name. Local development with
+no server key configured mirrors the backend's dev-open policy; production does not.
+
+`lib/__tests__/api-route-policy.test.ts` scans the UI source for `/v1/...` literals and
+fails if any endpoint is not classified, so the UI and the proxy cannot drift apart
+again — that drift is what made the privileged UI controls unreachable before this
+change.
 
 ## Criticality calibration
 
@@ -160,6 +184,7 @@ flowchart TD
 | `backend/src/routes/scanner.ts` + `backend/scripts/run_inspector.py` | Subprocess boundary over hostile input | TM-BE-03 |
 | `planner/qtrust_planner/predict.py` | Checkpoint load + inference input validation | TM-PL-01, TM-PL-02 |
 | `frontend/src/lib/api.ts` (`fetchIpfsJson`, relay call) | Server-side fetch + browser-origin writes | TM-FE-01, TM-BE-02 |
+| `frontend/src/app/api/[...path]/route.ts` + `frontend/src/lib/api-route-policy.ts` | Browser→backend authorization boundary; must never attach the admin key to operator routes | TM-FE-03, TM-BE-02 |
 | `contracts/src/QTrustGovernance.sol` | Upgrade/pause authority | TM-CT-02 |
 | `backend/src/server.ts` (middleware chain) | CORS, rate limit, auth wiring | TM-BE-02 |
 
@@ -172,5 +197,18 @@ TM-PL-02 (checkpoint SHA pinning at deploy) is now implemented (2026-09-08):
 the resolved GNN + RL checkpoints are verified against `models.sha256` at
 startup before `torch.load`, mismatches abort boot, and compose enforces the
 pin (`QTRUST_ENFORCE_MODEL_MANIFEST=1`). 8 regression tests cover the
-manifest contracts. Update this document after any architecture change or when
+manifest contracts.
+
+Second pass (2026-09-12) resolved TM-FE-03, which was found by cross-checking the
+shipped UI against the proxy policy rather than by reading either in isolation: the
+proxy is default-deny (correct), but the scanner dashboard, the GPU panels, the
+planner panel and the vendor attestation form all called privileged routes it denies,
+so those controls returned 403 in every deployment using the same-origin proxy while
+their unit tests — which stub `fetch` — passed. The fix keeps the boundary intact and
+adds a caller-key path: anonymous callers are still refused, the server-side admin key
+is still never attached to privileged routes, and a contract test now fails if the UI
+references an endpoint the policy does not classify. See
+`frontend/src/lib/api-route-policy.ts` and the verification table above.
+
+Update this document after any architecture change or when
 the three open questions are answered.

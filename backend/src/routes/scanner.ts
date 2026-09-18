@@ -699,6 +699,7 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     const scored = findings.map(computeRiskFinding);
     const broken = scored.filter((f) => f.riskLevel === "CRITICAL");
     const weakened = scored.filter((f) => f.riskLevel === "HIGH");
+    const medium = scored.filter((f) => f.riskLevel === "MEDIUM");
     const safe = scored.filter((f) => f.riskLevel === "NONE" || f.riskLevel === "LOW");
 
     const phases = [
@@ -717,7 +718,17 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
         priority: "HIGH",
       },
       {
+        // R2 fix: MEDIUM findings (typically WEAKENED penalty 25 + HNDL
+        // exposure) were silently dropped while summary.totalFindings still
+        // counted them. They get their own review phase between HIGH and LOW.
         phase: 3,
+        title: "Medium: Review Weakened Cryptography",
+        findings: medium,
+        estimatedDays: Math.max(1, medium.length * 1),
+        priority: "MEDIUM",
+      },
+      {
+        phase: 4,
         title: "Standard: Validate Safe Algorithms",
         findings: safe,
         estimatedDays: Math.max(1, safe.length * 0.5),

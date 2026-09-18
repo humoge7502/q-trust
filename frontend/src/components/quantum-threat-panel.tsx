@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { API_BASE_URL } from "@/lib/api";
+import { apiGetJson, OperatorKeyRequiredError } from "@/lib/api";
+import { OperatorAccessInline } from "@/components/operator-access";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
+import { ErrorState } from "@/components/ui/state";
 
 interface QuantumEstimate {
   rsa_key_size: number;
@@ -13,42 +16,46 @@ interface QuantumEstimate {
 
 const KEY_SIZES = [1024, 2048, 3072, 4096] as const;
 
-function urgency(year: number | null): { label: string; cls: string } {
-  if (year === null) return { label: "Not before 2033", cls: "text-green-600" };
+/**
+ * Urgency band as a semantic tone rather than a raw colour.
+ *
+ * This previously returned `text-red-600` / `text-orange-600` / `text-amber-600`
+ * / `text-green-600`. `orange` is not part of the product's palette at all,
+ * and the rest duplicated (without matching) the risk and state tokens used
+ * elsewhere — the same "high risk" state rendered in three different colours
+ * depending on which panel you looked at.
+ */
+function urgency(year: number | null): { label: string; tone: StatusTone } {
+  if (year === null) return { label: "Not before 2033", tone: "success" };
   const yearsAway = year - 2026;
-  if (yearsAway <= 2) return { label: "CRITICAL", cls: "text-red-600" };
-  if (yearsAway <= 5) return { label: "HIGH", cls: "text-orange-600" };
-  if (yearsAway <= 8) return { label: "MEDIUM", cls: "text-amber-600" };
-  return { label: "LOW", cls: "text-green-600" };
+  if (yearsAway <= 2) return { label: "CRITICAL", tone: "danger" };
+  if (yearsAway <= 5) return { label: "HIGH", tone: "danger" };
+  if (yearsAway <= 8) return { label: "MEDIUM", tone: "warning" };
+  return { label: "LOW", tone: "success" };
 }
 
 export default function QuantumThreatPanel() {
   const [bits, setBits] = useState<number>(2048);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [operatorEndpoint, setOperatorEndpoint] = useState<string | null>(null);
   const [result, setResult] = useState<QuantumEstimate | null>(null);
 
   const run = async () => {
     setLoading(true);
     setError(null);
+    setOperatorEndpoint(null);
     setResult(null);
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/v1/gpu/quantum/estimate/${bits}`,
+      setResult(
+        await apiGetJson<QuantumEstimate>(`/v1/gpu/quantum/estimate/${bits}`),
       );
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const body = await res.json();
-          detail = body.error ?? JSON.stringify(body);
-        } catch {
-          detail = await res.text();
-        }
-        throw new Error(`API ${res.status}: ${detail}`);
-      }
-      setResult(await res.json());
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (e instanceof OperatorKeyRequiredError) {
+        setOperatorEndpoint(e.endpoint);
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -62,9 +69,7 @@ export default function QuantumThreatPanel() {
         <h3 className="text-lg font-semibold text-foreground">
           Quantum Threat Estimate
         </h3>
-        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600">
-          Shor-backed
-        </span>
+        <StatusPill tone="accent">Shor-backed</StatusPill>
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
         Estimates the quantum resources required to break an RSA key of the
@@ -92,29 +97,30 @@ export default function QuantumThreatPanel() {
         type="button"
         onClick={run}
         disabled={loading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="w-full rounded-md bg-qtrust-600 px-4 py-2 text-micro font-semibold text-white transition hover:bg-qtrust-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
       >
         {loading ? "Estimating..." : `Estimate RSA-${bits} threat`}
       </button>
 
       {error && (
-        <div
-          role="alert"
-          className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600"
-        >
-          {error}
+        <div className="mt-3">
+          <ErrorState description={error} />
         </div>
+      )}
+
+      {operatorEndpoint && (
+        <OperatorAccessInline endpoint={operatorEndpoint} onSaved={() => void run()} />
       )}
 
       {result && (
         <dl className="mt-4 space-y-2 rounded-md border border-border p-3 text-sm">
           <div className="flex items-center justify-between">
             <dt className="text-muted-foreground">Migration urgency</dt>
-            <dd>
-              <span className={`font-semibold ${u.cls}`}>{u.label}</span>
+            <dd className="flex items-center gap-2">
+              <StatusPill tone={u.tone}>{u.label}</StatusPill>
               {result.estimated_breakable_year !== null && (
-                <span className={`ml-1 ${u.cls}`}>
-                  (~{result.estimated_breakable_year})
+                <span className="font-mono text-micro text-muted-foreground">
+                  ~{result.estimated_breakable_year}
                 </span>
               )}
             </dd>
@@ -131,7 +137,7 @@ export default function QuantumThreatPanel() {
               {result.physical_qubits_needed.toLocaleString()}
             </dd>
           </div>
-          <div className="pt-1 text-xs text-muted-foreground">
+          <div className="pt-1 text-micro text-muted-foreground">
             Basis: {result.based_on}
           </div>
         </dl>

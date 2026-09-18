@@ -1,6 +1,6 @@
 export default function VerificationLoading() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="flex-1 bg-canvas text-slate-900">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="h-7 w-48 animate-pulse rounded bg-slate-200" />
