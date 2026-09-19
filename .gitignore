@@ -196,3 +196,31 @@ ULTIMATE-AGENTIC-AI-POWER-CATALOG.md
 # the real-CBOM numbers without re-scanning.
 !planner/data/real_cboms/
 preview.html
+
+# ─── Extracted dataset-bundle payload (q-trust-datasets.tar.gz) ─────────────
+# The tarball (ignored above) is the distribution mechanism; its extracted
+# payload is local-only. Tracked fixtures stay tracked (ignore rules never
+# untrack files): planner/data/real_cboms/, inspector/data/acvp/,
+# qtrust_data/raw/popularity-list-top1k.csv, and all *.{py,md} sources.
+inspector/data/traces_v1/
+planner/data/estates_v1/
+planner/data/real_cboms_v2_2026_09_18/
+qtrust/data/gold/
+qtrust_data/gold/
+qtrust_data/annotations/MANIFEST.json
+qtrust_data/annotations/weak_labels.jsonl
+qtrust_data/bronze/MANIFEST.json
+qtrust_data/bronze/assets_normalized.jsonl
+qtrust_data/raw/MANIFEST.json
+qtrust_data/raw/cbom_for_planner.json
+qtrust_data/raw/real_*.json
+qtrust_data/raw/tls_scan.json
+qtrust_data/raw/top500_cbom.json
+qtrust_data/raw/traces_*.txt
+qtrust_data/raw/uni_cbom.json
+qtrust_data/silver/MANIFEST.json
+qtrust_data/silver/features_v1.jsonl
+qtrust_data/splits/split_manifest.json
+qtrust_data/splits/train.json
+qtrust_data/splits/val.json
+qtrust_data/splits/test.json

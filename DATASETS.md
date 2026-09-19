@@ -30,7 +30,7 @@ Was **missing** from the repo; rebuilt by actually running the project's own bui
 | `tls_scan.json` + `tls_scan.summary.json` | **Live TLS scan of 283 curated hosts, 275 succeeded (97%)** — run 2026-09-18 with `scripts/scan_hosts.py` | REAL (fresh) |
 | `tls_inventory.json` | Per-host CBOMs derived from the live scan (schema = `build_real_datasets.scan_real_hosts`) | REAL (fresh) |
 | `hosts.txt` | The 283 curated hosts (v1.1 list) | REAL |
-| `nvd_cves.json` | **387 real CVEs across 16 crypto libraries** (openssl, mbedtls, wolfssl, libsodium, bouncy-castle, python-cryptography, boringssl, aws-lc, botan, libgcrypt, cryptopp, gnupg, libressl, nettle, gnutls, nss) from NVD API 2.0, fetched 2026-09-18 | REAL (fresh) |
+| `nvd_cves.json` | **407 real CVEs (398 unique IDs) across 16 crypto libraries** (openssl, mbedtls, wolfssl, libsodium, bouncy-castle, python-cryptography, boringssl, aws-lc, botan, libgcrypt, cryptopp, gnupg, libressl, nettle, gnutls, nss) from NVD API 2.0, fetched 2026-09-18 | REAL (fresh) |
 | `vendor_dataset.json` | 16 vendor-readiness records (real CVE counts × deterministic PQC KB) | REAL |
 | `manifest.json` | Builder manifest with counts + provenance | — |
 
@@ -57,7 +57,7 @@ kept here as the primary source material):
 | `raw/` | 51 pristine immutable captures: all 42 real CBOMs, 5 liboqs trace files, uni/top500 CBOMs, cbom_for_planner, tls_scan (SHA-256 per file in MANIFEST) | REAL |
 | `bronze/` | 277 normalized per-asset records (`train_real_models.normalize_asset`) | REAL |
 | `silver/` | 277 feature rows in the **frozen 6-dim schema** (DATA_CARD Phase 0): alg_type/14, key_size/4096, vendor_pqc_ready, criticality/5, days_to_deadline/730, required_rate | REAL (derived) |
-| `gold/cboms/` | The 42 real host-disjoint enterprise CBOMs (280 hosts) + MANIFEST — layout expected by `scripts/expand_real_cbom.py` | REAL |
+| `gold/cboms/` | The 42 real host-disjoint enterprise CBOMs (277 unique hosts, cross-CBOM overlap verified = 0) + MANIFEST — layout expected by `scripts/expand_real_cbom.py` | REAL |
 | `gold/riskbench-v1/` | `pairs.jsonl` (10,000 pairs over 277 real-derived assets), `experts.json`, `manifest.json` — **exact `QTrustRiskBench.load_real()` schema**; **SYNTHETIC_DEMO** (QTRUST-001): generated with the project's own `generate_qtrust_risk_bench(seed=42)`, explicitly marked NOT human annotation. Real v1 still needs 5–10 human experts (schema + structure is ready) | SYNTHETIC_DEMO |
 | `gold/migration-outcomes/` | 5,000 records in the exact `MigrationOutcome` schema (cost/failure predictor training shape). No public dataset exists for this — labeled SYNTHETIC_DEMO, replaceable via `mine_git_history()` | SYNTHETIC_DEMO |
 | `gold/temporal/` | 200 org histories × 24 monthly `Snapshot`s (day/nodes/edges/risk) for TemporalGNN — SYNTHETIC_DEMO (QTRUST-003) | SYNTHETIC_DEMO |
