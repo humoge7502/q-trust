@@ -179,6 +179,15 @@ exports/
 q-trust-datasets-bundle.tar.gz
 q-trust-complete-data-bundle.tar.gz
 q-trust-datasets-bundle (1).tar.gz
+q-trust-datasets.tar.gz
+
+# Local-only agent skill tooling (opencode/claude skills installed in the
+# working tree; intentionally uncommitted per RELEASE_CHECKLIST hygiene box).
+.agents/
+
+# Personal reference catalog (general agentic-AI inventory, not Q-Trust
+# project content; kept locally, never committed).
+ULTIMATE-AGENTIC-AI-POWER-CATALOG.md
 
 # Real-data benchmark fixtures ARE committed (they back README/CHANGELOG
 # claims and are small): the host-disjoint real-CBOM corpus used by the
