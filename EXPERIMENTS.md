@@ -33,3 +33,24 @@ Records for ML experiments and empirical validations. Metrics are copied from ar
 
 ## Pre-existing experiments (authoritative, from TRUTH_AUDIT.md)
 CodeBERTa fine-tune (F1 0.952, repo-disjoint held-out), GNN LOO τ-b 0.7263 across 40 real CBOMs (deterministic-kernel re-run, bit-identical 3-fold repro), RL on real CBOMs (reward 140.34 ± 8.13 vs heuristic 140.62 — tie), side-channel detector (5/5 on real liboqs traces). These are recorded in `docs/TRUTH_AUDIT.md` with lineage and are not re-derived here.
+
+## E-06 — 42-fold LOO on GPU, host-disjoint 42-CBOM corpus (executed 2026-09-18)
+- **Hypothesis:** GNN ranking holds out-of-sample on the fixed 42-CBOM corpus (277 unique hosts, 0 overlaps — replaced the leaky 40-file corpus with 11 cross-CBOM dupes).
+- **Setup:** 2× A100, 30-epoch fine-tune, seed 42. Report: `planner/results/real_cbom_loo_42.json` (+2 shard files); 40-fold files kept as historical records.
+- **Result:** model τ-b 0.7168 vs doctrine heuristic 0.7210 (Δ −0.0042, medians identical 0.7237) — 0 wins / 41 ties / 1 loss, model top-10 1.0 on all 42 folds, +0.687 vs random.
+- **Conclusion:** honest tie with the heuristic out-of-sample; no superiority claim. Closes R-03 for the GNN leg.
+
+## E-07 — Side-channel retrain on 54 real trace sets (executed 2026-09-18)
+- **Setup:** `train_real_side_channel.py --traces-dir /tmp/real_data`, 54 sets, loss 0.178→0.080, anchors 0.000/1.000. Weights: `inspector/side_channel_model_real.pt` (previous backed up before overwriting; SHA in `models.sha256`).
+- **Result:** clean 46 VERIFIED + 8 LOW_RISK (0 false alarms); leak-injected 51/54 HIGH_RISK (misses: FALCON1024/FALCON512/SLH-256s keygen, n≤200).
+- **Conclusion:** retrain validated; residual misses recorded, not hidden.
+
+## E-08 — External head-to-head on public crypto benchmarks (measured 2026-09-18)
+- **Setup:** deterministic scanner layers (`CryptoCodeDetector(seed=42)`, static + AST — no HF weights), `scan_file` per case. Records: `benchmarks/external/results/cryptobench_filelevel.json`, `apache_filelevel.json`. Report: `benchmarks/external/HEAD-TO-HEAD.md`.
+- **Result:** CryptoAPI-Bench (203 files: 187 misuse, 16 secure) usage recall 164/187 = 0.877, file-level misuse precision 164/176 = 0.932; Apache (71/121 mapped, 50 absent from shipped jars — unevaluable, stated) recall 33/34 = 0.971, file-level P 0.532 / F1 0.688 (FPs are a file-level artifact; line-level scoring rejected after proving GT-line vs jar-source version drift).
+- **Conclusion:** usage-discovery framing, no SOTA superiority claim (CryptoGuard/CogniCrypt/GPT-4 measure misuse detection — a different task). Closes the "formal benchmark vs named external systems" gap honestly.
+
+## E-09 — ACVP oracle verification + liboqs KATs (executed 2026-09-18)
+- **Setup:** placed corpus `inspector/data/acvp/ACVP-vectors/` (34 families); independent oracle via platform stack (`cryptography`/`hashlib`), not the code under test. Tests: `inspector/tests/test_acvp_vectors.py`, `test_liboqs_kats.py` (12 passed).
+- **Result:** ECDSA-SigVer 196, RSA-SigVer 270, EdDSA-SigVer 20, SHA2-256 517, HMAC-SHA2-256 150 verified against NIST expected results; liboqs KATs 6/6 PQC match published hashes (skip cleanly without binaries). PQC ACVP vectors placed as fixtures, explicitly NOT claimed as verified here.
+- **Conclusion:** placed corpus is a sound oracle chain for future conformance work; skipped-test debt from `inspector/tests/test_v1.py:738` retired for the classical families.

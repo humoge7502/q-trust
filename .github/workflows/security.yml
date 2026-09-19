@@ -53,6 +53,10 @@ jobs:
 
       - name: Run Semgrep scan
         # - inspector/benchmarks holds intentionally vulnerable fixtures.
+        # - benchmarks/external is the third-party CryptoAPI-Bench /
+        #   ApacheCryptoAPI-Bench corpus: intentionally vulnerable cases
+        #   (BrokenCrypto*, EcbInSymmCrypto*, DummyCertValidation*, ...) that
+        #   our scanner is measured against (see benchmarks/external/HEAD-TO-HEAD.md).
         # - pickles-in-pytorch is excluded because every torch.load call site
         #   passes weights_only=True (each carries a nosemgrep annotation as
         #   documentation); CodeQL and gitleaks provide overlapping coverage.
@@ -61,6 +65,7 @@ jobs:
           --exclude-rule generic.secrets.security.detected-generic-secret
           --exclude-rule trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
           --exclude inspector/benchmarks
+          --exclude benchmarks/external
         continue-on-error: false
 
   codeql:

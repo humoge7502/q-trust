@@ -16,6 +16,10 @@
 #   - `X25519MLKEM768` is an IANA-registered TLS cipher-suite name that
 #     appears in an inspector recommendation string ("hybrid PQC key
 #     exchange: …") — an algorithm name, not a credential.
+#   - `inspector/data/acvp/` holds the public NIST ACVP test-vector corpus
+#     (AES/HMAC/XECDH fixtures). Their hex keys/IVs are the published test
+#     data itself and trip `generic-api-key` ~4,000 times; the whole directory
+#     is allowlisted by path below instead of by value.
 #
 # Any other high-entropy string still trips `generic-api-key` as normal.
 
@@ -24,6 +28,10 @@ useDefault = true
 
 [allowlist]
 description = "Public-by-construction dev keys and documented test fixtures"
+paths = [
+  # Public NIST ACVP test-vector corpus (see header comment).
+  '''inspector/data/acvp/''',
+]
 regexes = [
   # Anvil/Foundry deterministic dev accounts #0, #1, #2 (published by the
   # Foundry book; guarded outside test fixtures by the dev-key-guard job).
