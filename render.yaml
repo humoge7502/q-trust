@@ -1,0 +1,64 @@
+# Render blueprint — one-click Q-Trust deploy.
+# Button: https://render.com/deploy?repo=https://github.com/humoge7502/q-trust
+# Secrets (relayer key, planner key, db passwords) are prompted at deploy
+# time (sync: false) and never committed. Mirrors docker-compose.yml.
+services:
+  - type: web
+    name: qtrust-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: QTRUST_PLANNER_URL
+        fromService:
+          name: qtrust-planner
+          type: pserv
+          property: hostport
+          scheme: http
+      - key: QTRUST_PLANNER_API_KEY
+        sync: false
+      - key: QTRUST_RELAYER_PRIVATE_KEY
+        sync: false
+      - key: QTRUST_SCAN_ALLOWED_ROOTS
+        value: /workspace/projects
+      - key: QTRUST_REDIS_URL
+        fromService:
+          name: qtrust-redis
+          type: redis
+          property: connectionString
+      - key: QTRUST_PG_URL
+        fromService:
+          name: qtrust-postgres
+          type: pserv
+          property: connectionString
+
+  - type: pserv
+    name: qtrust-planner
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerContext: ./planner
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: QTRUST_PLANNER_API_KEY
+        sync: false
+      - key: QTRUST_REDIS_URL
+        fromService:
+          name: qtrust-redis
+          type: redis
+          property: connectionString
+
+databases:
+  - name: qtrust-postgres
+    databaseName: qtrust
+    user: qtrust
+    plan: starter
+
+  - name: qtrust-redis
+    plan: starter
