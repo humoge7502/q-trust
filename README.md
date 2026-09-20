@@ -69,10 +69,11 @@
 
 <div align="center">
 
-<!-- D-1 fix: qtrust-sdk / qtrust-inspector are NOT yet on PyPI (verified HTTP 404
-     from the PyPI API, 2026-09-03). These badges go live only when the packages
-     actually publish via publish-pypi.yml. Install from source meanwhile. -->
-<a href="https://github.com/humoge7502/q-trust/actions/workflows/publish-pypi.yml"><img src="https://img.shields.io/badge/PyPI-pending%20publication-orange?style=flat-square&logo=pypi&logoColor=white" alt="PyPI packages pending publication"/></a>
+<!-- Packages are live on PyPI (v2.2.0, published 2026-09-20 via
+     publish-pypi.yml). -->
+<a href="https://pypi.org/project/qtrust-inspector/"><img src="https://img.shields.io/pypi/v/qtrust-inspector?style=flat-square&logo=pypi&logoColor=white&label=PyPI%20%7C%20qtrust-inspector" alt="PyPI qtrust-inspector"/></a>
+<a href="https://pypi.org/project/qtrust-sdk/"><img src="https://img.shields.io/pypi/v/qtrust-sdk?style=flat-square&logo=pypi&logoColor=white&label=PyPI%20%7C%20qtrust-sdk" alt="PyPI qtrust-sdk"/></a>
+<a href="https://huggingface.co/spaces/KRISHNAPURI/q-trust-scanner"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Try%20it-live%20demo-yellow?style=flat-square" alt="Live demo"/></a>
 <a href="https://github.com/humoge7502/q-trust"><img src="https://tokei.rs/b1/github/humoge7502/q-trust?style=flat-square&category=code" alt="Lines of code"/></a>
 
 </div>
@@ -197,6 +198,8 @@ flowchart TB
 </div>
 
 <sub>**Real CLI, real flow**: `crypto-inspector` scans a live endpoint and emits a CycloneDX 1.7 CBOM, the GNN planner ranks migrations (τ 0.975 vs heuristic optimum), and the evidence root is anchored on Base L2.</sub>
+
+<sub>▶ **[Try it live in your browser](https://huggingface.co/spaces/KRISHNAPURI/q-trust-scanner)** — paste code, get crypto-usage classification (runs locally via ONNX, no upload) · 📦 [datasets](https://huggingface.co/datasets/KRISHNAPURI/q-trust-datasets) · 🤖 [model](https://huggingface.co/KRISHNAPURI/q-trust-codebert)</sub>
 
 ---
 
@@ -426,11 +429,10 @@ flowchart LR
 <a name="quickstart"></a>
 ## 🚀 Quick Start
 
-### ⏱ 60 seconds — scan something real
+### ⏱ 60 seconds — scan something real (no clone needed)
 
 ```bash
-git clone https://github.com/humoge7502/q-trust && cd q-trust/inspector
-pip install -e .
+pip install qtrust-inspector
 
 # Scan a live TLS endpoint → risk + compliance report
 crypto-inspector scan example.com --risk --compliance nist,cnsa
@@ -439,6 +441,10 @@ crypto-inspector scan example.com --risk --compliance nist,cnsa
 crypto-inspector scan example.com --cyclonedx cbom.json \
     --evidence ledger.json --roadmap plan.json
 ```
+
+> Prefer zero-install? Try the [live in-browser demo](https://huggingface.co/spaces/KRISHNAPURI/q-trust-scanner)
+> (model runs locally in your browser) or the [60-second Colab](showcase/qtrust_quickstart.ipynb).
+> Building from source still works: `git clone … && cd q-trust/inspector && pip install -e .`
 
 ### 🐳 10 minutes — full stack on Docker
 
@@ -739,6 +745,8 @@ Good first issues: [`good first issue`](https://github.com/humoge7502/q-trust/la
 ## 🌟 Community
 
 Maintainer: [@humoge7502](https://github.com/humoge7502) · contributions welcome via [CONTRIBUTING.md](CONTRIBUTING.md).
+
+📝 Essays: [*Why we published a benchmark we tied*](docs/essays/why-we-published-a-tie.md) — our evaluation philosophy.
 
 ---
 

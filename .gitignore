@@ -224,3 +224,9 @@ qtrust_data/splits/split_manifest.json
 qtrust_data/splits/train.json
 qtrust_data/splits/val.json
 qtrust_data/splits/test.json
+
+# Local scan/demo run artifacts (showcase notebook writes scan.json next to
+# itself when executed from the repo; CI and releases never need it).
+showcase/scan.json
+showcase/cbom.json
+showcase/*.sarif
