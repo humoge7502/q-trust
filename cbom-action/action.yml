@@ -1,0 +1,57 @@
+name: "Q-Trust CBOM Scan"
+description: "Scan source for cryptographic APIs: CycloneDX CBOM, NIST/CNSA scoring, SARIF for code scanning, optional CI gate."
+author: "Q-Trust"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  path:
+    description: "Source directory to scan"
+    required: false
+    default: "."
+  language:
+    description: "Filter by language (e.g. python, javascript, go). Empty = all."
+    required: false
+    default: ""
+  compliance:
+    description: "Comma-separated frameworks: nist,cnsa,fips,nis2,fisma,fedramp,cmmc"
+    required: false
+    default: "nist,cnsa"
+  sarif-file:
+    description: "Where to write SARIF output (upload it with github/codeql-action/upload-sarif)"
+    required: false
+    default: "qtrust.sarif"
+  cbom-file:
+    description: "Where to write the CycloneDX 1.7 CBOM"
+    required: false
+    default: "cbom.json"
+  ci-gate:
+    description: "Fail when a finding meets this criticality: critical|high|medium. Empty = report only."
+    required: false
+    default: ""
+  version:
+    description: "qtrust-inspector PyPI version to install"
+    required: false
+    default: "2.2.0"
+  python-version:
+    description: "Python version for the scan environment"
+    required: false
+    default: "3.12"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+    - shell: bash
+      run: pip install "qtrust-inspector==${{ inputs.version }}"
+    - shell: bash
+      id: scan
+      run: |
+        ARGS=("${{ inputs.path }}" --format sarif --output "${{ inputs.sarif-file }}" \
+          --cyclonedx "${{ inputs.cbom-file }}" --risk --compliance "${{ inputs.compliance }}")
+        [ -n "${{ inputs.language }}" ] && ARGS+=(--language "${{ inputs.language }}")
+        [ -n "${{ inputs.ci-gate }}" ] && ARGS+=(--ci-gate "${{ inputs.ci-gate }}")
+        crypto-inspector scan-source "${ARGS[@]}"
