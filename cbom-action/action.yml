@@ -46,12 +46,29 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
     - shell: bash
-      run: pip install "qtrust-inspector==${{ inputs.version }}"
-    - shell: bash
       id: scan
+      # Inputs flow through env, never direct ${{ }} interpolation in run:
+      # (semgrep run-shell-injection; same convention as .github/workflows).
+      env:
+        QTRUST_VERSION: ${{ inputs.version }}
+        QTRUST_PATH: ${{ inputs.path }}
+        QTRUST_LANGUAGE: ${{ inputs.language }}
+        QTRUST_COMPLIANCE: ${{ inputs.compliance }}
+        QTRUST_SARIF: ${{ inputs.sarif-file }}
+        QTRUST_CBOM: ${{ inputs.cbom-file }}
+        QTRUST_GATE: ${{ inputs.ci-gate }}
+      run: pip install "qtrust-inspector==$QTRUST_VERSION"
+    - shell: bash
+      env:
+        QTRUST_PATH: ${{ inputs.path }}
+        QTRUST_LANGUAGE: ${{ inputs.language }}
+        QTRUST_COMPLIANCE: ${{ inputs.compliance }}
+        QTRUST_SARIF: ${{ inputs.sarif-file }}
+        QTRUST_CBOM: ${{ inputs.cbom-file }}
+        QTRUST_GATE: ${{ inputs.ci-gate }}
       run: |
-        ARGS=("${{ inputs.path }}" --format sarif --output "${{ inputs.sarif-file }}" \
-          --cyclonedx "${{ inputs.cbom-file }}" --risk --compliance "${{ inputs.compliance }}")
-        [ -n "${{ inputs.language }}" ] && ARGS+=(--language "${{ inputs.language }}")
-        [ -n "${{ inputs.ci-gate }}" ] && ARGS+=(--ci-gate "${{ inputs.ci-gate }}")
+        ARGS=("$QTRUST_PATH" --format sarif --output "$QTRUST_SARIF" \
+          --cyclonedx "$QTRUST_CBOM" --risk --compliance "$QTRUST_COMPLIANCE")
+        [ -n "$QTRUST_LANGUAGE" ] && ARGS+=(--language "$QTRUST_LANGUAGE")
+        [ -n "$QTRUST_GATE" ] && ARGS+=(--ci-gate "$QTRUST_GATE")
         crypto-inspector scan-source "${ARGS[@]}"
