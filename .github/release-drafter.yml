@@ -59,6 +59,9 @@ change-title-escapes: '\<*_&'
 
 # Semver resolution: any PR labelled `major` forces a major bump; any PR
 # labelled `minor` forces a minor bump; everything else bumps the patch.
+# (release-drafter v7 schema: every tier needs a `labels` array and the
+# fallback is the top-level `default` — `patch: {default: true}` is invalid
+# and fails the run with "version-resolver.patch.labels: Invalid input".)
 version-resolver:
   major:
     labels:
@@ -67,7 +70,8 @@ version-resolver:
     labels:
       - 'minor'
   patch:
-    default: true
+    labels: []
+  default: patch
 
 # Body header / footer. $RESOLVED_VERSION expands to the version computed
 # by the resolver above; $PREVIOUS_TAG to the latest published tag.
