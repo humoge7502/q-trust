@@ -3,7 +3,7 @@
 
 # GNN training (already installed, but pin for GPU)
 torch>=2.14.0,<3.0
-torch-geometric>=2.5.0
+torch-geometric>=2.8.0.post1
 
 # Quantum simulation
 # NOTE: the legacy `qiskit-aer-gpu` package stopped at Python 3.12 wheels.
