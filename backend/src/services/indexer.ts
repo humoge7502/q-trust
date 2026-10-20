@@ -108,6 +108,16 @@ const EVENTS = [
         evidence_hash=EXCLUDED.evidence_hash, evidence_uri=EXCLUDED.evidence_uri`,
   },
   {
+    key: "migrations.verified",
+    contract: () => CONTRACTS.migrationRegistry,
+    abi: MigrationRegistryAbi,
+    event:
+      "event MigrationVerified(bytes32 indexed migrationId, address indexed verifiedBy, uint256 timestamp)",
+    upsert: `
+      UPDATE migrations SET verified=TRUE, tx_hash=$2, block_number=$3
+      WHERE migration_id=$1`,
+  },
+  {
     key: "audits",
     contract: () => CONTRACTS.auditRegistry,
     abi: AuditRegistryAbi,
@@ -165,6 +175,9 @@ async function applyLog(spec: EventSpec, log: Log): Promise<void> {
         args.toAlgorithm, args.evidenceHash, args.evidenceURI,
         Number(args.timestamp), ...row,
       ]);
+      break;
+    case "migrations.verified":
+      await pool.query(spec.upsert, [args.migrationId, ...row]);
       break;
     case "audits":
       await pool.query(spec.upsert, [

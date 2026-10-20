@@ -1,0 +1,16 @@
+{
+  "report": "Q-Trust demo audit",
+  "organization": "0xE610569aE0352DC3262419bb051a86145f52875c",
+  "auditor": "0xE610569aE0352DC3262419bb051a86145f52875c",
+  "network": "Base Sepolia",
+  "chainId": 84532,
+  "result": "Passed",
+  "assetsReviewed": 3,
+  "assetsMigrated": 1,
+  "scope": [
+    "Python inspector CBOM",
+    "Python planner CBOM",
+    "Backend CBOM"
+  ],
+  "note": "Public testnet demo record produced by the project's own relayer/auditor identity. It exercises the audit attestation path and is not an independent third-party audit."
+}

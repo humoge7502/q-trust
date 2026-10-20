@@ -109,6 +109,27 @@ describe("useUserRole admin detection", () => {
     expect(result.current.isPrivileged).toBe(false);
   });
 
+  it("recognises a registered vendor before their first attestation", async () => {
+    mockWallet(VENDOR_ADDRESS);
+    readContract.mockImplementation(({ functionName }: { functionName: string }) =>
+      Promise.resolve(functionName === "isVendorActive"),
+    );
+
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isVendor).toBe(true);
+    expect(result.current.role).toBe("vendor");
+    expect(result.current.isPrivileged).toBe(false);
+    expect(readContract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        functionName: "isVendorActive",
+        args: [VENDOR_ADDRESS],
+      }),
+    );
+  });
+
   it("resolves to plain 'none' for a connected wallet with no roles", async () => {
     mockWallet(VENDOR_ADDRESS);
     readContract.mockResolvedValue(false);

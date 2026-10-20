@@ -30,6 +30,8 @@ const columns = [
     label: "Resources",
     links: [
       { label: "API reference", href: `${docsBase}/docs`, external: true },
+      { label: "Documentation", href: "https://humoge7502.github.io/q-trust/", external: true },
+      { label: "GitHub", href: "https://github.com/humoge7502/q-trust", external: true },
       { label: "Block explorer", href: explorerUrl, external: true },
     ],
   },

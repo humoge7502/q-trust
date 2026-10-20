@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+﻿import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 /**
  * Audit H-6 regression: the rpc-pool Proxy wraps every viem method in a
- * Promise — including watchEvent, which returns its unwatch function
+ * Promise â€” including watchEvent, which returns its unwatch function
  * synchronously. Before the fix, watchLive stored a Promise in `unwatchers`
  * and stopIndexer silently failed to unsubscribe. This test asserts that
  * after awaiting watchEvent, stopIndexer invokes the REAL unwatch function.
@@ -70,22 +70,22 @@ describe("indexer graceful shutdown", () => {
     await indexer.startIndexer();
 
     // watchEvent must have been awaited per event spec (7 specs).
-    expect(watchEvent).toHaveBeenCalledTimes(7);
+    expect(watchEvent).toHaveBeenCalledTimes(8);
     // The stored value must be a FUNCTION (the actual unwatch), not a Promise.
     expect(unwatch).not.toHaveBeenCalled();
 
     indexer.stopIndexer();
 
-    expect(unwatch).toHaveBeenCalledTimes(7);
+    expect(unwatch).toHaveBeenCalledTimes(8);
   });
 
   it("startIndexer is idempotent and does not double-subscribe", async () => {
     const indexer = await import("../src/services/indexer.js");
     await indexer.startIndexer();
     await indexer.startIndexer();
-    expect(watchEvent).toHaveBeenCalledTimes(7);
+    expect(watchEvent).toHaveBeenCalledTimes(8);
     indexer.stopIndexer();
-    expect(unwatch).toHaveBeenCalledTimes(7);
+    expect(unwatch).toHaveBeenCalledTimes(8);
   });
 
   it("cleans up partial startup and permits retry after a transient failure", async () => {
@@ -103,9 +103,9 @@ describe("indexer graceful shutdown", () => {
 
     watchEvent.mockImplementation(() => unwatch);
     await indexer.startIndexer();
-    expect(watchEvent).toHaveBeenCalledTimes(10);
+    expect(watchEvent).toHaveBeenCalledTimes(11);
     expect(unwatch).toHaveBeenCalledTimes(2);
     indexer.stopIndexer();
-    expect(unwatch).toHaveBeenCalledTimes(9);
+    expect(unwatch).toHaveBeenCalledTimes(10);
   });
 });

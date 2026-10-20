@@ -97,9 +97,9 @@ function VendorsInner() {
   const loading = isConnecting || isReconnecting;
   const { isVendor, isLoading: roleLoading } = useUserRole();
 
-  const [productId, setProductId] = useState("DigiCert-TLS");
-  const [version, setVersion] = useState("5.2.1");
-  const [algorithm, setAlgorithm] = useState("ML-DSA-44");
+  const [productId, setProductId] = useState("QTrust-PQC-Lib");
+  const [version, setVersion] = useState("1.4.0");
+  const [algorithm, setAlgorithm] = useState("ML-KEM-768");
 
   const attestations = useQuery({
     queryKey: ["vendor-attestations", vendor],
@@ -242,7 +242,7 @@ function VendorsInner() {
 export default function VendorsPage() {
   const mounted = useMounted();
   const { address, isConnecting, isReconnecting } = useAccount();
-  const { role, isLoading: roleLoading } = useUserRole();
+  const { isLoading: roleLoading } = useUserRole();
 
   if (!mounted || isConnecting || isReconnecting || roleLoading) {
     return (
@@ -252,7 +252,11 @@ export default function VendorsPage() {
     );
   }
 
-  if (!address || role === "none") {
+  // Gate only on wallet connection. A connected wallet with no vendor role
+  // must reach VendorsInner's onboarding, not the "connect a wallet" gate —
+  // otherwise a newly approved vendor can never open the portal to publish
+  // their first attestation.
+  if (!address) {
     return (
       <main className="flex-1 bg-canvas text-foreground">
         <WalletGate description="Connect a wallet to view your attestations and check product PQC support as a vendor." />
