@@ -8,6 +8,7 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import {
   coinbaseWallet,
+  injectedWallet,
   metaMaskWallet,
   rainbowWallet,
   walletConnectWallet,
@@ -76,7 +77,16 @@ if (!WALLETCONNECT_PROJECT_ID || typeof WALLETCONNECT_PROJECT_ID !== "string") {
 const WALLETS = [
   {
     groupName: "Recommended",
-    wallets: [metaMaskWallet, coinbaseWallet, walletConnectWallet, rainbowWallet],
+    // `injectedWallet` is the generic EIP-1193 path. Keep it first so users
+    // with a browser extension that is not one of the branded SDK wallets can
+    // connect without WalletConnect or the MetaMask SDK transport.
+    wallets: [
+      injectedWallet,
+      metaMaskWallet,
+      coinbaseWallet,
+      walletConnectWallet,
+      rainbowWallet,
+    ],
   },
 ];
 
