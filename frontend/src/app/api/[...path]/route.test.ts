@@ -124,7 +124,6 @@ describe("S-1 proxy route allowlist", () => {
 
   describe("privileged routes are denied before reaching the backend", () => {
     it.each([
-      ["POST", ["v1", "relay", "attestation"]],
       ["POST", ["v1", "relay", "cbom"]],
       ["POST", ["v1", "relay", "audit"]],
       ["POST", ["v1", "relay", "migration"]],
@@ -173,7 +172,8 @@ describe("S-1 proxy route allowlist", () => {
    */
   describe("operator routes require the caller's own key", () => {
     const operatorRoutes: Array<[string, string[]]> = [
-      ["POST", ["v1", "relay", "attestation"]],
+      ["POST", ["v1", "relay", "migration"]],
+      ["POST", ["v1", "relay", "cbom"]],
       ["POST", ["v1", "webhooks", "subscribe"]],
       ["POST", ["v1", "write", "assets"]],
       ["POST", ["v1", "credentials", "issue"]],
@@ -190,7 +190,7 @@ describe("S-1 proxy route allowlist", () => {
     );
 
     it("forwards the caller's key and never the server admin key", async () => {
-      const res = await call("POST", ["v1", "relay", "attestation"], {
+      const res = await call("POST", ["v1", "relay", "migration"], {
         "x-qtrust-api-key": "operator-own-key",
       });
       expect(res.status).not.toBe(403);
@@ -201,7 +201,7 @@ describe("S-1 proxy route allowlist", () => {
     });
 
     it("does not leak the caller's header upstream under its own name", async () => {
-      await call("POST", ["v1", "relay", "attestation"], { "x-qtrust-api-key": "operator-own-key" });
+      await call("POST", ["v1", "relay", "migration"], { "x-qtrust-api-key": "operator-own-key" });
       expect(upstreamHeaders().get("x-qtrust-api-key")).toBeNull();
     });
 
@@ -221,7 +221,7 @@ describe("S-1 proxy route allowlist", () => {
     // defence-in-depth for runtimes that normalise instead of throwing. It is
     // unit-tested directly in `lib/__tests__/api-route-policy.test.ts`.
     it("treats a whitespace-only key as absent rather than forwarding it", async () => {
-      const res = await call("POST", ["v1", "relay", "attestation"], {
+      const res = await call("POST", ["v1", "relay", "migration"], {
         "x-qtrust-api-key": "   ",
       });
       expect(res.status).toBe(403);
@@ -230,7 +230,7 @@ describe("S-1 proxy route allowlist", () => {
     });
 
     it("rejects an over-long key", async () => {
-      const res = await call("POST", ["v1", "relay", "attestation"], {
+      const res = await call("POST", ["v1", "relay", "migration"], {
         "x-qtrust-api-key": "k".repeat(600),
       });
       expect(res.status).toBe(400);
@@ -239,7 +239,7 @@ describe("S-1 proxy route allowlist", () => {
 
     it("stays open in local development when no server key is configured", async () => {
       await withEnv({ QTRUST_API_KEY: undefined, QTRUST_API_KEYS: undefined }, async () => {
-        const res = await call("POST", ["v1", "relay", "attestation"]);
+        const res = await call("POST", ["v1", "relay", "migration"]);
         expect(res.status).not.toBe(403);
         // No admin key exists, so nothing is attached — the backend's own
         // dev-open policy decides.
@@ -251,11 +251,41 @@ describe("S-1 proxy route allowlist", () => {
       await withEnv(
         { QTRUST_API_KEY: undefined, QTRUST_API_KEYS: undefined, NODE_ENV: "production" },
         async () => {
-          const res = await call("POST", ["v1", "relay", "attestation"]);
+          const res = await call("POST", ["v1", "relay", "migration"]);
           expect(res.status).toBe(403);
           expect(fetchMock).not.toHaveBeenCalled();
         },
       );
+    });
+  });
+
+  /**
+   * Gasless vendor attestation: the vendor signs EIP-712 typed data, so the
+   * route is public-compute rather than operator-gated. The proxy still
+   * authenticates to the backend with the server key; the backend refuses to
+   * spend relayer gas unless the signature, the on-chain nonce and the
+   * signer's VENDOR_ROLE all check out.
+   */
+  describe("vendor attestation is relayed without a caller key", () => {
+    it("is proxied anonymously and never answers 403", async () => {
+      const res = await call("POST", ["v1", "relay", "attestation"]);
+      expect(res.status).not.toBe(403);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("authenticates to the backend with the server key, not the caller's", async () => {
+      await call("POST", ["v1", "relay", "attestation"], {
+        "x-qtrust-api-key": "vendor-own-key",
+      });
+      const sent = upstreamHeaders();
+      expect(sent.get("x-api-key")).toBe("test-admin-key");
+      expect(sent.get("x-qtrust-api-key")).toBeNull();
+    });
+
+    it("is still denied when the method is wrong", async () => {
+      const res = await call("GET", ["v1", "relay", "attestation"]);
+      expect(res.status).toBe(403);
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 });

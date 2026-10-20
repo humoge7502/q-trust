@@ -46,6 +46,7 @@
   "migration": {
     "id": "0x014e6d93c8ded0e535ebecf11985736f867ea0708a949983c5b3ad16a794fe8e",
     "txHash": "0xec0e55de99ddcb18b9a394be9f704c703e7d5ade53b29e16c4fc0a60264d3984",
+    "verificationTxHash": "0x2070b8ec0442dd7a10db18cf47d2d992523728b5d984b21bfdd9ed2f5c7d16ee",
     "from": "RSA-2048",
     "to": "ML-KEM-768"
   },
@@ -53,12 +54,19 @@
     "assets": 3,
     "migrations": {
       "org_address": "0xE610569aE0352DC3262419bb051a86145f52875c",
-      "total_migrations": 0,
-      "verified_migrations": 0,
+      "total_migrations": 1,
+      "verified_migrations": 1,
       "unverified_migrations": 0,
-      "asset_count": 0,
-      "attestation_count": 0,
-      "fetched_at": 1792447985
+      "asset_count": 3,
+      "attestation_count": 3,
+      "fetched_at": 1792514539
+    },
+    "latest_audit": {
+      "org_address": "0xE610569aE0352DC3262419bb051a86145f52875c",
+      "exists": true,
+      "result": "Passed",
+      "result_code": 1,
+      "timestamp": 1792477878
     }
   }
 }

@@ -425,9 +425,10 @@ export async function relayAttestation(payload: {
   nonce: number;
   signature: string;
 }): Promise<{ txHash: string; vendorDid: string; attestationId: string }> {
-  // The same-origin proxy authorizes this route with the caller's own key
-  // (see lib/api-route-policy.ts): it never attaches the server-side admin key
-  // to relayer submissions. `apiPostJson` supplies the operator key when set.
+  // The same-origin proxy treats this as public-compute (see
+  // lib/api-route-policy.ts): the request is authorized by the vendor's
+  // EIP-712 signature, and the backend verifies the signature, nonce and
+  // VENDOR_ROLE before spending relayer gas. Vendors do not need an API key.
   return apiPostJson<{ txHash: string; vendorDid: string; attestationId: string }>(
     "/v1/relay/attestation",
     payload,

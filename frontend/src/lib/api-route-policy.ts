@@ -31,12 +31,17 @@
  *                      key when configured; all of these are rate limited on
  *                      the backend and constrained by QTRUST_SCAN_ALLOWED_ROOTS.
  *  - `operator`        Money/state-mutating surface: relayer submissions
- *                      (spends gas), workspace writes (`/v1/write/*`), webhook
- *                      mutations and credential issuance. The proxy NEVER
- *                      attaches the server-side admin key to these routes. A
- *                      caller must present its own key via `x-qtrust-api-key`,
- *                      which the proxy forwards as `x-api-key`. Anonymous
- *                      callers get 403.
+ *                      other than vendor attestations, workspace writes
+ *                      (`/v1/write/*`), webhook mutations and credential
+ *                      issuance. The proxy NEVER attaches the server-side admin
+ *                      key to these routes. A caller must present its own key
+ *                      via `x-qtrust-api-key`, which the proxy forwards as
+ *                      `x-api-key`. Anonymous callers get 403.
+ *
+ * Vendor attestations are the one gasless exception: the vendor signs EIP-712
+ * typed data, and the backend verifies the signature, nonce and VENDOR_ROLE
+ * before broadcasting. A non-vendor can never make the relayer spend gas, so
+ * the browser can submit this route without an operator key.
  */
 
 export type RouteClass = "public-read" | "public-compute" | "operator";
@@ -117,6 +122,13 @@ export const ROUTE_POLICY: readonly RouteRule[] = [
   { prefix: "/v1/roadmap/generate", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/plans", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/gpu/", methods: GET_POST, routeClass: "public-compute" },
+
+  // Gasless vendor attestation. The vendor signs EIP-712 typed data in the
+  // browser; the backend recovers the signer, checks the on-chain nonce and
+  // rejects non-vendors before broadcasting. This is what makes the vendor
+  // portal's "gasless" form work for an approved vendor without an API key.
+  // Keep it above the broader `/v1/relay/` operator rule (longest prefix wins).
+  { prefix: "/v1/relay/attestation", methods: POST, routeClass: "public-compute" },
 
   // ---- Operator surface: requires the caller's own API key ----
   { prefix: "/v1/relay/", methods: POST, routeClass: "operator" },

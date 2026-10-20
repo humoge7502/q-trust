@@ -40,8 +40,25 @@ site is publicly reachable.
   (`frontend/src/lib/api-route-policy.ts`) classifies scanner, evidence
   creation, Roadmap sync, planner, and GPU calls as `public-compute` and
   attaches the server key on the server side. Operator-only routes
-  (`/v1/write/`, `/v1/relay/`, `/v1/webhooks/`, credential issuance) still
-  require the caller's own key — this protects relayer gas and on-chain writes.
+  (`/v1/write/`, the non-vendor `/v1/relay/` writes, `/v1/webhooks/`,
+  credential issuance) still require the caller's own key — this protects
+  relayer gas and on-chain writes.
+- **Gasless vendor attestation.** `POST /v1/relay/attestation` is the one
+  exception to the operator rule: it is `public-compute`, because the
+  authorization is the vendor's EIP-712 signature rather than an API key.
+  The backend recovers the signer, compares the signed nonce with the
+  on-chain nonce, and requires `VENDOR_ROLE` on `VendorRegistry` **before**
+  the relayer broadcasts, so an anonymous caller can never make the relayer
+  spend gas on a non-vendor. The route stays rate limited (10/min) and the
+  backend still requires a key on the wire — the frontend proxy supplies it
+  server-side. Verified locally: an anonymous proxied POST reaches signature
+  validation and fails with `400 EIP-712 signature verification failed`,
+  while `POST /v1/relay/migration` without a key still returns
+  `403 operator_key_required`. This is live on
+  https://q-trust-nu.vercel.app since the 2026-10-20 frontend deploy: an
+  anonymous `POST /api/v1/relay/attestation` answers `400` (signature
+  validation reached) instead of `403 operator_key_required`, while
+  `POST /api/v1/relay/migration` without a key still answers `403`.
 - **API docs are public** (`QTRUST_DOCS_PUBLIC=true`), so the header's
   "API docs" link works for everyone.
 - **Indexer:** `watchEvent` now uses `poll: true` (HTTP transports have no push
@@ -108,17 +125,62 @@ the frontend after reseeding).
 | `/workspace/projects/planner/qtrust_planner` (7 findings) | `0xd30d41f474522329945e5927ba1e28c0ce376fba80942b1e80b7cdc3c74f7cac` | `/demo/cbom-planner.json` |
 | `/workspace/projects/backend/src` (0 findings, clean) | `0xbc5464cb3f08b7984fcf6392a0ab12f01759ca3a4f654f6b070a2e3d2f7eddd7` | `/demo/cbom-backend.json` |
 
-Migration record: `0xec0e55de99ddcb18b9a394be9f704c703e7d5ade53b29e16c4fc0a60264d3984`
-(tx `0x014e6d93c8ded0e535ebecf11985736f867ea0708a949983c5b3ad16a794fe8e`).
+Migration record: id `0x014e6d93c8ded0e535ebecf11985736f867ea0708a949983c5b3ad16a794fe8e`,
+recorded in tx `0xec0e55de99ddcb18b9a394be9f704c703e7d5ade53b29e16c4fc0a60264d3984`
+(`recordMigration`) and verified in tx
+`0x2070b8ec0442dd7a10db18cf47d2d992523728b5d984b21bfdd9ed2f5c7d16ee`
+(`verifyMigration`). Both land on `MigrationRegistry`
+`0xe5c71e228d49752434dA9D8Ec8F078d1bA45287D`.
+
+Indexed read model for the demo org
+`0xE610569aE0352DC3262419bb051a86145f52875c` (from
+`GET /v1/orgs/<org>/migrations`):
+
+| Measure | Value |
+|---|---|
+| Assets registered | 3 |
+| Migrations recorded | 1 |
+| Migrations verified | 1 (0 unverified) |
+| Vendor attestations indexed | 3 |
+| Latest audit | `Passed` (result code 1) |
+
+`deploy/demo-records.json` mirrors these numbers plus the asset and migration
+identifiers, so the docs and the on-chain state cannot drift silently.
 
 ### Verification
 
 ```
 powershell -File deploy/smoke-test.ps1 -RepoRoot <repo>   # API + planner + scanner + frontend
 node frontend/scripts/browser-check.mjs                   # live anonymous browser flows
-npm test --prefix backend                                  # 108 tests
-npm test --prefix frontend                                 # 138 tests
+npm test --prefix backend                                  # 109 tests
+npm test --prefix frontend                                 # 142 tests
 ```
+
+Both suites pass on the merged tree: backend 109/109, frontend 142/142. Run
+the backend suite with `npx vitest run --maxWorkers=2` on a busy machine —
+under full parallelism the pool starves and a few suites hit the 5 s default
+timeout (they pass in isolation).
+
+Live state on 2026-10-21:
+
+- `deploy/smoke-test.ps1` against the hosted deployment: **all checks pass**
+  (API health, authenticated docs, planner proxy, scanner proxy, frontend).
+- `frontend/scripts/browser-check.mjs`: **31/31** against a production build
+  (`npm run build && npx next start`) wired to the local Docker API.
+- The same script cannot run against `https://q-trust-nu.vercel.app` from
+  this workstation: the local network's FortiGuard web filter and SSL
+  inspection answer `*.vercel.app` with a block page and an untrusted
+  certificate, so the browser never reaches the app. The API-level checks
+  above are unaffected (PowerShell trusts the inspection CA), and the live
+  proxy behaviour was verified directly: `POST /api/v1/relay/attestation`
+  without a key answers `400` (signature validation) and
+  `POST /api/v1/relay/migration` without a key answers `403`.
+- The hosted backend's tunnel variables had gone stale while the Vercel API
+  was unreachable, which made `/v1/plans` and `/v1/scan/source` answer `503`
+  (quick-tunnel URLs change whenever a tunnel restarts). Re-running
+  `deploy/vercel-backend.ps1` re-synced the current URLs and redeployed;
+  `deploy/ensure-local-stack.ps1` does the same automatically when it can
+  reach Vercel.
 
 The browser check covers: home loads and links to real records, `/v/<id>`
 renders VALID/REVOKED, `/scanner` runs a full scan and reaches the AI planner
@@ -141,6 +203,40 @@ Indexer start block: `48333836`. Operational roles were granted to the relayer
 `0xE610569aE0352DC3262419bb051a86145f52875c` (funded with 0.01 Base Sepolia
 ETH via the OpenFaucet proof-of-work faucet); `DEFAULT_ADMIN_ROLE` was
 renounced.
+
+## Launch video
+
+The Q-Trust launch film is produced with the `brag` workflow
+(https://github.com/latent-spaces/brag) as a HyperFrames composition.
+
+| Artifact | Path |
+|---|---|
+| Composition source | `brag-output/composition/index.html` (+ `styles.css`, `assets/`) |
+| Creative contract / plan | `brag-output/brag-plan.md` |
+| Implementation brief | `brag-output/composition-brief.md` |
+| Rendered master | `brag-output/brag.mp4` (1920x1080, 30 fps, 21.5 s, H.264 + AAC) |
+| Poster frame | `brag-output/brag.jpg` (20.2 s) |
+
+Scene timing: `0-3.7` NIST IR 8547 deadline hook, `3.7-7.9` the claim, `7.9-14.1`
+the workspace, `14.1-18.5` the on-chain proof, `18.5-21.5` the light editorial
+finale. The copy uses the real workspace numbers (284 assets, 39 at risk, 68 %
+PQC ready) and the real seeded records (migration
+`0x014e6d93...a794fe8e`, verification tx `0x2070b8ec...7d16ee`).
+
+Re-render:
+
+```
+cd brag-output/composition
+npx hyperframes check            # lint + runtime + layout + motion + contrast
+npx hyperframes render -o ../brag.mp4 --quality delivery --fps 30
+```
+
+`npx hyperframes check` currently reports 0 lint errors, 0 runtime warnings,
+0 layout issues, 0 motion issues and 156/156 WCAG AA contrast checks passing.
+The music bed is not committed (third-party library track); restore
+`assets/music/bed.mp3` from
+`happy-beats-business-moves-vol-11-by-ende-dot-app.mp3` (first 21.5 s) before
+re-rendering.
 
 ## Hosting blockers (checked 2026-10-20)
 
@@ -182,3 +278,23 @@ The Vercel serverless deployment is the no-card path that works today.
   The Base Sepolia relayer/deployer keys were also visible in that log; they
   are testnet-only and the relayer cannot be rotated because
   `DEFAULT_ADMIN_ROLE` was renounced.
+- **The Neon (hosted Postgres) credential is still the one secret that has
+  not been rotated.** It was provisioned through the Vercel Marketplace, so
+  no Neon API key is available on this machine (`neonctl` is not installed
+  and `NEON_API_KEY` is not in any env file) — the password has to be reset
+  in the Neon console (or with a Neon API key), and the new value then has to
+  be written to every consumer in one pass: `.env` (`QTRUST_PG_URL`,
+  `QTRUST_COMPOSE_PG_URL`), `frontend/.env.local` (`DATABASE_URL`,
+  `DATABASE_URL_UNPOOLED`, `POSTGRES_*`), the `q-trust` Vercel project
+  (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `POSTGRES_*`,
+  `POSTGRES_PRISMA_URL`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`,
+  `POSTGRES_URL_NO_SSL`) and the `qtrust-backend` Vercel project
+  (`QTRUST_PG_URL`). Until that is done, rotate the Neon password **first**
+  and update all of them in the same session — the local indexer and the
+  hosted API share that database.
+- **The local network filters `*.vercel.app`.** FortiGuard's web filter and
+  SSL inspection block the Vercel domains from this workstation (the browser
+  gets a "Web Page Blocked" page, `curl` gets an untrusted root), so the
+  live browser suite cannot run here. The hosted API is still reachable from
+  tools that trust the inspection CA, and the tunnel watchdog re-points
+  Vercel whenever a quick tunnel comes back with a new URL.

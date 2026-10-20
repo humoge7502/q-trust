@@ -100,8 +100,12 @@ describe("API route policy", () => {
     // R1: GET /v1/plans/:did was retired — the planner is stateless, so the
     // proxy intentionally exposes nothing there (default-deny 403).
     expect(classifyEndpoint("/v1/plans/did:web:example", "GET")).toBeNull();
-    // ...while the operator surface behind them still requires a key.
-    expect(classifyEndpoint("/v1/relay/attestation", "POST")).toBe("operator");
+    // Vendor attestation is signature-authorized and intentionally public
+    // compute so approved vendors can publish without an operator key.
+    expect(classifyEndpoint("/v1/relay/attestation", "POST")).toBe("public-compute");
+    // ...while the other relayer writes still require a key.
+    expect(classifyEndpoint("/v1/relay/audit", "POST")).toBe("operator");
+    expect(classifyEndpoint("/v1/relay/migration", "POST")).toBe("operator");
     // The planner, scanner and GPU panels are open compute (demo posture).
     expect(classifyEndpoint("/v1/plans", "POST")).toBe("public-compute");
   });
@@ -120,7 +124,6 @@ describe("API route policy", () => {
   it("classifies the privileged surface exactly as the UI expects", () => {
     // Money/state-mutating surface: still requires the caller's own key.
     const operatorEndpoints: Array<[string, string]> = [
-      ["/v1/relay/attestation", "POST"],
       ["/v1/relay/cbom", "POST"],
       ["/v1/relay/migration", "POST"],
       ["/v1/write/assets", "POST"],
@@ -141,6 +144,7 @@ describe("API route policy", () => {
       ["/v1/scan/manifests", "POST"],
       ["/v1/roadmap/generate", "POST"],
       ["/v1/evidence/create", "POST"],
+      ["/v1/relay/attestation", "POST"],
       ["/v1/plans", "POST"],
       ["/v1/gpu/side-channel/analyze", "POST"],
       ["/v1/gpu/rl/plan", "POST"],
