@@ -1,0 +1,14 @@
+# Local artifacts ignored (render scratch space)
+snapshots/
+snapshots-v2/
+render-check/
+composition/.hyperframes/
+composition/node_modules/
+
+# Third-party music bed: restore from the media library before re-rendering.
+# Source: happy-beats-business-moves-vol-11-by-ende-dot-app.mp3 (first 21.5 s)
+composition/assets/music/
+
+# The explainer uses the same bed (first 87.6 s) and the same rule.
+explainer/assets/music/
+explainer/.hyperframes/

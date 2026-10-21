@@ -165,7 +165,7 @@ crypto-inspector verify ${safeAssetId}`}</code>
           </p>
         </section>
 
-        <footer className="mt-8 flex flex-col gap-2 text-center text-xs text-slate-500 sm:flex-row sm:justify-between">
+        <footer className="mt-8 flex flex-col gap-2 text-center text-xs text-slate-600 sm:flex-row sm:justify-between">
           <span>
             Verified at {new Date(verification.verified_at * 1000).toISOString()}
           </span>

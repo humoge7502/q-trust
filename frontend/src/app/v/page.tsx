@@ -9,10 +9,12 @@
  */
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRightIcon } from "@/app/icons";
 import { JsonLd } from "@/components/json-ld";
 import { CodeBlock } from "@/components/ui/code-block";
 import { VerifyForm } from "@/components/verify-form.client";
+import { parseAssetId } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Verify an attestation",
@@ -36,7 +38,26 @@ const EXPLAINER = [
   },
 ];
 
-export default function VerifyIndexPage() {
+interface Props {
+  searchParams: Promise<{ assetId?: string | string[] }>;
+}
+
+export default async function VerifyIndexPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const raw = Array.isArray(params.assetId) ? params.assetId[0] : params.assetId;
+  let resolved: string | null = null;
+  if (raw) {
+    try {
+      resolved = parseAssetId(raw);
+    } catch {
+      resolved = null;
+    }
+  }
+  // The form is a real GET form so Enter still works before hydration. If the
+  // browser submits natively, render the record instead of leaving the visitor
+  // on /v?assetId=... with no result.
+  if (resolved) redirect(`/v/${resolved}`);
+
   return (
     <main className="flex-1 bg-canvas text-slate-900">
       <JsonLd />
@@ -56,6 +77,15 @@ export default function VerifyIndexPage() {
 
         <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <VerifyForm />
+          {raw && !resolved ? (
+            <p
+              role="alert"
+              className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 ring-1 ring-inset ring-amber-600/20"
+            >
+              That asset ID is not in the expected format. Use 0x followed by 64
+              hexadecimal characters.
+            </p>
+          ) : null}
         </div>
 
         <dl className="mt-10 grid border-t border-slate-300 sm:grid-cols-3">

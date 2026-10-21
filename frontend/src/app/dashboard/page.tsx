@@ -169,6 +169,9 @@ function DashboardInner() {
             if you&rsquo;re a vendor.
           </p>
         </div>
+        <div className="mt-6 flex justify-center">
+          <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
+        </div>
       </CenteredNote>
     );
   }
@@ -186,7 +189,12 @@ function DashboardInner() {
           </h1>
           <p className="mt-2 break-all font-mono text-micro text-muted-foreground">{org}</p>
         </div>
-        <AuditStatus code={latest?.result_code ?? null} exists={latest?.exists ?? false} />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Persistent wallet control: without it a connected visitor has no
+              way to see the active account, switch wallets, or disconnect. */}
+          <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
+          <AuditStatus code={latest?.result_code ?? null} exists={latest?.exists ?? false} />
+        </div>
       </header>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">

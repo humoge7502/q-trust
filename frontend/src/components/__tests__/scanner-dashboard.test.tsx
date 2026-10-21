@@ -88,9 +88,11 @@ describe("ScannerDashboard", () => {
     expect(screen.getByText("2 findings")).toBeInTheDocument();
     expect(screen.getByText("1 critical")).toBeInTheDocument();
     expect(screen.getByText("1 high")).toBeInTheDocument();
-    // Table + mobile card fallback both render — use getAllByText
+    // Table + mobile card fallback both render - use getAllByText
     expect(screen.getAllByText("RSA-2048")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("src/tls.py")[0]).toBeInTheDocument();
+    // The table shows the basename and keeps the full path in the title.
+    expect(screen.getAllByText("tls.py")[0]).toBeInTheDocument();
+    expect(screen.getAllByTitle("src/tls.py")[0]).toBeInTheDocument();
     expect(screen.getAllByText("quantum-vulnerable key exchange")[0]).toBeInTheDocument();
   });
 

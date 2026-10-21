@@ -76,6 +76,55 @@ function Get-TeamId {
   return $null
 }
 
+function Invoke-VercelApi {
+  <#
+    Call the Vercel API with the CLI session token. The CLI session expires
+    periodically; when that happens the CLI can refresh it silently from its
+    stored refresh token. The unattended stack watchdog previously died here
+    and left the hosted API pointing at dead tunnels, so refresh once and retry.
+  #>
+  param(
+    [Parameter(Mandatory)][string]$Method,
+    [Parameter(Mandatory)][string]$Uri,
+    $Body,
+    [Parameter(Mandatory)][hashtable]$Headers
+  )
+
+  for ($attempt = 1; $attempt -le 2; $attempt++) {
+    try {
+      if ($null -ne $Body) {
+        return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $Headers -ContentType 'application/json' -Body $Body
+      }
+      return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $Headers
+    } catch {
+      $status = $null
+      try { $status = [int]$_.Exception.Response.StatusCode } catch {}
+      $detail = ''
+      try { $detail = [string]$_.ErrorDetails.Message } catch {}
+
+      $expired = ($status -eq 403 -and $detail -match 'invalidToken')
+      if (-not $expired -or $attempt -eq 2) { throw }
+
+      Write-Host 'Vercel: CLI session expired; refreshing it via the Vercel CLI...' -ForegroundColor Yellow
+      $vcScript = Join-Path (Split-Path (Get-Command node).Source) 'node_modules\vercel\dist\vc.js'
+      if (-not (Test-Path $vcScript)) { throw 'Vercel CLI entrypoint not found; cannot refresh the session. Run vercel login.' }
+
+      $outFile = Join-Path $env:TEMP 'qtrust-vercel-refresh.out.log'
+      $errFile = Join-Path $env:TEMP 'qtrust-vercel-refresh.err.log'
+      $proc = Start-Process -FilePath (Get-Command node).Source `
+        -ArgumentList @($vcScript, 'whoami') `
+        -NoNewWindow -Wait -PassThru `
+        -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+      if ($proc.ExitCode -ne 0) {
+        $errText = (Get-Content $errFile -Raw -ErrorAction SilentlyContinue)
+        throw "Vercel CLI session refresh failed (exit $($proc.ExitCode)). Run 'vercel login'. $errText"
+      }
+
+      $Headers.Authorization = "Bearer $(Get-VercelToken)"
+    }
+  }
+}
+
 $envMap = Read-EnvFile (Join-Path $RepoRoot '.env')
 $frontendEnv = Read-EnvFile (Join-Path $RepoRoot 'frontend\.env.local')
 
@@ -135,13 +184,13 @@ $projectQuery = if ($team) { "?teamId=$team" } else { '' }
 
 $project = $null
 try {
-  $project = Invoke-RestMethod -Method Post -Uri "https://api.vercel.com/v11/projects$projectQuery" -Headers $headers -ContentType 'application/json' -Body (@{ name = $ProjectName } | ConvertTo-Json -Compress)
+  $project = Invoke-VercelApi -Method Post -Uri "https://api.vercel.com/v11/projects$projectQuery" -Headers $headers -Body (@{ name = $ProjectName } | ConvertTo-Json -Compress)
   Write-Host "  created project $($project.id)" -ForegroundColor Green
 } catch {
   $status = $null
   try { $status = [int]$_.Exception.Response.StatusCode } catch {}
   if ($status -eq 409) {
-    $project = Invoke-RestMethod -Method Get -Uri "https://api.vercel.com/v9/projects/$ProjectName$projectQuery" -Headers $headers
+    $project = Invoke-VercelApi -Method Get -Uri "https://api.vercel.com/v9/projects/$ProjectName$projectQuery" -Headers $headers
     Write-Host "  reusing project $($project.id)" -ForegroundColor Yellow
   } else {
     throw
@@ -166,7 +215,7 @@ if (-not $SkipEnvSync) {
       type   = 'encrypted'
       target = @('production', 'preview', 'development')
     } | ConvertTo-Json -Compress
-    Invoke-RestMethod -Method Post -Uri "https://api.vercel.com/v10/projects/$($project.id)/env$envQuery" -Headers $headers -ContentType 'application/json' -Body $payload | Out-Null
+    Invoke-VercelApi -Method Post -Uri "https://api.vercel.com/v10/projects/$($project.id)/env$envQuery" -Headers $headers -Body $payload | Out-Null
     $synced++
   }
   Write-Host "  synced $synced variables" -ForegroundColor Green

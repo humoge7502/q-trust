@@ -26,6 +26,8 @@ export function VerifyForm() {
 
   return (
     <form
+      action="/v"
+      method="get"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();

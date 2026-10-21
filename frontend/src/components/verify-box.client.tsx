@@ -27,6 +27,8 @@ export function VerifyBox() {
       </div>
 
       <form
+        action="/v"
+        method="get"
         noValidate
         onSubmit={(event) => {
           event.preventDefault();

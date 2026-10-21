@@ -35,6 +35,26 @@ interface ScanFinding {
   line?: number;
   severity?: string;
   message?: string;
+  /**
+   * API-native fields. The scanner speaks the CBOM vocabulary (`host`,
+   * `asset_type`, `criticality`, `metadata.lines`), while the tables below
+   * speak the UI vocabulary above. Keeping both means downstream calls
+   * (/v1/risk/score, /v1/compliance/evaluate) still receive the original
+   * finding while the table can render it without blank cells.
+   */
+  asset_type?: string;
+  host?: string | null;
+  port?: number | null;
+  key_type?: string | null;
+  key_size?: number | null;
+  criticality?: string | null;
+  metadata?: {
+    language?: string;
+    lines?: Array<string | number>;
+    line?: number;
+    total_matches?: number;
+  } | null;
+  [key: string]: unknown;
 }
 
 interface ScanSummary {
@@ -149,11 +169,13 @@ const COMPLIANCE_FRAMEWORKS = [
  * Directories mounted into the local scanner container. Exposed as one-click
  * presets so a first-time visitor does not have to guess a server-side path.
  */
+const DEMO_ESTATE = "/workspace/projects/deploy/demo-estate";
+
 const SAMPLE_TARGETS = [
-  { label: "Backend", path: "/workspace/projects/backend/src" },
-  { label: "Frontend", path: "/workspace/projects/frontend/src" },
-  { label: "Contracts", path: "/workspace/projects/contracts/src" },
-  { label: "Inspector", path: "/workspace/projects/inspector/qtrust_inspector" },
+  { label: "Demo estate", path: DEMO_ESTATE },
+  { label: "API gateway", path: `${DEMO_ESTATE}/services/api-gateway` },
+  { label: "Payments", path: `${DEMO_ESTATE}/services/payments` },
+  { label: "Mobile", path: `${DEMO_ESTATE}/services/mobile` },
 ] as const;
 
 /* -------------------------------------------------------------------------- */
@@ -238,6 +260,74 @@ async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+const ASSET_TYPE_LABELS: Record<string, string> = {
+  source_crypto_usage: "Source usage",
+  dependency_manifest: "Dependency manifest",
+  certificate: "Certificate",
+  tls_endpoint: "TLS endpoint",
+  library: "Library",
+};
+
+/** Strip the scan root so tables show `ast_scanner.py`, not the whole path. */
+function relativeToRoot(file: string, root: string): string {
+  const base = root.replace(/\/+$/, "");
+  if (!base) return file;
+  if (file.startsWith(`${base}/`)) return file.slice(base.length + 1);
+  return file;
+}
+
+function firstReportedLine(finding: ScanFinding): number | undefined {
+  const lines = finding.metadata?.lines;
+  if (Array.isArray(lines) && lines.length > 0) {
+    const first = Number(lines[0]);
+    if (Number.isFinite(first)) return first;
+  }
+  // Some detectors report a single `metadata.line` instead of `lines`.
+  const single = Number(finding.metadata?.line);
+  return Number.isFinite(single) ? single : undefined;
+}
+
+/** One-line, human description of a finding built from CBOM fields. */
+function describeFinding(finding: ScanFinding): string {
+  const parts: string[] = [];
+  const kind = finding.asset_type ?? finding.type;
+  if (kind) parts.push(ASSET_TYPE_LABELS[kind] ?? kind.replaceAll("_", " "));
+  if (finding.key_type) parts.push(finding.key_type);
+  if (typeof finding.key_size === "number" && finding.key_size > 0) {
+    parts.push(`${finding.key_size}-bit`);
+  }
+  const matches = finding.metadata?.total_matches;
+  if (typeof matches === "number" && matches > 0) {
+    parts.push(`${matches} match${matches === 1 ? "" : "es"}`);
+  }
+  return parts.join(" · ") || "Cryptographic asset detected";
+}
+
+/**
+ * Translate a scanner finding into the shape the tables render.
+ *
+ * Never drops the original fields: the same object is posted back to
+ * /v1/risk/score and /v1/compliance/evaluate, which read `algorithm`,
+ * `key_size` and `first_seen` directly.
+ */
+function normalizeFinding(finding: ScanFinding, root: string): ScanFinding {
+  const file = finding.file ?? finding.host ?? "";
+  return {
+    ...finding,
+    type: finding.type ?? finding.asset_type,
+    file: relativeToRoot(file, root),
+    line: finding.line ?? firstReportedLine(finding),
+    severity: (finding.severity ?? finding.criticality ?? "unknown").toLowerCase(),
+    message: finding.message ?? describeFinding(finding),
+  };
+}
+
+/** Last path segment, for dense tables; the full path stays in the title. */
+function basename(file: string): string {
+  const parts = file.split("/");
+  return parts[parts.length - 1] || file;
 }
 
 function summarizeFindings(findings: ScanFinding[]): ScanSummary {
@@ -351,7 +441,7 @@ export function ScannerDashboard() {
   /* ---- Scan state ---- */
   // Pre-filled with a mounted demo target so the first click produces a real
   // scan; visitors can pick another sample or type any allowed path.
-  const [target, setTarget] = useState("/workspace/projects/inspector/qtrust_inspector");
+  const [target, setTarget] = useState(DEMO_ESTATE);
   const [scanSource, setScanSource] = useState(true);
   const [scanManifest, setScanManifest] = useState(true);
   const [scanLoading, setScanLoading] = useState(false);
@@ -422,7 +512,12 @@ export function ScannerDashboard() {
         includeSource: scanSource,
         includeManifests: scanManifest,
       });
-      setScanResult({ ...data, summary: summarizeFindings(data.findings) });
+      const findings = data.findings.map((finding) => normalizeFinding(finding, target.trim()));
+      setScanResult({
+        ...data,
+        findings,
+        summary: summarizeFindings(findings),
+      });
     } catch (err) {
       reportError(err, setScanError);
     } finally {
@@ -738,7 +833,9 @@ export function ScannerDashboard() {
                   <tbody>
                     {scanResult.findings.map((f, i) => (
                       <tr key={i} className="border-b border-border/60">
-                        <td className="px-4 py-2 font-mono text-foreground">{f.file}</td>
+                        <td className="max-w-[220px] truncate px-4 py-2 font-mono text-foreground" title={f.file}>
+                          {basename(f.file) || "-"}
+                        </td>
                         <td className="px-4 py-2 text-muted-foreground">{f.line ?? "—"}</td>
                         <td className="px-4 py-2 font-medium text-foreground">{f.algorithm}</td>
                         <td className="px-4 py-2">
@@ -865,8 +962,8 @@ export function ScannerDashboard() {
                         const broken = r.algorithmClassification === "BROKEN" || r.algorithmClassification === "WEAKENED";
                         return (
                           <tr key={i} className="border-b border-border/60">
-                            <td className="max-w-[160px] truncate px-4 py-2 font-mono text-foreground">
-                              {r.file}
+                            <td className="max-w-[160px] truncate px-4 py-2 font-mono text-foreground" title={r.file}>
+                              {basename(r.file)}
                             </td>
                             <td className="px-4 py-2 text-muted-foreground">{r.line ?? "—"}</td>
                             <td className="px-4 py-2 font-medium text-foreground">{r.algorithm}</td>

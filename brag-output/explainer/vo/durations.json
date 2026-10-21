@@ -1,0 +1,50 @@
+{
+  "lines": [
+    {
+      "id": "vo-01",
+      "scene": "deadline",
+      "duration": 9.0
+    },
+    {
+      "id": "vo-02",
+      "scene": "loop",
+      "duration": 9.58
+    },
+    {
+      "id": "vo-03",
+      "scene": "scan",
+      "duration": 10.8
+    },
+    {
+      "id": "vo-04",
+      "scene": "risk",
+      "duration": 12.17
+    },
+    {
+      "id": "vo-05",
+      "scene": "roadmap",
+      "duration": 7.94
+    },
+    {
+      "id": "vo-06",
+      "scene": "evidence",
+      "duration": 11.74
+    },
+    {
+      "id": "vo-07",
+      "scene": "verify",
+      "duration": 10.01
+    },
+    {
+      "id": "vo-08",
+      "scene": "vendor",
+      "duration": 10.87
+    },
+    {
+      "id": "vo-09",
+      "scene": "finale",
+      "duration": 2.86
+    }
+  ],
+  "total": 84.96
+}
