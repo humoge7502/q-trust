@@ -33,10 +33,17 @@ console.log(
 const list = [...survived].sort(
   (a, b) => (a.location?.start?.line ?? 0) - (b.location?.start?.line ?? 0),
 );
-const rows = list.slice(0, 30).map(
-  (m) =>
-    `| ${m.mutatorName} | ${m.location?.start?.line ?? "?"} | \`${String(m.replacement ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ").slice(0, 80)}\` |`,
-);
+const rows = list.slice(0, 30).map((m) => {
+  // Escape for a markdown table cell — backslashes FIRST, then pipes and
+  // newlines (CodeQL js/incomplete-string-escaping: replacing pipes before
+  // backslashes would let an input backslash un-escape a produced pipe).
+  const replacement = String(m.replacement ?? "")
+    .slice(0, 80)
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|")
+    .replace(/\n/g, " ");
+  return `| ${m.mutatorName} | ${m.location?.start?.line ?? "?"} | \`${replacement}\` |`;
+});
 if (rows.length) {
   console.log("\n| Mutator | Line | Replacement |\n|---|---|---|\n" + rows.join("\n"));
 }
