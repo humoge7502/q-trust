@@ -6,9 +6,10 @@ import { ArrowRightIcon, ArrowTopRightOnSquareIcon } from "@/app/icons";
 import { API_DOCS_URL } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "Developers — build on Q-Trust — Q-Trust",
+  title: "Developer quickstart",
   description:
     "A copyable quickstart for the Q-Trust public API: verify attestations, read asset records, and anchor your own migration evidence. Plus a concrete scenario walkthrough.",
+  alternates: { canonical: "/developers" },
 };
 
 const API_BASE = "https://qtrust-backend.vercel.app/api";

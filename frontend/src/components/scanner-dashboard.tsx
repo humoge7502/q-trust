@@ -15,6 +15,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { apiPostJson, OperatorKeyRequiredError } from "@/lib/api";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import SideChannelPanel from "@/components/side-channel-panel";
 import { PlanningPanel } from "@/components/planning-panel";
 import { MigrationRace } from "@/components/migration-race";
@@ -1370,6 +1371,14 @@ export function ScannerDashboard() {
             <>
               {riskError && <p className="text-xs text-danger">{riskError}</p>}
 
+              {riskLoading && (
+                <div aria-busy="true" aria-label="Calculating risk scores" className="mt-4 space-y-3">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-40 w-full" />
+                </div>
+              )}
+
               {riskScores.length > 0 && (
                 <>
                   <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -1539,6 +1548,13 @@ export function ScannerDashboard() {
           ) : (
             <>
               {complianceError && <p className="text-xs text-danger">{complianceError}</p>}
+              {complianceLoading && (
+                <div aria-busy="true" aria-label="Evaluating compliance" className="mt-4 space-y-3">
+                  <Skeleton className="h-5 w-52" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              )}
 
               {complianceReport && (
                 <div>
@@ -1698,6 +1714,14 @@ export function ScannerDashboard() {
           ) : (
             <>
               {roadmapError && <p className="text-xs text-danger">{roadmapError}</p>}
+              {roadmapLoading && (
+                <div aria-busy="true" aria-label="Generating roadmap" className="mt-4 space-y-3">
+                  <Skeleton className="h-5 w-44" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              )}
               {operatorEndpoint === "/v1/roadmap/generate" && (
                 <OperatorAccessInline
                   endpoint={operatorEndpoint}

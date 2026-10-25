@@ -241,14 +241,14 @@ function VerificationUnavailable({ assetId }: { assetId: string }) {
 function StatusBadge({ status }: { status: "VALID" | "REVOKED" }) {
   if (status === "VALID") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+      <span className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 sm:self-center">
         <ShieldCheckIcon className="h-4 w-4" />
         VALID
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+    <span className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20 sm:self-center">
       <XCircleIcon className="h-4 w-4" />
       REVOKED
     </span>

@@ -980,3 +980,87 @@ def _build_schedule(migration_order: list[dict[str, Any]], deadline: date) -> di
         "suggested_daily_rate": round(daily_rate, 2) if daily_rate else None,
         "windows": windows,
     }
+
+
+# ---------------------------------------------------------------------------
+# Outcome-optimized planning (E-09/E-12 productization, 2026-10-24).
+#
+# Unlike /plan (GNN-ranked priorities under the doctrine objective), this
+# endpoint plans under the quantum-risk-days objective with the transparent
+# execution simulator (qtrust_planner.outcome_sim, SIM_SPEC_VERSION pinned):
+# exact DP optimum for small estates, deterministic beam above, plus Smith's
+# rule and the doctrine formula as honest comparison baselines — all
+# model-free, reproducible, and framed as simulation-grounded (NOT observed
+# org outcomes). Inherits the same rate-limit and API-key middleware as every
+# other POST route.
+# ---------------------------------------------------------------------------
+
+class ObjectiveRequest(BaseModel):
+    cbom: dict[str, Any] = Field(..., description="CBOM JSON (assets list required)")
+    beam_width: int = Field(64, ge=8, le=256,
+                            description="beam width for estates beyond the exact-DP size cap")
+
+
+@app.post("/v1/plan/objective")
+def plan_objective(req: ObjectiveRequest) -> dict[str, Any]:
+    from qtrust_planner.outcome_sim import (
+        SIM_SPEC_VERSION, estate_from_cbom, feasible_projection,
+        heuristic_priority_scores, optimal_order, smith_rule_order)
+
+    asset_records = _parse_assets(req.cbom)
+    try:
+        estate = estate_from_cbom({**req.cbom, "assets": asset_records},
+                                  name=str(req.cbom.get("target", "api-estate")))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    n = estate.n
+    opt_qrd = estate.total_quantum_risk_days(optimal_order(estate))
+
+    def _lane(name: str, description: str, order: list[int]) -> dict[str, Any]:
+        qrd = estate.total_quantum_risk_days(order)
+        elapsed = 0.0
+        steps = []
+        for rank, idx in enumerate(order):
+            asset = estate.assets[idx]
+            elapsed += asset.duration_days
+            steps.append({
+                "rank": rank + 1,
+                "asset_id": asset_records[idx].get("asset_id", f"asset-{idx:04d}"),
+                "algorithm": asset.algorithm,
+                "host": asset.host,
+                "completion_day": round(elapsed, 2),
+                "exposure_weight": round(asset.exposure_weight, 4),
+            })
+        return {
+            "strategy": name,
+            "description": description,
+            "total_qrd": round(qrd, 2),
+            "qrd_ratio_vs_optimal": round(qrd / opt_qrd, 6) if opt_qrd > 0 else 1.0,
+            "makespan_days": round(elapsed, 2),
+            "schedule": steps,
+        }
+
+    return {
+        "objective": "quantum-risk-days (QRD) = Σ exposure_weight_i × completion_day_i",
+        "sim_spec_version": SIM_SPEC_VERSION,
+        "honesty_note": (
+            "Simulation-grounded ordering from real CBOM structure and the "
+            "documented qrd-sim/1.0 assumptions — not observed organizational "
+            "outcomes. The optimal lane is exact for estates of up to 14 "
+            "assets (subset DP) and beam-approximated beyond that."),
+        "n_assets": n,
+        "qrd_optimal": round(opt_qrd, 2),
+        "plans": [
+            _lane("outcome_optimal",
+                  "exact optimum (subset DP; beam-approximated above 14 assets)",
+                  optimal_order(estate, beam_width=req.beam_width)),
+            _lane("smith_rule",
+                  "shortest-weighted-job-first — provably optimal without "
+                  "dependency constraints",
+                  smith_rule_order(estate)),
+            _lane("doctrine_formula",
+                  "the shipped priority formula — shown for comparison",
+                  feasible_projection(heuristic_priority_scores(estate), estate)),
+        ],
+    }

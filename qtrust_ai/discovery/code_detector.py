@@ -334,6 +334,10 @@ class DetectorConfig:
     dataflow_weight: float = 0.20
     ml_weight: float = 0.20
     threshold: float = 0.5
+    # A confident ML hit with no rule/AST/dataflow corroboration is allowed to
+    # decide alone only above this probability. Select it on a held-out split;
+    # at 0.5 the gate matches the model's own operating point.
+    ml_decisive_threshold: float = 0.85
     seed: int = 42
     max_file_size_bytes: int = 2_000_000
     context_lines: int = 2
@@ -866,12 +870,19 @@ class CryptoCodeDetector:
             is_crypto = True
 
         # Decisive high-confidence ML hit: when the fine-tuned transformer is
-        # confidently crypto AND *no* deterministic layer fired, the learned
+        # confident enough AND *no* deterministic layer fired, the learned
         # signal alone should flag the file. This is what recovers obfuscated /
         # renamed / cross-language crypto that static+AST miss (and previously
-        # fell through because a flat ml_weight < threshold). The high bar
-        # (0.85) keeps precision: weak ML evidence never overrides the ensemble.
-        if ml_is_crypto and not static and not ast_f and not dflow and ml_score >= 0.85:
+        # fell through because a flat ml_weight < threshold). The gate is a
+        # config value selected on a held-out split; raising it suppresses
+        # ML-only detections, lowering it trades precision for recall.
+        if (
+            ml_is_crypto
+            and not static
+            and not ast_f
+            and not dflow
+            and ml_score >= cfg.ml_decisive_threshold
+        ):
             is_crypto = True
 
         # Choose algorithm: prefer static > ast > ml

@@ -1,0 +1,11 @@
+{
+  "method": "temperature_scaling",
+  "model": "huggingface/CodeBERTa-small-v1 fine-tune (crypto discovery)",
+  "transform": "p_cal = sigmoid(logit(p_raw) / T)",
+  "preserves_ranking": true,
+  "temperature": 2.795379,
+  "fitted": true,
+  "n_calibration": 2238,
+  "fit_nll_before": null,
+  "fit_nll_after": null
+}

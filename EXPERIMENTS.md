@@ -106,3 +106,20 @@ CodeBERTa fine-tune (F1 0.9395, repo-disjoint held-out), GNN LOO τ-b 0.7263 acr
 - **Setup:** v5 corpus = v4 + 8 repos (`scripts/expand_code_corpus_v5.py` → `code_corpus_v5.json`): 17,831 files / 66 sources / 9,114 crypto (+660 files, +300 crypto: google/tink 180, RustCrypto/signatures 41, digitalbazaar/forge 38, curl + libressl C-TLS, noble-hashes, bcrypt, httpcomponents). Trained 3 epochs / max_len 256 / batch 8 on GPU, eval split **identical** to v4 (same 8 repos, 2,238 files), so any change is purely from the extra data.
 - **Result:** 31.6 min on GPU, train_acc 0.9445. **Held-out got worse:** pinned F1 **0.8707** (P 0.9366 / R **0.8135**) vs v4 **0.8966** (Δ −0.0259); native F1 0.8846 vs 0.9077 (Δ −0.0231). Recall dropped most.
 - **Conclusion (honest negative):** adding 8 repos did **not** help — the extra data (mostly Java `google/tink`, some C TLS) shifted the distribution and hurt recall. **The 3-epoch v4 (F1 0.8966) remains the best clean model.** Together with E-14b this shows the detector is at a **local optimum**: neither more epochs nor naive more data improves it. The binding constraint is likely **label noise** — both train and eval labels are regex-derived (`is_crypto` = any crypto keyword), so held-out F1 is capped by the labeler's own error, not model capacity. Genuine improvement needs better labels (human-annotated or AST/static-precise) or a larger base model — not more of the same. Recorded so this is not retried blindly.
+
+## E-15 — Held-out de-duplication: corrected v4 metric (executed 2026-10-26)
+- **Motivation:** E-14 recorded that the pinned eval has **2,238 raw records for 1,779 distinct `(source, path)` pairs** — 459 extras, 197 duplicated keys, 194 with different code and 22 with conflicting labels. The canonical F1 was computed on the inflated set, so one file could be counted twice and even scored as both crypto and non-crypto.
+- **Setup:** `scripts/evaluate_dedup_eval.py` loads the shipped `crypto_codebert_v4` checkpoint, scores every raw held-out record **once** (full detector ensemble, threshold 0.5 — the same path as `evaluate`), asserts that the raw row reproduces the shipped **P 0.9429 / R 0.8546 / F1 0.8966**, then recomputes metrics under four deterministic policies. `keep_longest` was declared primary before scoring and never consults the label. Artifact: `qtrust_ai/artifacts/eval_dedup_v4.json`.
+- **Result (2,238 scored in 853 s, CPU):**
+
+| Policy | n | P | R | F1 | FN |
+|---|---:|---:|---:|---:|---:|
+| raw (shipped) | 2,238 | 0.9429 | 0.8546 | 0.8966 | 177 |
+| keep_first | 1,779 | 0.9501 | 0.8604 | 0.9030 | 142 |
+| keep_last | 1,779 | 0.9500 | 0.8645 | 0.9052 | 137 |
+| **keep_longest (primary)** | **1,779** | **0.9492** | **0.8626** | **0.9039** | **140** |
+| unique_content | 2,224 | 0.9428 | 0.8622 | 0.9007 | 166 |
+
+- **Conclusion:** the duplicate records were **depressing** the reported metric, not inflating it (the extras were disproportionately false negatives). The corrected, label-blind clean metric is **F1 0.9039** (+0.0073); the three path-level policies agree within 0.0022 (0.9030–0.9052), so the correction is robust to which copy is kept. `keep_last` is not adopted despite scoring 0.0006 higher, because choosing the policy by its own test score is test-set selection. This is a **re-scoring of the same checkpoint**, not a new model; no training claim is made.
+- **Durable fix:** `qtrust_ai/discovery/corpus_hygiene.py` + `scripts/dedupe_code_corpus.py` now produce a de-duplicated corpus (v4: **17,171 → 14,470 records**, 819 duplicated keys, **2,701 extras**, **146 label conflicts**). `scripts/train_discovery_v4.py --dedupe-train keep_longest` applies the policy to the training split only, leaving the pinned eval byte-identical for comparability. The next retrain should use it (recorded as E-16, not yet run).
+- **Residual labels:** 22 conflicting-label keys remain in the clean eval only as a single kept copy; the label itself can still be wrong because labels are regex-derived. Label quality — not model size — remains the binding constraint on a larger F1 claim.

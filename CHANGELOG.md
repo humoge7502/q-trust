@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added — planning, business model, deps, command palette (2026-10-24/26)
+
+- **Command palette**: global ⌘K/Ctrl+K palette (Radix Dialog, combobox/
+  listbox a11y, arrow-key navigation, route-aware close, header trigger).
+  (`src/components/command-palette.tsx`, 5 tests.)
+- **Scanner skeletons**: content-area loading states in the risk/compliance/
+  roadmap/evidence tabs now use structured skeleton blocks (aria-busy) per
+  the frontend-ui-engineering skill — button spinners unchanged.
+- **Skill registry**: `SKILLS.md` documents the active design/engineering
+  skill set, the applied workflow, and the deliberately rejected toolkits
+  with reasons.
+- **Planner**: `POST /v1/plan/objective` — outcome-optimized migration planning
+  under the quantum-risk-days objective (qrd-sim/1.0): exact DP optimum (≤14
+  assets), deterministic beam above, Smith's-rule and doctrine-formula
+  comparison lanes, simulation-grounded framing in the response.
+  (`planner/server.py`, tests in `planner/tests/test_server.py`.)
+- **Business model**: `BUSINESS_MODEL.md` — research-locked record of the
+  shipped `/pricing` model (open core → assurance engagements → annual
+  certification → OEM) with market evidence (46.2% CAGR consensus,
+  competitors quote-only) and rejected alternatives.
+
+### Changed
+- **Dependencies**: frontend + backend `npm update` in-range refreshes
+  (0 vulnerabilities both); Python side unchanged where majors would break.
+- **RL**: `train_agent_ppo` now saves lineage-carrying checkpoints
+  (state_dict + config + seed + protocol) instead of bare state dicts.
+
 
 ### Added — certification bundles + assurance analytics (2026-10-24)
 

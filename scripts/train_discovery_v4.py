@@ -79,6 +79,13 @@ def main() -> None:
                     help="evaluate the existing checkpoint without training")
     ap.add_argument("--corpus", default=str(CORPUS_V4),
                     help="training corpus json (default v4; pass v5 to test more data)")
+    ap.add_argument(
+        "--dedupe-train",
+        default="none",
+        choices=("none", "keep_first", "keep_last", "keep_longest", "unique_content"),
+        help="de-duplicate (source, path) records in the training split only; "
+             "the pinned eval stays byte-identical for comparability",
+    )
     args = ap.parse_args()
 
     suffix = args.out_suffix if args.out_suffix is not None else (
@@ -108,6 +115,19 @@ def main() -> None:
     eval_corpus = [r for r in v4_corpus if r["source"] in pinned_eval_src]
     if args.max_train:
         train_corpus = train_corpus[: args.max_train]
+
+    train_dedupe = None
+    if args.dedupe_train != "none":
+        from qtrust_ai.discovery.corpus_hygiene import dedupe_records, dedupe_stats
+
+        train_corpus, dedupe_report = dedupe_records(train_corpus, args.dedupe_train)
+        train_dedupe = dedupe_stats(dedupe_report)
+        print(
+            f"train de-dupe [{args.dedupe_train}]: "
+            f"{dedupe_report['raw_records']} -> {dedupe_report['kept_records']} "
+            f"records ({dedupe_report['extra_records']} extra, "
+            f"{dedupe_report['keys_with_conflicting_labels']} label conflicts)"
+        )
 
     n_train_pos = sum(1 for r in train_corpus if r["is_crypto"])
     n_eval_pos = sum(1 for r in eval_corpus if r["is_crypto"])
@@ -219,6 +239,7 @@ def main() -> None:
             "repo_disjoint": True,
         },
         "fine_tune": {**ft, "max_len": args.max_len, "batch_size": args.batch_size},
+        "train_dedupe": train_dedupe,
         "eval_pinned": res_pinned,
         "eval_native_split": {
             "note": "v4's own repo-disjoint 80/20 split (includes new repos)",

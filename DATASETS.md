@@ -185,6 +185,24 @@ evaluation/fit pairs at Jaccard ≥ 0.80 or ≥ 0.95; the maximum was 0.5598 and
 the p99 was 0.0037. The v4 corpus therefore does not rely on copied code
 leaking across the split.
 
+### Duplicate paths (measured 2026-10-26)
+
+The corpus also carries **819 duplicated `(source, path)` keys / 2,701 extra
+records** (17,171 raw → 14,470 unique), including 146 keys whose copies
+disagree on the crypto label. The pinned held-out set inherits 197 duplicated
+keys / 459 extras (22 label conflicts, 194 with different code). A fresh
+re-score of the unchanged checkpoint on one copy per path gives **F1 0.9039**
+(P 0.9492 / R 0.8626, n=1,779) versus **0.8966** on the inflated set — the
+shipped exact numbers for both views are in EXPERIMENTS.md E-15 and
+`qtrust_ai/artifacts/eval_dedup_v4.json`.
+
+For future work use `scripts/dedupe_code_corpus.py` (builds a
+`*_dedup.json` corpus with a `stats.hygiene` block) and
+`scripts/train_discovery_v4.py --dedupe-train keep_longest` (training split
+only; the pinned eval stays byte-identical). `keep_longest` was the
+pre-declared policy because it does not consult the label. Do not quote the
+raw-set F1 as the clean metric.
+
 CryptoAPI-Bench / ApacheCryptoAPI-Bench remain evaluation-only (E-08). See
 `qtrust_ai/artifacts/model_comparison_stable.md` for the v3-stable vs v4-stable
 result and the promotion decision.

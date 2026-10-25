@@ -50,7 +50,7 @@ export function VerifyForm() {
           inputMode="text"
           autoComplete="off"
           spellCheck={false}
-          placeholder={EXAMPLE_ASSET_ID}
+          placeholder={EXAMPLE_ASSET_ID || undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? "asset-id-error asset-id-help" : "asset-id-help"}
           onChange={clearError}
@@ -66,21 +66,26 @@ export function VerifyForm() {
       </div>
 
       <p id="asset-id-help" className="mt-3 text-xs leading-6 text-muted-foreground">
-        Paste a full asset ID, or{" "}
-        <button
-          type="button"
-          onClick={() => {
-            const input = document.getElementById("asset-id");
-            if (input instanceof HTMLInputElement) {
-              input.value = EXAMPLE_ASSET_ID;
-              clearError();
-              input.focus();
-            }
-          }}
-          className="font-medium text-foreground underline decoration-slate-400 underline-offset-4 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
-        >
-          use the example
-        </button>
+        Paste a full asset ID
+        {EXAMPLE_ASSET_ID ? (
+          <>
+            , or{" "}
+            <button
+              type="button"
+              onClick={() => {
+                const input = document.getElementById("asset-id");
+                if (input instanceof HTMLInputElement) {
+                  input.value = EXAMPLE_ASSET_ID;
+                  clearError();
+                  input.focus();
+                }
+              }}
+              className="font-medium text-foreground underline decoration-slate-400 underline-offset-4 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+            >
+              use the example
+            </button>
+          </>
+        ) : null}
         . No wallet or account required.
       </p>
 

@@ -23,13 +23,13 @@
 | **Tamper-evident evidence chain** | ✅ per-record SHA-256 + sorted-pair Merkle root + Ed25519 proof (`backend/src/services/certification.ts`, 19+9 tests) | ✗ (dashboards) | ✗ | ✗ | ✗ | **AHEAD** |
 | **Third-party offline verification** | ✅ TS + Python verifiers over one committed fixture, CI byte-diffs it | ✗ | ✗ | ✗ | ✗ | **AHEAD** |
 | **Merkle-proof revocation** | ✅ built; buyer story thin | ✗ | ✗ | ~ PKI CRL | ✗ | **AHEAD** (needs GTM) |
-| On-chain anchoring (Base L2) | ✅ 11 UUPS contracts, 213 forge tests, 7-day timelock | ✗ | ✗ | ✗ | ✗ | **AHEAD** |
+| On-chain anchoring (Base L2) | ✅ 11 UUPS contracts, 209 forge test functions, 7-day timelock | ✗ | ✗ | ✗ | ✗ | **AHEAD** |
 | **Evaluation-validity gating** | ✅ novel control (refuse to certify below ceiling) | ✗ | ✗ | ✗ | ✗ | **AHEAD** (patentable) |
 | Reproducible external benchmark | ✅ CryptoAPI-Bench + Apache, honest framing | ~ internal | ✗ | ✗ | ✗ | **AHEAD** (rare) |
 | Open research artifact | ✅ 16-page paper, ceiling theorem, 53/53 claims harness | ✗ | ✗ | ✗ | ✗ | **AHEAD** |
 | Privacy (hash-only) | ✅ hash-only evidence model | ~ | ~ | ~ | ~ | **PARITY/AHEAD** |
 | Self-hostable / open | ✅ Docker compose, self-host | ✗ SaaS | ✗ SaaS | ✗ | ✅ | **AHEAD vs SaaS** |
-| Detector accuracy (clean eval) | ✅ F1 **0.8966** digest / **0.9077** native, **0 % train overlap**, +0.24 over TF-IDF baseline (E-14) | ? | ? | ? | ? | **UNKNOWN vs them** (no shared benchmark) |
+| Detector accuracy (clean eval) | ✅ F1 **0.9039** on the de-duplicated digest eval (1,779 files; P 0.9492 / R 0.8626) and **0.9077** native, **0 % train overlap**, +0.24 over TF-IDF baseline (E-14/E-15) | ? | ? | ? | ? | **UNKNOWN vs them** (no shared benchmark) |
 
 ---
 
@@ -52,7 +52,7 @@
 - **No external security audit** (R-01) — a procurement blocker for regulated buyers.
 - **No paying design partner** — pricing and product-market fit unvalidated.
 - **Browser-held operator key** (TD-08) — accepted risk, but a real UX/security trade-off.
-- **Mutation testing absent**; storage-layout baseline needs a Foundry host.
+- **Mutation testing covers one service, not the estate.** `backend/reports/mutation/certification.json` scores **99.16 % (591/596 killed, 5 documented equivalents)** for `certification.ts` under the CI gate; discovery, planner and backend routes have no mutation baseline yet. The storage-layout baseline still needs a Foundry host.
 - **Detector accuracy vs incumbents is unknown** — no shared benchmark exists; a misuse-discrimination head-to-head is open.
 
 ## 5. What would make it genuinely unmatched (concrete, not aspirational)
@@ -69,3 +69,17 @@
 ## 6. Bottom line
 
 Q-Trust is **not** "best at everything" — discovery and prioritization accuracy are commodity/parity. It **is** genuinely ahead on the **assurance/certification fabric, on-chain evidence, evaluation-validity gating, and open reproducible research** — and those are the hardest things to copy. The honest path to "no one close" is to **make the certification fabric the product's front door**, prove one clean accuracy claim, and land one regulated design partner — not to claim superiority the artifacts don't yet support.
+
+## 7. Market signals (public sources checked 2026-10-26)
+
+These are dated announcements, not audited capabilities. They are recorded to keep the positioning current; the matrix above remains the authoritative capability comparison.
+
+| Date | Signal | What it means for Q-Trust |
+|---|---|---|
+| 2026-01-22 | [Keyfactor and IBM Consulting launched a joint quantum-safe transformation solution](https://www.keyfactor.com/press-releases/keyfactor-and-ibm-consulting-launch-joint-solution-to-accelerate-enterprise-quantum-safe-transformation/) — unified visibility and risk-based modernization. | Confirms enterprise demand for discovery + prioritisation. Both are the commodity layer; Q-Trust cannot win there. |
+| 2026-03-23 | [SandboxAQ added AI-SPM guardrails to AQtive Guard](https://www.prnewswire.com/news-releases/sandboxaq-launches-new-aqtive-guard-capabilities-enterprise-guardrails-to-address-hidden-risk-in-the-agentic-ai-era-302721973.html), expanding from crypto management toward AI-system posture. | Incumbents are broadening the dashboard, not adding third-party-verifiable migration evidence. |
+| 2026-02-09 | [Open Security Architecture SP-040](https://www.opensecurityarchitecture.org/patterns/sp-040/) treats cryptographic inventory, hybrid deployment, **supply-chain assurance**, and contingency as one migration pattern. | Validates the buyer's need for assurance that survives outside the vendor's console — the gap the certification fabric fills. |
+| 2026-06-10 | [QC Ecuring publishes a 50-point PQC readiness checklist](https://www.qcecuring.com/blog/pqc-readiness-assessment-checklist) (consulting-style self-assessment). | Readiness checklists are becoming content, not product. A machine-checkable, signed record is the differentiator. |
+
+**Search finding (not proof of absence):** targeted searches for a vendor offering an **offline, third-party-verifiable PQC readiness attestation** — Merkle root, signed bundle, revocation proof, no vendor login — returned advisory services and dashboards, not a competing verification protocol. The moat is therefore plausible but must be tested with buyers, not asserted from search results.
+

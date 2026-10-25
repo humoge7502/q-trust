@@ -29,6 +29,7 @@ const PUBLIC_ROUTES: Array<{
   { path: "/developers", changeFrequency: "monthly", priority: 0.5 },
   { path: "/v", changeFrequency: "monthly", priority: 0.6 },
   { path: "/certify", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/pricing", changeFrequency: "monthly", priority: 0.7 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

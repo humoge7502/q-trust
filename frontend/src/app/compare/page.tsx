@@ -5,9 +5,12 @@ import { ScrollX } from "@/components/ui/scroll-x";
 import { ArrowRightIcon, CheckIcon } from "@/app/icons";
 
 export const metadata: Metadata = {
-  title: "Q-Trust vs. the alternatives — Q-Trust",
+  // The root layout appends " · Q-Trust". Repeating the brand here produced
+  // "… — Q-Trust · Q-Trust" in the tab and in search results.
+  title: "The alternatives, compared",
   description:
     "A spreadsheet tracks. A scanner finds. Q-Trust makes the migration verifiable across teams, vendors, and years. An honest comparison of the options.",
+  alternates: { canonical: "/compare" },
 };
 
 type Row = { capability: string; cells: string[] };

@@ -51,10 +51,11 @@ people who must act on it.
    power is below its statistical ceiling — a control no incumbent ships. This is the product form of
    the project's own ceiling theorem.
 3. **Privacy-preserving revocation** via Merkle proofs — check revocation without revealing the list.
-4. **On-chain anchoring** (11 UUPS contracts, 213 forge tests, 7-day timelock) — an immutable audit
+4. **On-chain anchoring** (11 UUPS contracts, 209 forge test functions, 7-day timelock) — an immutable audit
    trail no dashboard competitor offers.
 5. **Honest, clean ML.** The v4 detector is evaluated with **0 % train/eval file overlap** (E-14,
-   `eval_leakage_audit.json`): F1 **0.8966** (digest) / **0.9077** (native), +0.24 over a TF-IDF
+   `eval_leakage_audit.json`): F1 **0.9039** on the de-duplicated digest eval (1,779 files; E-15) /
+   **0.9077** (native), +0.24 over a TF-IDF
    baseline. Note this is **usage discovery**, a different task from CryptoAPI-Bench misuse detection,
    so no cross-task SOTA claim is made.
 

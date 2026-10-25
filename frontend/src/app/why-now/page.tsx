@@ -11,9 +11,10 @@ import {
 } from "@/app/icons";
 
 export const metadata: Metadata = {
-  title: "Why now — the quantum threat, honestly explained — Q-Trust",
+  title: "Why now: the quantum threat, honestly explained",
   description:
     "Harvest-now-decrypt-later, the NIST PQC standards, and the real deadline. Why the hard part of post-quantum migration isn't the math — it's the coordination.",
+  alternates: { canonical: "/why-now" },
 };
 
 const TIMELINE = [

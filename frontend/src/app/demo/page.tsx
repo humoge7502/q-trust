@@ -5,9 +5,10 @@ import { VideoFrame } from "@/components/ui/video-frame";
 import { ArrowRightIcon } from "@/app/icons";
 
 export const metadata: Metadata = {
-  title: "Product demo — Q-Trust",
+  title: "Product demo",
   description:
     "Watch Q-Trust scan a cryptographic estate, score quantum risk, assess compliance, and anchor evidence on-chain. A full narrated walkthrough plus a feature-by-feature tour.",
+  alternates: { canonical: "/demo" },
 };
 
 const TOUR = [

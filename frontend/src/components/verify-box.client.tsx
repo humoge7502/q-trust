@@ -41,7 +41,7 @@ export function VerifyBox() {
           <input
             id="verify-input"
             name="assetId"
-            placeholder={EXAMPLE_ASSET_ID}
+            placeholder={EXAMPLE_ASSET_ID || undefined}
             spellCheck={false}
             autoComplete="off"
             inputMode="text"
@@ -54,26 +54,31 @@ export function VerifyBox() {
             {pending ? "Opening…" : "Verify"} <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </div>
-        <p id="verify-help" className="relative mt-3 text-[11px] leading-relaxed text-slate-400">Paste a full asset ID or{" "}
-          <button
-            type="button"
-            onClick={() => {
-              const input = document.getElementById("verify-input");
-              if (input instanceof HTMLInputElement) {
-                input.value = EXAMPLE_ASSET_ID;
-                clearError();
-                input.focus();
-              }
-            }}
-            className="text-slate-300 underline decoration-slate-600 underline-offset-4 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-          >
-            use the example
-          </button>
+        <p id="verify-help" className="relative mt-3 text-[11px] leading-relaxed text-slate-400">Paste a full asset ID
+          {EXAMPLE_ASSET_ID ? (
+            <>
+              {" "}or{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  const input = document.getElementById("verify-input");
+                  if (input instanceof HTMLInputElement) {
+                    input.value = EXAMPLE_ASSET_ID;
+                    clearError();
+                    input.focus();
+                  }
+                }}
+                className="text-slate-300 underline decoration-slate-600 underline-offset-4 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              >
+                use the example
+              </button>
+            </>
+          ) : null}
           . No wallet required.</p>
         {error ? <p id="verify-error" role="alert" className="relative mt-3 rounded-lg bg-rose-300/10 px-3 py-2 text-xs font-medium text-rose-200 ring-1 ring-inset ring-rose-300/20">{error}</p> : null}
       </form>
 
-      <div className="relative mt-6 border-t border-white/10 pt-4"><div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Verify independently</div><CodeBlock label="Independent verification command" className="mt-2 overflow-x-auto text-[11px] leading-relaxed text-slate-300"><code>{`qtrust verify ${EXAMPLE_ASSET_ID.slice(0, 18)}…`}</code></CodeBlock><Link href="/v" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-cyan-300 hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">Learn about asset IDs <ArrowRightIcon className="h-3 w-3" aria-hidden="true" /></Link></div>
+      <div className="relative mt-6 border-t border-white/10 pt-4"><div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Verify independently</div><CodeBlock label="Independent verification command" className="mt-2 overflow-x-auto text-[11px] leading-relaxed text-slate-300"><code>{EXAMPLE_ASSET_ID ? `qtrust verify ${EXAMPLE_ASSET_ID.slice(0, 18)}…` : "qtrust verify <asset-id>"}</code></CodeBlock><Link href="/v" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-cyan-300 hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">Learn about asset IDs <ArrowRightIcon className="h-3 w-3" aria-hidden="true" /></Link></div>
     </div>
   );
 }

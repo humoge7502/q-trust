@@ -527,13 +527,15 @@ export async function issueCertification(
     caveats,
   };
 
+  const { schema, ...body } = asserted;
   const unsigned: Omit<CertificationBundle, "digest" | "proof"> = {
+    schema,
     // The id is derived from every field except itself, so it names the
     // assertion rather than the moment it was written. Canonical JSON sorts
     // keys before hashing, so where `bundle_id` sits in this literal cannot
     // change the id, the digest, or what a verifier recomputes.
-    ...asserted,
     bundle_id: bundleId(asserted as unknown as Record<string, unknown>),
+    ...body,
   };
 
   const digest = bundleDigest(unsigned as unknown as Record<string, unknown>);

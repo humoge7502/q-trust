@@ -1,5 +1,6 @@
 {
   "schema": "qtrust.certification.v1",
+  "bundle_id": "urn:uuid:967c7166-1f93-51ff-a1ed-bec3947d16bf",
   "issued_at": "2026-10-24T12:00:00.000Z",
   "valid_from": "2026-10-24T12:00:00.000Z",
   "valid_until": "2026-11-23T12:00:00.000Z",
@@ -129,7 +130,6 @@
     "anchored": true
   },
   "caveats": [],
-  "bundle_id": "urn:uuid:967c7166-1f93-51ff-a1ed-bec3947d16bf",
   "digest": "sha256:93c2f4273f167d8d3674372864dceb368db3eaf094201fbb7b1d3dab033b93e4",
   "proof": {
     "type": "Ed25519Signature2020",

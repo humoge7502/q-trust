@@ -1,0 +1,140 @@
+{
+  "checkpoint": "qtrust_ai\\artifacts\\crypto_codebert_v4",
+  "corpus": "C:\\Users\\Devesh tiwari\\q-trust-projects\\q-trust-datasets\\code_corpus_v4.json",
+  "split": "pinned digest split of corpus v3 (seed 42), repo-disjoint",
+  "duplicates": {
+    "raw_records": 2238,
+    "unique_keys": 1779,
+    "duplicated_keys": 197,
+    "extra_records": 459,
+    "keys_with_different_code": 194,
+    "keys_with_conflicting_labels": 22
+  },
+  "policies": {
+    "raw": {
+      "n": 2238,
+      "tp": 1040,
+      "fp": 63,
+      "fn": 177,
+      "tn": 958,
+      "precision": 0.9429,
+      "recall": 0.8546,
+      "f1": 0.8966,
+      "accuracy": 0.8928,
+      "fn_rate": 0.1454
+    },
+    "keep_first": {
+      "n": 1779,
+      "tp": 875,
+      "fp": 46,
+      "fn": 142,
+      "tn": 716,
+      "precision": 0.9501,
+      "recall": 0.8604,
+      "f1": 0.903,
+      "accuracy": 0.8943,
+      "fn_rate": 0.1396
+    },
+    "keep_last": {
+      "n": 1779,
+      "tp": 874,
+      "fp": 46,
+      "fn": 137,
+      "tn": 722,
+      "precision": 0.95,
+      "recall": 0.8645,
+      "f1": 0.9052,
+      "accuracy": 0.8971,
+      "fn_rate": 0.1355
+    },
+    "keep_longest": {
+      "n": 1779,
+      "tp": 879,
+      "fp": 47,
+      "fn": 140,
+      "tn": 713,
+      "precision": 0.9492,
+      "recall": 0.8626,
+      "f1": 0.9039,
+      "accuracy": 0.8949,
+      "fn_rate": 0.1374
+    },
+    "unique_content": {
+      "n": 2224,
+      "tp": 1039,
+      "fp": 63,
+      "fn": 166,
+      "tn": 956,
+      "precision": 0.9428,
+      "recall": 0.8622,
+      "f1": 0.9007,
+      "accuracy": 0.897,
+      "fn_rate": 0.1378
+    }
+  },
+  "per_language_keep_longest": {
+    "c": {
+      "tp": 656,
+      "fp": 40,
+      "fn": 67,
+      "tn": 335
+    },
+    "cpp": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 7,
+      "tn": 20
+    },
+    "csharp": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 1,
+      "tn": 0
+    },
+    "javascript": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 4,
+      "tn": 216
+    },
+    "python": {
+      "tp": 82,
+      "fp": 3,
+      "fn": 42,
+      "tn": 77
+    },
+    "rust": {
+      "tp": 85,
+      "fp": 4,
+      "fn": 5,
+      "tn": 43
+    },
+    "shell": {
+      "tp": 30,
+      "fp": 0,
+      "fn": 11,
+      "tn": 9
+    },
+    "solidity": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 0,
+      "tn": 1
+    },
+    "swift": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 2,
+      "tn": 0
+    },
+    "typescript": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "tn": 12
+    }
+  },
+  "raw_reproduces_shipped": true,
+  "notes": "Ensemble detector.predict is used, matching training_report_v4.json's eval_pinned. The spread across de-duplication policies bounds how much of the reported metric depends on repeated (source, path) records. keep_longest is the primary corrected number; it selects the most complete version of a path without consulting its label.",
+  "generated_at": "2026-10-25T19:08:38Z"
+}

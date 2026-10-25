@@ -254,3 +254,54 @@ def test_docs_available_in_dev():
     client = _make_client(QTRUST_PLANNER_API_KEY=None)
     assert client.get("/docs").status_code == 200
     assert client.get("/openapi.json").status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# /v1/plan/objective — outcome-optimized planning (qrd-sim/1.0)
+# ---------------------------------------------------------------------------
+
+def test_objective_happy_path_three_lanes():
+    client = _make_client()
+    res = client.post("/v1/plan/objective", json=_cbom_payload())
+    assert res.status_code == 200
+    body = res.json()
+    assert body["sim_spec_version"].startswith("qrd-sim/")
+    assert body["n_assets"] == 2
+    assert {lane["strategy"] for lane in body["plans"]} == {
+        "outcome_optimal", "smith_rule", "doctrine_formula",
+    }
+    optimal = next(l for l in body["plans"] if l["strategy"] == "outcome_optimal")
+    # The only exposed asset is the RSA-1024 (ML-KEM has zero exposure), so
+    # the optimum is unique and the ratio must be exactly 1.
+    assert optimal["qrd_ratio_vs_optimal"] == 1.0
+    assert optimal["schedule"][0]["algorithm"].upper().startswith("RSA")
+    for lane in body["plans"]:
+        ranks = [s["rank"] for s in lane["schedule"]]
+        assert ranks == sorted(ranks)
+        assert all(s["asset_id"] for s in lane["schedule"])
+
+
+def test_objective_empty_cbom_is_422():
+    client = _make_client()
+    res = client.post("/v1/plan/objective", json={"cbom": {"assets": []}})
+    assert res.status_code == 422
+
+
+def test_objective_beam_path_completes_large_estate():
+    client = _make_client()
+    assets = [
+        {"id": f"a-{i}", "algorithm": "RSA-2048", "key_size": 2048,
+         "criticality": ["low", "medium", "high", "critical"][i % 4]}
+        for i in range(18)
+    ]
+    res = client.post("/v1/plan/objective", json={"cbom": {"assets": assets}})
+    assert res.status_code == 200
+    body = res.json()
+    optimal = next(l for l in body["plans"] if l["strategy"] == "outcome_optimal")
+    # Beam path (>14 assets): still a complete, feasible, ratio-honest plan.
+    assert len(optimal["schedule"]) == 18
+    assert optimal["qrd_ratio_vs_optimal"] >= 1.0
+    # Heterogeneous criticality+identical durations mean the optimum is not
+    # unique, but the exact-DP upper bound is 14 — so 18 must be flagged by
+    # the honesty note, not silently claimed exact.
+    assert "beam" in body["honesty_note"].lower()

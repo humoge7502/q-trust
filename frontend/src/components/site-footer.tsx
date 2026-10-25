@@ -26,6 +26,7 @@ const columns = [
       { label: "Verify", href: "/v" },
       { label: "Certification", href: "/certify" },
       { label: "Evidence", href: "/evidence" },
+      { label: "Pricing", href: "/pricing" },
     ],
   },
   {

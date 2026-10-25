@@ -6,9 +6,10 @@ import { Reveal, ScrollProgress } from "@/components/scroll-effects.client";
 import { ArrowRightIcon, BeakerIcon, DocumentCheckIcon, ShieldCheckIcon } from "@/app/icons";
 
 export const metadata: Metadata = {
-  title: "Evidence for the PQC mandate — OMB M-26-15 mapped to Q-Trust — Q-Trust",
+  title: "Evidence for the PQC mandate: OMB M-26-15",
   description:
     "OMB M-26-15 requires federal agencies to maintain cryptographic inventories and submit phased migration plans with evidence. Q-Trust produces exactly that: CBOM inventories, outcome-ordered plans, and publicly verifiable on-chain attestations.",
+  alternates: { canonical: "/evidence" },
 };
 
 /**
