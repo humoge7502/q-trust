@@ -121,6 +121,10 @@ def main() -> int:
     raw = [r for r in v4["corpus"] if r["source"] in eval_sources]
 
     for r in raw:
+        # nosemgrep: python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1
+        # SHA-1 here is a content-identity key for duplicate detection only
+        # (never a signature or credential); changing the algorithm would
+        # break exact reproduction of the committed eval_dedup_v4.json.
         r["content_sha1"] = hashlib.sha1(r["code"].encode("utf-8")).hexdigest()
 
     groups: dict[tuple[str, str], list[dict]] = defaultdict(list)

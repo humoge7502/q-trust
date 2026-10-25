@@ -270,7 +270,7 @@ def test_objective_happy_path_three_lanes():
     assert {lane["strategy"] for lane in body["plans"]} == {
         "outcome_optimal", "smith_rule", "doctrine_formula",
     }
-    optimal = next(l for l in body["plans"] if l["strategy"] == "outcome_optimal")
+    optimal = next(plan for plan in body["plans"] if plan["strategy"] == "outcome_optimal")
     # The only exposed asset is the RSA-1024 (ML-KEM has zero exposure), so
     # the optimum is unique and the ratio must be exactly 1.
     assert optimal["qrd_ratio_vs_optimal"] == 1.0
@@ -297,7 +297,7 @@ def test_objective_beam_path_completes_large_estate():
     res = client.post("/v1/plan/objective", json={"cbom": {"assets": assets}})
     assert res.status_code == 200
     body = res.json()
-    optimal = next(l for l in body["plans"] if l["strategy"] == "outcome_optimal")
+    optimal = next(plan for plan in body["plans"] if plan["strategy"] == "outcome_optimal")
     # Beam path (>14 assets): still a complete, feasible, ratio-honest plan.
     assert len(optimal["schedule"]) == 18
     assert optimal["qrd_ratio_vs_optimal"] >= 1.0

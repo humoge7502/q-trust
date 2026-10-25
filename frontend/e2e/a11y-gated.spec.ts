@@ -55,14 +55,30 @@ test.describe("wallet-gated a11y (TD-12)", () => {
       await page.goto(route);
       await expectQTrustApp(page);
 
-      // The injected connector auto-connects: the gate's h1 must be gone and
-      // the connected account chip must render — asserting the connected
-      // state first keeps this test from passing vacuously against the gate.
-      await expect(page.getByRole("heading", { name: "Connect your wallet" })).toBeHidden({ timeout: 15_000 });
-      // The connected surface states the wallet is connected (empty state on
-      // a clean chain) — asserting it keeps this test from passing vacuously
-      // against the gate.
-      await expect(page.getByText(/wallet is connected/i).first()).toBeVisible({ timeout: 15_000 });
+      // The injected connector usually auto-connects — but under CI the
+      // Reown remote config fetch can 403 (placeholder project ID), which
+      // delays wagmi's init. Drive the RainbowKit modal explicitly when the
+      // connected state has not appeared, so the test is deterministic in
+      // both environments rather than depending on a third-party endpoint.
+      const connected = page.getByText(/wallet is connected/i).first();
+      try {
+        await connected.waitFor({ state: "visible", timeout: 8_000 });
+      } catch {
+        await page
+          .getByRole("button", { name: /connect/i })
+          .first()
+          .click();
+        await page
+          .getByRole("button", { name: /injected|browser wallet|metamask/i })
+          .first()
+          .click({ timeout: 10_000 });
+      }
+      // The gate's h1 must be gone and the connected surface must state the
+      // wallet is connected (empty state on a clean chain) — asserting the
+      // connected state keeps this test from passing vacuously against the
+      // gate.
+      await expect(page.getByRole("heading", { name: "Connect your wallet" })).toBeHidden({ timeout: 20_000 });
+      await expect(connected).toBeVisible({ timeout: 20_000 });
 
       await waitForSettledAnimations(page);
       const violations = await auditPage(page);
