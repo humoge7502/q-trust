@@ -1,0 +1,82 @@
+{
+  "probe_spec": {
+    "seed": 999999,
+    "n": 40,
+    "min_n": 8,
+    "max_n": 12
+  },
+  "baselines": {
+    "heuristic": 1.1631220399624311,
+    "smith": 1.075916693268153
+  },
+  "configs": {
+    "A-e09-baseline": {
+      "n_synthetic": 200,
+      "epochs": 40,
+      "real_repeat": 6,
+      "runs": [
+        {
+          "seed": 42000,
+          "probe_ratio_mean": 1.0407542822114662,
+          "probe_ratio_max": 1.2329420325935005,
+          "real_ratio_mean": 1.0,
+          "real_at_optimum": 42
+        },
+        {
+          "seed": 42077,
+          "probe_ratio_mean": 1.047204882456199,
+          "probe_ratio_max": 1.3387377264092892,
+          "real_ratio_mean": 1.0,
+          "real_at_optimum": 42
+        },
+        {
+          "seed": 42154,
+          "probe_ratio_mean": 1.0382130183677432,
+          "probe_ratio_max": 1.2302960862004482,
+          "real_ratio_mean": 1.0,
+          "real_at_optimum": 42
+        }
+      ],
+      "probe_ratio_mean_of_means": 1.042057,
+      "probe_ratio_stdev": 0.004635,
+      "real_ratio_mean_of_means": 1.0,
+      "real_at_optimum_total": 126,
+      "real_evals": 126
+    },
+    "B-4x-data": {
+      "n_synthetic": 800,
+      "epochs": 70,
+      "real_repeat": 6,
+      "runs": [
+        {
+          "seed": 42000,
+          "probe_ratio_mean": 1.0295321270434026,
+          "probe_ratio_max": 1.152054019050439,
+          "real_ratio_mean": 1.0,
+          "real_at_optimum": 42
+        },
+        {
+          "seed": 42077,
+          "probe_ratio_mean": 1.0279528343191924,
+          "probe_ratio_max": 1.199641131407416,
+          "real_ratio_mean": 1.0,
+          "real_at_optimum": 42
+        },
+        {
+          "seed": 42154,
+          "probe_ratio_mean": 1.0304686467076372,
+          "probe_ratio_max": 1.2013835614004689,
+          "real_ratio_mean": 1.0,
+          "real_at_optimum": 42
+        }
+      ],
+      "probe_ratio_mean_of_means": 1.029318,
+      "probe_ratio_stdev": 0.001272,
+      "real_ratio_mean_of_means": 1.0,
+      "real_at_optimum_total": 126,
+      "real_evals": 126
+    }
+  },
+  "generated_at": "2026-10-23T23:15:03Z",
+  "honesty_note": "Simulation-grounded objective (qrd-sim/1.0). Probe = synthetic dependency-dense estates (never trained); real = the 42 host-disjoint estates. Baselines are deterministic; model rows are mean over seeds."
+}

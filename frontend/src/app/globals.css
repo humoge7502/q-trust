@@ -118,6 +118,11 @@
 :root {
   color-scheme: light;
   --scroll-progress: 0;
+  /* Migration Race exposure tones (dark-section fills; numbers and labels
+     always repeat the information in text — colour is never the only cue). */
+  --race-broken: #f87171; /* Shor-vulnerable algorithm families */
+  --race-weakened: #fbbf24; /* Grover-weakened / unknown */
+  --race-safe: #67e8f9; /* PQC or no quantum exposure */
 }
 
 /* Base typography roles. Headings take the display face so the editorial
@@ -193,6 +198,20 @@ html, body {
   backdrop-filter: blur(16px) saturate(1.2);
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
   border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Mount-time grow-in for measurement bars (compliance segments, score bars).
+   transform/opacity only — never width — so the fill animates on the
+   compositor; @starting-style makes it a pure-CSS entry (no JS state). The
+   reduced-motion kill-switch below already collapses this to a no-op. */
+.grow-in-x {
+  transform-origin: left;
+  transition: transform 550ms var(--ease-brand);
+}
+@starting-style {
+  .grow-in-x {
+    transform: scaleX(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -312,6 +331,25 @@ html, body {
   html { scroll-behavior: auto; }
   .hero-enter, .signal-track, .hero-orb-one, .hero-orb-two { animation: none; }
   .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+}
+
+/* Per-tab result badge.
+   Rendered from `data-badge` as a pseudo-element on purpose: `textContent` of a
+   tab trigger is its accessible name, and `scripts/full-audit.mjs` asserts the
+   eight exact labels. A real `<span>` badge would turn "Scan" into "Scan20" and
+   silently break that contract. `color-mix` keeps the chip legible on both the
+   inactive (light) and active (near-black) trigger without a second class. */
+.qtab[data-badge]::after {
+  content: attr(data-badge);
+  margin-left: 0.125rem;
+  border-radius: 9999px;
+  padding: 0 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  background-color: color-mix(in srgb, currentColor 16%, transparent);
+  color: inherit;
 }
 
 /* Custom scrollbar for long lists */

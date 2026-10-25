@@ -206,7 +206,9 @@ def test_cli_rejects_missing_directory_path(tmp_path):
     missing = tmp_path / "definitely-not-here"
     result = runner.invoke(app, ["scan", str(missing), "--no-risk"])
     assert result.exit_code == 2
-    assert "does not exist" in result.output
+    # Normalise whitespace: the console wraps long (Windows temp) paths across
+    # lines, so "does not exist" may be split as "does not \nexist".
+    assert "does not exist" in " ".join(result.output.split())
 
 
 def test_cli_rejects_bare_file_as_target(tmp_path):
@@ -219,7 +221,7 @@ def test_cli_rejects_bare_file_as_target(tmp_path):
     a_file.write_text("hello")
     result = runner.invoke(app, ["scan", str(a_file), "--no-risk"])
     assert result.exit_code == 2
-    assert "not a directory" in result.output
+    assert "not a directory" in " ".join(result.output.split())
 
 
 def test_cli_still_scans_real_directory(tmp_path):

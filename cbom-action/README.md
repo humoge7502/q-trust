@@ -38,5 +38,5 @@ jobs:
 | `version` | `2.2.0` | Pinned `qtrust-inspector` from PyPI |
 
 Powered by [`qtrust-inspector`](https://pypi.org/project/qtrust-inspector/)
-(F1 0.9525 discovery, repo-disjoint eval). Scanner reference:
+(F1 0.9395 discovery, repo-disjoint eval). Scanner reference:
 [humoge7502/q-trust](https://github.com/humoge7502/q-trust).

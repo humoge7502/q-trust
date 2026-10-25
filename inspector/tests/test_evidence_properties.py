@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import tempfile
 
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from qtrust_inspector.evidence import EvidenceLedger
@@ -39,7 +39,11 @@ def _build(cbom_list) -> EvidenceLedger:
     return ledger
 
 
-@settings(max_examples=50)
+# The character-level text strategies below are valid but slow to generate on
+# heterogeneous hardware (notably Windows dev boxes), which trips Hypothesis's
+# ``too_slow`` health check. The generator is correct — only its speed varies —
+# so suppress that one health check for these property tests.
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(cbom_list=cbom_lists)
 def test_random_chain_appends_verify(cbom_list):
     ledger = _build(cbom_list)
@@ -49,7 +53,11 @@ def test_random_chain_appends_verify(cbom_list):
     assert ledger.entries[0].prev_hash == "0" * 64
 
 
-@settings(max_examples=50)
+# The character-level text strategies below are valid but slow to generate on
+# heterogeneous hardware (notably Windows dev boxes), which trips Hypothesis's
+# ``too_slow`` health check. The generator is correct — only its speed varies —
+# so suppress that one health check for these property tests.
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(data=st.data())
 def test_random_middle_entry_tamper_detected(data):
     cbom_list = data.draw(st.lists(cboms, min_size=2, max_size=20))
@@ -63,7 +71,11 @@ def test_random_middle_entry_tamper_detected(data):
     assert ledger.verify_chain() is False
 
 
-@settings(max_examples=50)
+# The character-level text strategies below are valid but slow to generate on
+# heterogeneous hardware (notably Windows dev boxes), which trips Hypothesis's
+# ``too_slow`` health check. The generator is correct — only its speed varies —
+# so suppress that one health check for these property tests.
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(data=st.data())
 def test_removing_head_or_middle_entry_breaks_chain(data):
     cbom_list = data.draw(st.lists(cboms, min_size=2, max_size=20))

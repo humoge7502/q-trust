@@ -7,6 +7,8 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { deriveChain } from "@/lib/config";
+
 const MAINNET_CHAIN_ID = 8453;
 const SEPOLIA_CHAIN_ID = 84532;
 
@@ -36,42 +38,34 @@ afterEach(() => {
   delete process.env.QTRUST_USE_MAINNET;
 });
 
-describe("config chain derivation", () => {
-  it("defaults to Base Sepolia when QTRUST_USE_MAINNET is unset", async () => {
-    await withEnv({ QTRUST_USE_MAINNET: undefined }, async () => {
-      vi.resetModules();
-      const { CHAIN } = await import("@/lib/config");
-      expect(CHAIN.id).toBe(SEPOLIA_CHAIN_ID);
-      expect(CHAIN.name).toBe("Base Sepolia");
-    });
+// Deterministic: exercise the pure `deriveChain(env)` directly instead of
+// re-importing the module after mutating a global `process.env`. The old
+// approach raced across concurrent test files (a shared `process.env` plus a
+// module-load-time `CHAIN`) and failed intermittently under full-suite load.
+describe("config chain derivation (pure)", () => {
+  it("defaults to Base Sepolia when QTRUST_USE_MAINNET is unset", () => {
+    const chain = deriveChain({});
+    expect(chain.id).toBe(SEPOLIA_CHAIN_ID);
+    expect(chain.name).toBe("Base Sepolia");
   });
 
-  it("uses Base mainnet when QTRUST_USE_MAINNET=true", async () => {
-    await withEnv({ QTRUST_USE_MAINNET: "true" }, async () => {
-      vi.resetModules();
-      const { CHAIN } = await import("@/lib/config");
-      expect(CHAIN.id).toBe(MAINNET_CHAIN_ID);
-      expect(CHAIN.name).toBe("Base");
-    });
+  it("uses Base mainnet when QTRUST_USE_MAINNET=true", () => {
+    const chain = deriveChain({ QTRUST_USE_MAINNET: "true" });
+    expect(chain.id).toBe(MAINNET_CHAIN_ID);
+    expect(chain.name).toBe("Base");
   });
 
-  it("stays on Base Sepolia for any other QTRUST_USE_MAINNET value", async () => {
-    await withEnv({ QTRUST_USE_MAINNET: "false" }, async () => {
-      vi.resetModules();
-      const { CHAIN } = await import("@/lib/config");
-      expect(CHAIN.id).toBe(SEPOLIA_CHAIN_ID);
-    });
+  it("stays on Base Sepolia for any other QTRUST_USE_MAINNET value", () => {
+    expect(deriveChain({ QTRUST_USE_MAINNET: "false" }).id).toBe(SEPOLIA_CHAIN_ID);
+    expect(deriveChain({ QTRUST_USE_MAINNET: "yes" }).id).toBe(SEPOLIA_CHAIN_ID);
   });
 
-  it("honors QTRUST_BASE_SEPOLIA_RPC for the mainnet RPC override", async () => {
-    await withEnv(
-      { QTRUST_USE_MAINNET: "true", QTRUST_BASE_SEPOLIA_RPC: "https://rpc.example.test" },
-      async () => {
-        vi.resetModules();
-        const { CHAIN } = await import("@/lib/config");
-        expect(CHAIN.rpcUrls.default.http).toEqual(["https://rpc.example.test"]);
-      },
-    );
+  it("honors QTRUST_BASE_SEPOLIA_RPC for the mainnet RPC override", () => {
+    const chain = deriveChain({
+      QTRUST_USE_MAINNET: "true",
+      QTRUST_BASE_SEPOLIA_RPC: "https://rpc.example.test",
+    });
+    expect(chain.rpcUrls.default.http).toEqual(["https://rpc.example.test"]);
   });
 });
 

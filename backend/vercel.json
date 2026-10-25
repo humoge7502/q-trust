@@ -4,7 +4,7 @@
   "functions": {
     "api/index.mjs": {
       "maxDuration": 60,
-      "includeFiles": "package.json"
+      "includeFiles": ["dist/**", "package.json"]
     }
   },
   "rewrites": [

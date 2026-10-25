@@ -1,0 +1,77 @@
+name: Mutation Gate
+
+# Mutation testing measures whether the tests *kill* invented bugs, which unit
+# counts and line coverage cannot. It is slow (thousands of test runs) and its
+# result only changes when the mutated file or its tests change, so it runs on a
+# schedule and on pull requests that touch certification — never on every push.
+#
+# `stryker.config.json` exits non-zero below `thresholds.break`, so the gate is
+# the config, not this file. Raising the score means writing better tests, and
+# the number in docs/TESTING.md is the record of that bargain.
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "backend/src/services/certification.ts"
+      - "backend/tests/certification*.test.ts"
+      - "backend/tests/certify*.test.ts"
+      - "backend/stryker.config.json"
+      - "backend/vitest.mutation.config.ts"
+      - ".github/workflows/mutation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  certification:
+    name: Certification mutation score
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v4.11.0
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - name: Mutate src/services/certification.ts
+        working-directory: backend
+        run: npx stryker run stryker.config.json
+      - name: Publish the score in the run summary
+        if: always()
+        working-directory: backend
+        run: |
+          node --input-type=module -e '
+            import { readFileSync, existsSync } from "node:fs";
+            const file = "reports/mutation/certification.json";
+            if (!existsSync(file)) { console.log("No mutation report produced."); process.exit(0); }
+            const report = JSON.parse(readFileSync(file, "utf8"));
+            const mutants = Object.values(report.files).flatMap((f) => f.mutants ?? []);
+            const by = (s) => mutants.filter((m) => m.status === s);
+            const killed = by("Killed").length + by("Timeout").length;
+            const survived = by("Survived");
+            const uncovered = by("NoCoverage").length;
+            const ignored = by("Ignored").length;
+            const scored = mutants.length - uncovered - ignored;
+            const pct = scored ? ((killed / scored) * 100).toFixed(2) : "n/a";
+            const allPct = mutants.length ? ((killed / mutants.length) * 100).toFixed(2) : "n/a";
+            console.log(`## Mutation score: ${pct}% of in-scope mutants killed (${killed}/${scored})`);
+            console.log(`\n${allPct}% of all ${mutants.length} generated mutants (${uncovered} had no coverage, ${ignored} ignored, ${survived.length} survived).`);
+            const list = [...survived].sort((a, b) => (a.location?.start?.line ?? 0) - (b.location?.start?.line ?? 0));
+            const rows = list.slice(0, 30).map((m) =>
+              `| ${m.mutatorName} | ${m.location?.start?.line ?? "?"} | \`${String(m.replacement ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ").slice(0, 80)}\` |`);
+            if (rows.length) console.log("\n| Mutator | Line | Replacement |\n|---|---|---|\n" + rows.join("\n"));
+            if (list.length > rows.length) console.log(`\n…and ${list.length - rows.length} more in the uploaded artifact.`);
+          ' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-certification
+          path: backend/reports/mutation/certification.json
+          if-no-files-found: warn
+          retention-days: 30

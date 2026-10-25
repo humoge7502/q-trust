@@ -58,3 +58,17 @@ test.describe("verification page a11y", () => {
     expect(seriousViolations(violations)).toEqual([]);
   });
 });
+
+test.describe("certification page a11y", () => {
+  test("/certify has no critical or serious wcag2a/wcag2aa/best-practice violations", async ({ page }) => {
+    // The policy list is fetched server-side and may be absent when the
+    // backend is down; the verifier itself is client-side, so the route always
+    // has something to audit.
+    const response = await page.goto("/certify");
+    expect(response, "no response from /certify").not.toBeNull();
+    expect(response!.status(), "server error on /certify").toBeLessThan(500);
+
+    const violations = await auditPage(page);
+    expect(seriousViolations(violations)).toEqual([]);
+  });
+});

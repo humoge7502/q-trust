@@ -4,9 +4,53 @@
 
 This package implements the 32-point transformation (user spec) to make Q-Trust **way ahead** of SandboxAQ / IBM / Keyfactor etc., who sell dashboards, not predictive systems.
 
+## ⚠️ Status & honesty statement (read first)
+
+This package is the **research / intelligence prototype library** for Q-Trust. It
+is **NOT the served production path**. The production system is:
+
+```
+scanner → GNN/RL planner (planner/) → API + UI (backend/, web/) → on-chain attestation (contracts/, Base Sepolia)
+```
+
+`qtrust_ai` supplies auxiliary intelligence (discovery, risk, cost/failure
+modelling, scenario generation, explainability, benchmark + metrics). Most
+modules here are **trainable stubs / prototypes**: they expose real
+`train()`/`predict()`/`evaluate()` and deterministic fallbacks, but they are
+calibrated on synthetic / anchor data unless a `--real` dataset path is used.
+They are intentionally portable (CPU-only, no mandatory torch/sklearn).
+
+Two modules were explicitly honesty-refactored (2026-10-23) and must not be
+described as "trained models" in external claims:
+
+- **`graph/temporal_gnn.py`** is a **transparent-heuristic scenario generator**,
+  *not* a trained forecaster. Its published trajectory (73→61→50→42 over
+  30/90/180d) comes from an auditable risk-decay heuristic calibrated to the
+  anchor. The optional torch TGCN path is experimental only and is **never**
+  blended into the forecast (`torch_model_used_in_forecast` is always `False`).
+- **`migration/multi_objective_rl.py`** is a **genuine REINFORCE policy-gradient**
+  agent (verified: trained mean reward 0.959 vs untrained 0.882). It is a small
+  research agent, not a production scheduler — the production roadmap is produced
+  by `planner/`'s constrained optimizer, which the RL agent only *advises*.
+
+**Metric disambiguation (important):** the "F1 0.970" quoted below is the
+*code detector*'s held-out score on the real corpus **(one model, one dataset)**.
+It is **not** the system-wide accuracy. The system's canonical headline metrics
+are different and must not be conflated:
+
+| Metric | Value | Scope |
+|--------|-------|-------|
+| Code-detector F1 (real corpus, held-out) | 0.970 | one model |
+| Canonical benchmark F1 (`benchmark_comparison.json`) | **0.9395** | system benchmark |
+| Planner ranking Kendall τ_b | 0.975 (synthetic) / 0.7168–0.7263 (real LOO) | planner |
+
+Always cite the correct scope. The metric-consistency CI gate
+(`scripts/verify_metric_consistency.py`) enforces the 0.9395 canonical value and
+forbids stale/over-claimed numbers.
+
 ## Why not just train the GNN more?
 
-Current GNN: `Graph → GNN → priority score` with τ 0.975 vs heuristic. It memorizes the rule that generated its labels (synthetic 40/30/20/10 mix missing). NIST lists discovery + risk + interoperability as core workstreams — not ranking alone.
+Current GNN: `Graph → GNN → priority score` with synthetic-held-out τ 0.975 (real-estate LOO: tie at the tie ceiling, E-06; outcome-based: optimum, E-09). It memorizes the rule that generated its labels (synthetic 40/30/20/10 mix missing). NIST lists discovery + risk + interoperability as core workstreams — not ranking alone.
 
 ## The intelligence stack (32 points)
 
@@ -67,8 +111,9 @@ Every `--real` run now also benchmarks each trained model against the
 obvious naive baseline (frequency prior, heuristic ordering, constant
 predictor, …) via `qtrust_ai/benchmark/compare.py`, writing
 `qtrust_ai/artifacts/benchmark_comparison.json` — 7 comparisons, 6/7 models
-beat their best baseline, mean relative gain **8.98×** — so "F1 0.97" is
-always a *defensible* claim, not a number in a vacuum.
+beat their best baseline, mean relative gain **8.98×** — so the code detector's
+"F1 0.970" (real corpus, held-out) is a *defensible per-model* claim, not the
+system-wide accuracy (see the metric-disambiguation table above).
 
 The real corpus is **4,431 files across 11 languages** (Python, Go, Rust, C,
 C++, Java, C#, Swift, PHP, JS/TS, Solidity) from pyca/cryptography,

@@ -21,7 +21,14 @@ const PUBLIC_ROUTES: Array<{
 }> = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/scanner", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/research", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/demo", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/why-now", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/evidence", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/compare", changeFrequency: "monthly", priority: 0.5 },
+  { path: "/developers", changeFrequency: "monthly", priority: 0.5 },
   { path: "/v", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/certify", changeFrequency: "monthly", priority: 0.7 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

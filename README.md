@@ -29,6 +29,17 @@
   </picture>
 </div>
 
+### Your cryptographic estate, in one command
+
+```bash
+pip install qtrust-inspector
+crypto-inspector scan-source . --cyclonedx cbom.json --risk --compliance nist,cnsa
+```
+
+A CycloneDX CBOM of every cryptographic asset in your tree — algorithms, key
+sizes, quantum exposure, NIST/CNSA compliance — in about a minute. No account,
+no upload ([GitHub Action](cbom-action) too).
+
 <br/>
 
 <div align="center">
@@ -98,7 +109,7 @@
 
 <br/>
 
-| ⛓ **11**<br>UUPS registries on Base L2 | 🔎 **10**<br>scanner modules | 🧠 **τ 0.975**<br>GNN ranking accuracy | 🧪 **211**<br>contract tests | 🛡 **7**<br>compliance frameworks |
+| ⛓ **11**<br>UUPS registries on Base L2 | 🔎 **10**<br>scanner modules | 🧠 **1.0000**<br>outcome-optimal migration plans (42-estate LOO, p=1.7e-08) | 🧪 **211**<br>contract tests | 🛡 **7**<br>compliance frameworks |
 |:---:|:---:|:---:|:---:|:---:|
 | EIP-712 gasless · 7-day timelock | TLS · SSH · source · binary | PyTorch Geometric + RL agent | unit · invariant · fuzz · attack | NIST · CNSA 2.0 · FIPS · NIS2 · FISMA · FedRAMP · CMMC |
 
@@ -173,7 +184,7 @@ flowchart TB
     end
 
     subgraph PLAN["③ PLAN — GNN + RL"]
-        gnn["PyTorch Geometric GNN<br/>Kendall τ 0.975 · RL agent"]
+        gnn["PyTorch Geometric GNN<br/>outcome-optimal sequencing · RL agent"]
     end
 
     subgraph ATTEST["④ ATTEST — Base L2"]
@@ -197,7 +208,7 @@ flowchart TB
 <img src="assets/demo-terminal.gif" width="880" alt="Q-Trust live demo — scan, plan, attest" />
 </div>
 
-<sub>**Real CLI, real flow**: `crypto-inspector` scans a live endpoint and emits a CycloneDX 1.7 CBOM, the GNN planner ranks migrations (τ 0.975 vs heuristic optimum), and the evidence root is anchored on Base L2.</sub>
+<sub>**Real CLI, real flow**: `crypto-inspector` scans a live endpoint and emits a CycloneDX 1.7 CBOM, the GNN planner reaches the simulation-optimal migration ordering out-of-sample (E-09), and the evidence root is anchored on Base L2.</sub>
 
 <sub>▶ **[Try it live in your browser](https://huggingface.co/spaces/KRISHNAPURI/q-trust-scanner)** — paste code, get crypto-usage classification (runs locally via ONNX, no upload) · 📦 [datasets](https://huggingface.co/datasets/KRISHNAPURI/q-trust-datasets) · 🤖 [model](https://huggingface.co/KRISHNAPURI/q-trust-codebert)</sub>
 
@@ -218,7 +229,7 @@ flowchart TB
 <a href="#-measured-results"><img src="assets/feature-ai.png" width="280" alt="GNN planner"/></a>
 <h4>🧠 Plan</h4>
 <sub><b>GNN priority ranking + RL sequencing</b><br/><br/>
-PyTorch Geometric model scores Kendall τ 0.975 against heuristic optimum; RL agent sequences migrations with cost estimates.</sub>
+Out-of-sample on 42 real host-disjoint estates, the learned ordering attains the quantum-risk-days optimum (ratio 1.0000 vs 1.0473 for the priority formula, Wilcoxon p=1.7e-08); RL agent sequences migrations with cost estimates. Synthetic-scale held-out τ_b is 0.975 (labeled as such).</sub>
 </td>
 <td width="33%" align="center" valign="top">
 <a href="#-gpu-accelerated-analytics-optional"><img src="assets/feature-chain.png" width="280" alt="On-chain anchoring"/></a>
@@ -261,6 +272,60 @@ Hash-chained evidence ledger anchored to Base L2 via EIP-712 gasless relays — 
 | FISMA | Federal systems | FIPS modules, NIST algorithms, key management |
 | FedRAMP | Cloud services | CNSA Suite, TLS 1.2+, validated modules |
 | CMMC | DoD supply chain | CUI protection, key management, audit trails |
+
+</details>
+
+<details>
+<summary><b>📜 Certification bundles — signed, offline-verifiable assurance</b></summary>
+<br/>
+
+Issue a policy-gated, Ed25519-signed snapshot of an organisation's assets,
+migrations, vendor attestations and latest audit. Verification is fail-closed and
+runs offline: record digests → sorted-pair Merkle root → signature → validity
+window. The same bundle verifies byte-for-byte in TypeScript and Python, and CI
+diffs the committed fixture so the two implementations cannot drift.
+
+| Policy | Audit required | Revocation root | Min verified migrations | Max validity |
+|---|---|---|---|---|
+| `default` | no | no | 0 | 365 d |
+| `regulated` | yes | yes | 0 | 180 d |
+| `strict` | yes | yes | ≥ 90% | 90 d |
+
+When the evidence cannot support the requested claim the service **refuses to
+sign** (409 with per-reason failures) instead of issuing a misleading bundle.
+
+```bash
+# Issue (operator key), then verify offline (public)
+curl -sS -X POST "$QTRUST_API/v1/certify" -H "x-api-key: $QTRUST_API_KEY" \
+  -H 'content-type: application/json' \
+  -d '{"org":"0x1111…","policy":"regulated"}' > bundle.json
+
+cd backend && npm run certify:verify -- ../bundle.json
+cd .. && python -m qtrust.bundle bundle.json
+```
+
+The same verification is available in the browser at **`/certify`** — paste or
+load a bundle, optionally re-anchor it to Base, and read the per-check report.
+The page calls the public verify endpoint; it does not re-implement any check.
+
+See [docs/CERTIFICATION_AND_ASSURANCE.md](docs/CERTIFICATION_AND_ASSURANCE.md).
+
+</details>
+
+<details>
+<summary><b>📊 Assurance analytics — agility, CRQC exposure, sector packs</b></summary>
+<br/>
+
+`POST /v1/assurance/report` turns a CBOM into three audit-facing views:
+
+- **Crypto-agility grade (A–E)** — six weighted factors (posture, abstraction,
+  configurability, PQC path, observability, lifecycle) with per-factor evidence.
+- **CRQC / HNDL exposure** — Monte-Carlo financial exposure by CRQC arrival year,
+  combining data lifetime, asset value and vulnerability class; assumptions are
+  echoed in the response, never hidden.
+- **Sector control crosswalks** — `cnsa-2.0`, `pci-dss-4.0`, `dora`, `hipaa`,
+  `fedramp-rev5`. Controls that cannot be decided from machine evidence report
+  `MANUAL`, so a pack cannot overstate readiness.
 
 </details>
 
@@ -359,7 +424,7 @@ flowchart LR
 | **GNN v3 + real data (LOO)** | in-dist **τ 0.9710** · **out-of-sample 40-fold LOO** on host-disjoint real TLS CBOMs (280 hosts, re-run 2026-09-02 on the deterministic-kernel harness, 30-epoch fine-tune, folds sharded across **4 A100s**): **τ-b 0.7263** vs doctrine heuristic **0.7450** (Δ **−0.0188**) — **reproduces the doctrine on 38/40** held-out real CBOMs (0 wins / 38 ties / 2 losses, both small heavily-tied n≤8 graphs) · **+0.503 vs random** | [`planner/results/real_cbom_loo_40.json`](planner/results/real_cbom_loo_40.json) · in-sample suite [`benchmark_real_v3.json`](planner/results/benchmark_real_v3.json) |
 | **GNN v3 + real data (42-fold LOO)** | Same protocol, re-run 2026-09-18 on the **42-CBOM / 277-host disjoint corpus** (30-epoch fine-tune, 2 A100 shards): **τ-b 0.7168** vs doctrine heuristic **0.7210** (Δ **−0.0042**, medians identical 0.7237) — **0 wins / 41 ties / 1 loss**, model top-10 **1.0** on every fold · **+0.687 vs random (0.0301)** | [`planner/results/real_cbom_loo_42.json`](planner/results/real_cbom_loo_42.json) |
 | RL migration agent | **100%** completion on 40 packed real-CBOM estates (risk labels derived from the real scan fields: RSA-1024 → critical, RSA-2048 → high, expired/near-expiry raise the class) · mean reward **140.34** ± 8.13 vs doctrine heuristic **140.62** (Δ **−0.28** — **statistical tie**) vs random **136.84** (+**3.50**, +**2.6%**) — learns real risk-priority and matches the doctrine on real estates ([bit-reproducible](docs/TRUTH_AUDIT.md): 2/40 wins · 27 ties · 11 losses) | [`planner/results/rl_benchmark_real_cbom.json`](planner/results/rl_benchmark_real_cbom.json) |
-| Code discovery model | CodeBERTa fine-tuned on **13,973 real code files** incl. SolidiFI/SmartBugs/EIPs/WebAuthn blockchain contracts (seed-pinned, deterministic — same seed → same F1) — held-out **precision 0.952 / recall 0.953 / F1 0.952** (2,415 unseen files), beating all baselines (6/7 beat naive, mean relative gain 1.55×) | [`qtrust_ai/artifacts/benchmark_comparison.json`](qtrust_ai/artifacts/benchmark_comparison.json) · run log [`training_report_real.json`](qtrust_ai/artifacts/training_report_real.json) |
+| Code discovery model | CodeBERTa fine-tuned on **13,973 real code files** incl. SolidiFI/SmartBugs/EIPs/WebAuthn blockchain contracts (seed-pinned, deterministic — same seed → same F1) — held-out **precision 0.9279 / recall 0.9514 / F1 0.9395** (2,415 unseen files), beating all baselines (6/7 beat naive, mean relative gain 1.55×) | [`qtrust_ai/artifacts/benchmark_comparison.json`](qtrust_ai/artifacts/benchmark_comparison.json) · run log [`training_report_real.json`](qtrust_ai/artifacts/training_report_real.json) |
 | Real-data corpus | **13,973** real code files (incl. SolidiFI/SmartBugs/EIPs/WebAuthn) · **277** live TLS hosts · **401** NVD CVEs · **54** real liboqs timing trace sets | [`scripts/build_real_datasets.py`](scripts/build_real_datasets.py) + [`scripts/expand_real_corpus.py`](scripts/expand_real_corpus.py) |
 | API throughput | **147.8 req/s** @ 100 VUs · p95 **11.3 ms** (anvil, 24-core / A100) | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) |
 | Contract tests | **211** — unit + invariant (1000 runs) + fuzz + attack | [`CHANGELOG.md`](CHANGELOG.md) |
@@ -456,6 +521,26 @@ docker compose up -d --build
 ```
 
 Dashboard at `http://localhost:3000` · API at `http://localhost:3001` · Grafana at `http://localhost:3002` · public verification page at `/v/<asset-id>`.
+
+### 📜 2 minutes — issue and verify a certification bundle
+
+With the backend running (`QTRUST_API_KEY` set):
+
+```bash
+# Issue a policy-gated, Ed25519-signed assurance bundle (operator key)
+curl -sS -X POST http://localhost:3001/v1/certify \
+  -H "x-api-key: $QTRUST_API_KEY" -H 'content-type: application/json' \
+  -d '{"org":"0x1111111111111111111111111111111111111111","policy":"default"}' \
+  > bundle.json
+
+# Verify offline with either implementation — exit 0 means all checks passed
+cd backend && npm run certify:verify -- ../bundle.json
+cd .. && pip install -e ./sdk && python -m qtrust.bundle bundle.json
+```
+
+`CERTIFIED` bundles verify without trusting the issuer's database: the evidence
+records travel with the bundle and are committed through a Merkle root and an
+Ed25519 proof. Expiry, tampering and policy refusals are first-class outcomes.
 
 <details>
 <summary><b>🧩 Per-component development setup</b></summary>
@@ -618,7 +703,7 @@ gantt
     section Landed
     11 registries + 211 tests        :done, 2025-11, 2026-02
     v2.0 scanner (10 modules)        :done, 2026-02, 2026-05
-    GNN planner (τ 0.975)            :done, 2026-03, 2026-06
+    GNN planner (synthetic τ 0.975)    :done, 2026-03, 2026-06
     7 CI pipelines + docs site       :done, 2026-05, 2026-07
 
     section In flight
@@ -634,7 +719,7 @@ gantt
 | Status | Milestone |
 |:---:|---|
 | ✅ | v2.0 — 10-module scanner, 7 compliance frameworks, CycloneDX 1.7 + SARIF 2.1 |
-| ✅ | GNN planner (τ 0.975) + RL migration agent |
+| ✅ | GNN planner (synthetic τ 0.975; real-estate optimum E-09) + RL migration agent |
 | ✅ | Bank pilot end-to-end demo (`pilot/`) |
 | 🔄 | Base Sepolia deployment + public verification page |
 | 🔄 | Independent security audit |
@@ -715,7 +800,7 @@ python scripts/train_factory.py --phase all
 python -m qtrust.evaluation.run_all --splits qtrust_data/splits --out qtrust_bench/evaluation/report.json
 ```
 
-**Competitive edge vs SandboxAQ/IBM/PQShield:** Q-Trust is the only platform with host-disjoint real TLS CBOMs (277 hosts, 40 CBOMs), source-disjoint code corpus (14k files incl. blockchain contracts, 13+ langs), F1 0.952 code detector, expert-labeled ranking, LayerNorm GNN τ 0.97, side-channel detector on real liboqs traces, and closed-loop twin feeding outcomes back to training (§48). Dataset > architecture.
+**Competitive edge vs SandboxAQ/IBM/PQShield:** Q-Trust is the only platform with host-disjoint real TLS CBOMs (277 hosts, 40 CBOMs), source-disjoint code corpus (14k files incl. blockchain contracts, 13+ langs), F1 0.9395 code detector, expert-labeled ranking, LayerNorm GNN τ 0.97, side-channel detector on real liboqs traces, and closed-loop twin feeding outcomes back to training (§48). Dataset > architecture.
 
 See `qtrust/README.md` and `docs/STRATEGIC_FACTORY.md` for full 64-point roadmap.
 

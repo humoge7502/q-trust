@@ -1,0 +1,98 @@
+name: Invariant Fuzz (nightly)
+
+# TD-04: deep property-based fuzzing of the registry invariants beyond the
+# hand-written suite. CI runs the invariant tests with default fuzz runs;
+# this nightly job runs them with a high run count (and a deep mode via
+# workflow_dispatch) so slow invariant violations surface within a day
+# instead of never. Reuses the existing invariant/ handler + suite:
+#   contracts/test/invariant/RegistryHandler.t.sol
+#   contracts/test/invariant/RegistryInvariant.t.sol
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # nightly 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      fuzz_runs:
+        description: "Foundry fuzz runs per invariant"
+        default: "20000"
+      invariant_depth:
+        description: "invariant.runs (sequence depth per run)"
+        default: "500"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: invariant-fuzz
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: Foundry invariant fuzzing
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      FUZZ_RUNS: ${{ github.event.inputs.fuzz_runs || '20000' }}
+      INVARIANT_RUNS: ${{ github.event.inputs.invariant_depth || '500' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@df0e4c8b6bbcd4b105e0e29e4043736c16a1c6e4 # v1.4.1
+        with:
+          version: stable
+
+      - name: Fuzz registry invariants (high-run profile)
+        working-directory: contracts
+        env:
+          FOUNDRY_PROFILE: fuzz-nightly
+        run: |
+          cat >> foundry.toml <<'EOF'
+
+          [profile.fuzz-nightly.fuzz]
+          runs = ${FUZZ_RUNS}
+
+          [profile.fuzz-nightly.invariant]
+          runs = ${INVARIANT_RUNS}
+          depth = ${INVARIANT_RUNS}
+          fail_on_revert = false
+          EOF
+          forge build
+          forge test --match-path "test/invariant/*" -vvv
+
+      - name: Fuzz pausability invariants (adversarial surface)
+        working-directory: contracts
+        env:
+          FOUNDRY_PROFILE: fuzz-nightly
+        run: forge test --match-path "test/PausabilityInvariant.t.sol" -vvv
+
+      - name: Summary
+        if: always()
+        run: echo "Nightly invariant fuzz completed. Failures here are invariant violations that the default-run CI suite cannot reach."
+
+  notify-on-failure:
+    name: Open issue on failure
+    needs: fuzz
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Create tracking issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const runId = context.runId;
+            const title = `Nightly invariant fuzz failed (run ${runId})`;
+            const existing = await github.rest.issues.listForRepo({
+              ...context.repo, state: "open", labels: "invariant-fuzz"
+            });
+            if (existing.data.some(i => i.title === title)) return;
+            await github.rest.issues.create({
+              ...context.repo,
+              title,
+              labels: ["invariant-fuzz", "bug"],
+              body: `The nightly high-run Foundry invariant job failed.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}\n\nThis indicates a deep invariant violation beyond the default CI fuzz budget (TD-04).`
+            });

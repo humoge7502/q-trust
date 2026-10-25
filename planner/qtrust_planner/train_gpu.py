@@ -206,8 +206,9 @@ def train_gpu(
     device = torch.device(device_name or ("cuda" if use_cuda else "cpu"))
     if not use_cuda:
         print("WARNING: CUDA not available — running reduced CPU training pass.")
-        n_graphs = min(n_graphs, 2_000)
-        epochs = min(epochs, 5)
+        if os.environ.get("QTRUST_CPU_FULL") != "1":
+            n_graphs = min(n_graphs, 2_000)
+            epochs = min(epochs, 5)
 
     torch.manual_seed(seed)
     # Deterministic kernels: BF16 autocast GEMMs on Ampere are non-deterministic
@@ -473,9 +474,11 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--norm", choices=("batch", "layer", "graph"), default="batch",
-                        help="hidden normalization; 'layer' recommended for the v3 retrain "
-                             "(see model_v3 AUDIT NOTE)")
+    parser.add_argument("--norm", choices=("batch", "layer", "graph"), default="layer",
+                        help="hidden normalization; 'layer' is the default (correct under "
+                             "PyG batching). 'batch' is retained only to reproduce legacy "
+                             "checkpoints and must not be used for new training (see "
+                             "model_v3 AUDIT NOTE)")
     parser.add_argument("--quick", action="store_true", help="Quick test: 10K graphs, 20 epochs")
     parser.add_argument("--init", type=str, default=None,
                         help="Checkpoint to continue from (fine-tune on real data)")

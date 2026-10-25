@@ -37,7 +37,7 @@ Unchanged in shape (the existing architecture is sound): Base L2 contracts (11 U
 
 No model was retrained (see Limitations). What was done:
 - **GPU validation:** real GNN training through project code (val τ 0.922→0.927) and full RL train→checkpoint-load→`/rl/plan` inference on CUDA.
-- **Leakage audit (empirical):** split reproduction is bit-identical (38 repos → 30/8; 11,558/2,415 files; zero repo overlap); cross-repo exact duplicates 0.4%; full-record train/eval overlap 11 files (0.46% of eval); vendor dataset 0 duplicates. The F1 0.952 claim survives audit.
+- **Leakage audit (empirical):** split reproduction is bit-identical (38 repos → 30/8; 11,558/2,415 files; zero repo overlap); cross-repo exact duplicates 0.4%; full-record train/eval overlap 11 files (0.46% of eval); vendor dataset 0 duplicates. The F1 0.9395 claim survives audit.
 - **Doc honesty:** TRUTH_AUDIT split/epoch wording corrected to what is verifiable (`--hf-epochs 2` default; epoch count absent from shipped artifact).
 
 ## Dataset Changes
@@ -46,7 +46,7 @@ No labels touched. Additions are audit records only (see E-04 in `EXPERIMENTS.md
 
 ## Evaluation Methodology & Benchmark Results
 
-`benchmark_comparison.json` verified internally coherent: seed 42, n=2,415 held-out real-code files, Q-Trust P 0.952 / R 0.953 / F1 0.9525, baselines recorded (rules-only F1 0.673, majority-class best baseline), 6/7 models beat best baseline, mean relative gain 1.55×. LOO GNN τ-b 0.7263 (40 host-disjoint real CBOMs, deterministic-kernel re-run) matches. RL reward 140.34±8.13 vs heuristic 140.62 (honest tie). Methodology: repo-disjoint splits, host-disjoint folds, seeded everything.
+`benchmark_comparison.json` verified internally coherent: seed 42, n=2,415 held-out real-code files, Q-Trust P 0.9279 / R 0.9514 / F1 0.9395, baselines recorded (rules-only F1 0.673, majority-class best baseline), 6/7 models beat best baseline, mean relative gain 1.55×. LOO GNN τ-b 0.7263 (40 host-disjoint real CBOMs, deterministic-kernel re-run) matches. RL reward 140.34±8.13 vs heuristic 140.62 (honest tie). Methodology: repo-disjoint splits, host-disjoint folds, seeded everything.
 
 ## Security Findings (this engagement)
 

@@ -139,6 +139,24 @@ def _load_trained_model(model_path: str) -> tuple[Any, dict[str, Any]]:
         cfg.setdefault("heads", 8)
         model = MigrationGNNv3(**cfg)
         model.load_state_dict(state_dict, strict=False)
+        # DEPRECATION / CORRECTNESS WARNING (2026-10-23, model_v3 AUDIT NOTE):
+        # v3 checkpoints trained with BatchNorm1d leak cross-graph statistics
+        # under PyG batching, making their numbers invalid for multi-estate
+        # batched inference. Retrain with norm="layer" before using these
+        # LOO / in-distribution results as validated claims.
+        if cfg.get("norm") == "batch":
+            logger.warning(
+                json.dumps({
+                    "event": "planner_legacy_batchnorm_checkpoint",
+                    "level": "WARNING",
+                    "message": "Loading a v3 checkpoint trained with BatchNorm1d "
+                               "(norm='batch'). Under PyG batching this leaks "
+                               "cross-graph statistics and is NOT valid for "
+                               "multi-estate inference. Retrain with norm='layer' "
+                               "(default) before trusting its LOO numbers.",
+                    "model_path": model_path,
+                })
+            )
     else:
         cfg = config if config else _DEFAULT_GNN_CONFIG
         model = MigrationGNN(**cfg)

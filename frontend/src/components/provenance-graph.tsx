@@ -10,7 +10,7 @@ const ProvenanceGraphCanvas = dynamic(
     loading: () => (
       <div className="flex min-w-max items-center gap-2 py-4" aria-hidden="true">
         {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-[62px] w-40 animate-pulse rounded-lg bg-slate-100" />
+          <div key={i} className="h-[62px] w-40 animate-pulse rounded-lg bg-neutral-surface" />
         ))}
       </div>
     ),

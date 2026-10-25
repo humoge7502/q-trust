@@ -227,16 +227,62 @@ if (-not $SkipDeploy) {
   Write-Host 'Vercel: deploying backend (production)...' -ForegroundColor Cyan
   # Invoke the CLI through node with redirected streams: PowerShell 5.1 turns
   # the CLI's stderr banner into a terminating error otherwise.
-  $vcScript = Join-Path (Split-Path (Get-Command node).Source) 'node_modules\vercel\dist\vc.js'
-  if (-not (Test-Path $vcScript)) { throw "Vercel CLI entrypoint not found at $vcScript" }
+  #
+  # The CLI is not necessarily installed beside the `node` that happens to be
+  # first on PATH (this machine runs the managed runtime under
+  # ~/.workbuddy-ai/binaries/node while `vercel` lives in the system npm root),
+  # so resolve it in order: an explicit override, the shim on PATH, the npm
+  # global root, then the sibling node_modules.
+  $vcScript = $env:QTRUST_VERCEL_CLI
+  if (-not $vcScript) {
+    $shim = Get-Command vercel -ErrorAction SilentlyContinue
+    if ($shim) {
+      $shimDir = Split-Path $shim.Source
+      foreach ($candidate in @(
+        (Join-Path $shimDir 'node_modules\vercel\dist\vc.js'),
+        (Join-Path (Split-Path $shimDir -Parent) 'node_modules\vercel\dist\vc.js')
+      )) {
+        if (Test-Path $candidate) { $vcScript = $candidate; break }
+      }
+    }
+  }
+  if (-not $vcScript) {
+    $npmRoot = (& npm root -g 2>$null | Select-Object -First 1)
+    if ($npmRoot) {
+      $candidate = Join-Path $npmRoot 'vercel\dist\vc.js'
+      if (Test-Path $candidate) { $vcScript = $candidate }
+    }
+  }
+  if (-not $vcScript) {
+    $candidate = Join-Path (Split-Path (Get-Command node).Source) 'node_modules\vercel\dist\vc.js'
+    if (Test-Path $candidate) { $vcScript = $candidate }
+  }
+  if (-not $vcScript -or -not (Test-Path $vcScript)) { throw "Vercel CLI entrypoint not found (set QTRUST_VERCEL_CLI)" }
   $outFile = Join-Path $env:TEMP 'qtrust-vercel-deploy.out.log'
   $errFile = Join-Path $env:TEMP 'qtrust-vercel-deploy.err.log'
-  $proc = Start-Process -FilePath (Get-Command node).Source `
-    -ArgumentList @($vcScript, 'deploy', '--prod', '--yes') `
-    -WorkingDirectory (Join-Path $RepoRoot 'backend') `
-    -NoNewWindow -Wait -PassThru `
-    -RedirectStandardOutput $outFile -RedirectStandardError $errFile
-  $raw = ((Get-Content $outFile -Raw -ErrorAction SilentlyContinue) + "`n" + (Get-Content $errFile -Raw -ErrorAction SilentlyContinue))
+  # Start-Process is unusable here: the process environment block on this
+  # machine carries both cases of the proxy variables (HTTPS_PROXY and
+  # https_proxy) and PowerShell 5.1 rebuilds that block case-insensitively,
+  # so it throws "Item has already been added. Key in dictionary". Drive the
+  # child through .NET directly — same redirected streams, no env rewrite, and
+  # it does not depend on the host's proxy casing.
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = (Get-Command node).Source
+  $psi.WorkingDirectory = (Join-Path $RepoRoot 'backend')
+  $psi.Arguments = (@($vcScript, 'deploy', '--prod', '--yes') | ForEach-Object { '"' + $_ + '"' }) -join ' '
+  $psi.UseShellExecute = $false
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.CreateNoWindow = $true
+  $proc = [System.Diagnostics.Process]::Start($psi)
+  # Read both streams concurrently: draining one to completion first can
+  # deadlock when the other fills its pipe buffer.
+  $outTask = $proc.StandardOutput.ReadToEndAsync()
+  $errTask = $proc.StandardError.ReadToEndAsync()
+  $proc.WaitForExit()
+  $raw = $outTask.Result + "`n" + $errTask.Result
+  Set-Content -Path $outFile -Value $outTask.Result -Encoding UTF8 -ErrorAction SilentlyContinue
+  Set-Content -Path $errFile -Value $errTask.Result -Encoding UTF8 -ErrorAction SilentlyContinue
   $clean = $raw -replace "\x1B\[[0-9;]*[A-Za-z]", ''
   Write-Host $clean
   Write-Host "CLI exit code: $($proc.ExitCode)" -ForegroundColor Cyan

@@ -50,7 +50,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       <Dialog.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-qtrust-600 focus:ring-offset-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-slate-600" aria-hidden="true">
+        <span className="flex h-6 w-6 items-center justify-center rounded bg-neutral-surface text-muted-foreground" aria-hidden="true">
           ✕
         </span>
         <span className="sr-only">Close</span>
@@ -69,7 +69,7 @@ const SheetTitle = React.forwardRef<
   React.ElementRef<typeof Dialog.Title>,
   React.ComponentPropsWithoutRef<typeof Dialog.Title>
 >(({ className, ...props }, ref) => (
-  <Dialog.Title ref={ref} className={cn("text-lg font-semibold text-slate-900", className)} {...props} />
+  <Dialog.Title ref={ref} className={cn("text-lg font-semibold text-foreground", className)} {...props} />
 ));
 SheetTitle.displayName = Dialog.Title.displayName;
 

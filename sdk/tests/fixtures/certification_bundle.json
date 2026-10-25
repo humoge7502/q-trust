@@ -1,0 +1,141 @@
+{
+  "schema": "qtrust.certification.v1",
+  "issued_at": "2026-10-24T12:00:00.000Z",
+  "valid_from": "2026-10-24T12:00:00.000Z",
+  "valid_until": "2026-11-23T12:00:00.000Z",
+  "issuer": "did:key:z6MktULudTtAsAhRegYPiZ6631RV3viv12qd4GQF8z1xB22S",
+  "subject": {
+    "org": "0x1111111111111111111111111111111111111111",
+    "chain_id": 84532
+  },
+  "verdict": "CERTIFIED",
+  "policy": {
+    "id": "qtrust.certification.default",
+    "version": "1.0.0",
+    "description": "Baseline assurance: requires registered assets and no failed audit.",
+    "require_asset_evidence": true,
+    "require_audit": false,
+    "max_audit_age_days": 365,
+    "reject_failed_audit": true,
+    "min_verified_migration_ratio": 0,
+    "require_revocation_root": false,
+    "max_validity_days": 365,
+    "default_validity_days": 30
+  },
+  "claims": {
+    "asset_count": 2,
+    "migration_counts": {
+      "total": 1,
+      "verified": 1,
+      "unverified": 0
+    },
+    "latest_audit": {
+      "exists": true,
+      "result": "Passed",
+      "result_code": 1,
+      "timestamp": 1792756800
+    },
+    "attestation_count": 1,
+    "revocation": {
+      "checked": true,
+      "root": "0x9999999999999999999999999999999999999999999999999999999999999999",
+      "configured": true
+    }
+  },
+  "evidence": {
+    "hash_algorithm": "sha256",
+    "leaf_count": 5,
+    "merkle_root": "0x28a11bbac9c9cba6a632c38cb9226e882699d2810a040573c3c0a1b9fe6e4124",
+    "leaves": [
+      {
+        "kind": "asset",
+        "id": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "digest": "2fe40c700213b71880e03c18f2c5b41c62fbb70f829e43bb7f07825a2ae991f4",
+        "record": {
+          "asset_id": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "org_did": "0x1111111111111111111111111111111111111111",
+          "cbom_hash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "metadata_uri": "ipfs://cbom-1",
+          "timestamp": 1760000000,
+          "last_updated": 1760000000,
+          "active": true
+        }
+      },
+      {
+        "kind": "asset",
+        "id": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "digest": "bd07d9846a5165d308f9094229eb8d4b0d705834cc7cc77fd03fe3fc15ecbf14",
+        "record": {
+          "asset_id": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "org_did": "0x1111111111111111111111111111111111111111",
+          "cbom_hash": "0x2222222222222222222222222222222222222222222222222222222222222222",
+          "metadata_uri": "ipfs://cbom-2",
+          "timestamp": 1760000100,
+          "last_updated": 1760000100,
+          "active": true
+        }
+      },
+      {
+        "kind": "migration",
+        "id": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "digest": "88835f6e50683ae8631414fb2a5223fd8912155a601cce430f322fc03b98f479",
+        "record": {
+          "migration_id": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "asset_id": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "org_did": "0x1111111111111111111111111111111111111111",
+          "from_algorithm": "RSA-2048",
+          "to_algorithm": "ML-KEM-768",
+          "evidence_hash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "evidence_uri": "ipfs://evidence-1",
+          "timestamp": 1760000500,
+          "verified": true
+        }
+      },
+      {
+        "kind": "attestation",
+        "id": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "digest": "6cc9abab87fdff41960166950bd3a94b9b09b80a0eeefc092a9ea23f3761f9de",
+        "record": {
+          "attestation_id": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "vendor_did": "0x2222222222222222222222222222222222222222",
+          "product_id": "load-balancer",
+          "version": "4.2.0",
+          "algorithm": "ML-KEM-768",
+          "supported": true,
+          "evidence_uri": "ipfs://vendor-evidence",
+          "timestamp": 1760000900,
+          "revoked": false
+        }
+      },
+      {
+        "kind": "audit",
+        "id": "audit:0x1111111111111111111111111111111111111111",
+        "digest": "2b1f7b76391fb97452edcdcbf23dd0e20d5aec1e15f76ca9c401056906ccd9c0",
+        "record": {
+          "org": "0x1111111111111111111111111111111111111111",
+          "result": "Passed",
+          "result_code": 1,
+          "timestamp": 1792756800
+        }
+      }
+    ]
+  },
+  "anchor": {
+    "chain_id": 84532,
+    "chain_name": "Base Sepolia",
+    "block_number": 12345678,
+    "block_hash": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "block_timestamp": 1760001000,
+    "anchored": true
+  },
+  "caveats": [],
+  "bundle_id": "urn:uuid:967c7166-1f93-51ff-a1ed-bec3947d16bf",
+  "digest": "sha256:93c2f4273f167d8d3674372864dceb368db3eaf094201fbb7b1d3dab033b93e4",
+  "proof": {
+    "type": "Ed25519Signature2020",
+    "created": "2026-10-24T12:00:00.000Z",
+    "verificationMethod": "did:key:z6MktULudTtAsAhRegYPiZ6631RV3viv12qd4GQF8z1xB22S#key-1",
+    "proofPurpose": "assertionMethod",
+    "proofValue": "c84b741e28cd374795153c5d1b4064e1460c921f66d148bdd814029711075c241ea2a229438a56385c1074a48c890242b292c23108f22459d070ba92a48b190f"
+  }
+}

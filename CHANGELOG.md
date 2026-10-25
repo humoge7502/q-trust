@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — certification bundles + assurance analytics (2026-10-24)
+
+- **Certification bundles (`qtrust.certification.v1`):** policy-gated
+  (`default`/`regulated`/`strict`) signed snapshot of assets, migrations, vendor
+  attestations and latest audit. Per-record SHA-256, sorted-pair Merkle root,
+  Ed25519Signature2020 proof, validity window, opt-in chain re-anchor. Issuance
+  refuses (409) rather than signing unsupportable claims.
+- **Offline verification:** `npm run certify:verify -- <file>` and
+  `python -m qtrust.bundle <file>` verify the same committed fixture
+  byte-for-byte; CI regenerates the fixture and fails on drift. Verification is
+  fail-closed across structure, digest, Merkle, signature, validity and optional
+  chain state.
+- **APIs:** `POST /v1/certify` (operator key, 10/min), `POST /v1/certify/verify`
+  (public, 60/min, offline by default), `GET /v1/certify/policies`,
+  `POST /v1/assurance/report` (30/min; agility, CRQC/HNDL exposure and five
+  sector packs with `MANUAL` for undecidable controls).
+- **Docs:** `docs/CERTIFICATION_AND_ASSURANCE.md`, OpenAPI, API reference,
+  README capability + 2-minute flow, mkdocs nav.
+- **Tests:** backend 154 (incl. 18 certification, 8 certify routes, 6 fixture
+  contract, 4 assurance), frontend 151 (incl. new policy assertions), SDK bundle
+  12 + 7 Hypothesis properties, inspector advanced-risk 19.
+
+### Added — browser verifier for certification bundles (2026-10-25)
+
+- **`/certify`:** paste or load a bundle, optionally re-anchor to Base, and read
+  the per-check report (structure, digest, Merkle, signature, validity, chain
+  anchor), the issuer's caveats and every failure reason. The browser calls the
+  public `POST /v1/certify/verify` through the same-origin proxy and does not
+  re-implement any check. Admission policies render beside the form.
+- **Tests:** 4 component tests + 3 Playwright contract tests + axe audit of the
+  route at desktop and mobile viewports. Golden path exercised against the
+  running backend with the committed fixture (`valid: true`, 5/5 checks).
+- **Issuer pinning:** `POST /v1/certify/verify` and `/certify` accept
+  `trust_anchor_did`. Without a pin, any self-consistent Ed25519 key produces a
+  valid bundle; with a pin, a different issuer fails the signature check even
+  when the proof is cryptographically sound. Mirrors the Python SDK's
+  `trust_anchor_did` exactly.
+
+### Fixed — custom font-size utilities were silently dropped by `cn()` (2026-10-25)
+
+- `tailwind-merge` treats any unrecognised `text-*` class as a text colour, so
+  `cn("text-micro", "text-muted-foreground")` kept the colour and discarded the
+  size. Every `PanelTitle`, `PanelDescription`, `SectionHeading` and
+  `StatusPill` rendered at the browser default 16px while the source claimed
+  10–11px. The custom sizes are now registered with `extendTailwindMerge`, with
+  a regression test asserting the merged class list.
+
+### Changed — detector v4 training is resumable (2026-10-24)
+
+- `CryptoCodeDetector.fine_tune` now writes a checkpoint after every epoch and
+  accepts `init_from`/`start_epoch`; the v4 driver supports `--resume` and
+  `--skip-train`, and smoke runs default to a `-smoke` artifact suffix so they
+  cannot overwrite canonical artifacts. Rationale: two full CPU runs segfaulted
+  mid-epoch on Windows; resume costs at most the current epoch.
+- **No v4 accuracy claim is made until the same-eval artifact exists** (see
+  `EXPERIMENTS.md` E-14).
+
+
 ### Changed — governance sync with Sep-18 training evidence (2026-09-18)
 
 - `EXPERIMENTS.md`: E-06 (42-fold LOO τ-b 0.7168), E-07 (side-channel
@@ -591,8 +649,8 @@ inputs. Three defects found and fixed, each with a regression test.
   clean report with exit 0 — dangerous for a security tool wired into CI.
   Both cases now exit 2 with an explanatory message; real directories and
   CIDR ranges are unaffected.
-- **README citation fix.** The code-discovery headline metrics (P 0.952 /
-  R 0.953 / F1 0.952 on 2,415 held-out files) are sourced to
+- **README citation fix.** The code-discovery headline metrics (P 0.9279 /
+  R 0.9514 / F1 0.9395 on 2,415 held-out files) are sourced to
   `benchmark_comparison.json`, which actually contains them, instead of the
   run log whose `evaluate` field is null; the unverifiable "4-epoch"
   qualifier was dropped (the epoch count is not recorded in any artifact).
@@ -754,7 +812,7 @@ registry CSV exports the same day.
   on the corrected pool on A100s (deterministic, listmle; v3 at 100K graphs /
   200 epochs / LayerNorm / seed 42, best val τ 0.9729; v2 at 1.2K graphs /
   80 epochs). Fresh canonical `planner/results/benchmark_v3.json` (seed=999,
-  1000 graphs): **v3 τ 0.9753** (top-5 0.673) and **v2 τ 0.9703** (top-5
+  1000 graphs): **v3 τ 0.975 (synthetic-scale, held-out)3** (top-5 0.673) and **v2 τ 0.9703** (top-5
   0.713) — the CI promotion gate (v3 must beat canonical v2) now passes
   honestly, and `planner/results/benchmark.json` (3 seeds) re-measures
   gnn-listmle at **τ 0.9637 ± 0.0002**. `models.sha256` refreshed for the
@@ -792,8 +850,8 @@ registry CSV exports the same day.
   independent eval processes return identical numbers.
 - Real-data training refreshed 2026-09-02 on A100s (deterministic): all 15
   `qtrust_ai` models train on the real corpora (15/15 trained, anchors 15/15,
-  wall 328s); CodeBERTa held-out F1 **0.9525** reproduces bit-for-bit
-  (P 0.952 / R 0.953); 6/7 models beat their best naive baseline (mean
+  wall 328s); CodeBERTa held-out F1 **0.9395** reproduces bit-for-bit
+  (P 0.9279 / R 0.9514); 6/7 models beat their best naive baseline (mean
   relative gain 1.55×). Anomaly detector re-verified: **162/162 (100%)**
   detection, FPR **2/54 (3.7%)** on real CBOMs.
 
@@ -1298,3 +1356,6 @@ Enterprise-grade release of the Q-Trust platform.
 [2.0.0]: https://github.com/humoge7502/q-trust/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/humoge7502/q-trust/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/humoge7502/q-trust/releases/tag/v1.0.0
+
+
+> **Metric-correction note (2026-10-23):** the discovery F1 quoted above as `0.9525` was corrected to **0.9395** (P 0.9279 / R 0.9514) by the re-audit in `paper/REANALYSIS.md` (no threshold reaches 0.9525). Update any downstream value accordingly.

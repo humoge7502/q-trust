@@ -76,6 +76,7 @@ describe("S-1 proxy route allowlist", () => {
       ["GET", ["v1", "orgs", "did:web:example", "assets"]],
       ["GET", ["v1", "vendors", "did:web:example", "attestations"]],
       ["GET", ["v1", "relay", "nonce", "did:web:example"]],
+      ["GET", ["v1", "certify", "issuer"]],
       ["GET", ["health"]],
     ])("%s %s", async (method, segments) => {
       const res = await call(method, segments as string[]);

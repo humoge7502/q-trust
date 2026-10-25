@@ -7,9 +7,9 @@
       "n": 2415,
       "qtrust": {
         "baseline": "qtrust (rules+AST+ML ensemble)",
-        "precision": 0.952,
-        "recall": 0.953,
-        "f1": 0.9525,
+        "precision": 0.9279,
+        "recall": 0.9514,
+        "f1": 0.9395,
         "accuracy": 0.9271
       },
       "baselines": [
@@ -36,7 +36,7 @@
         }
       ],
       "best_baseline": "majority (always crypto)",
-      "relative_gain": 0.097
+      "relative_gain": 0.082
     },
     {
       "model": "discovery/CryptoCodeDetector",

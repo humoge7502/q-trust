@@ -20,6 +20,7 @@ import { CodeBlock } from "@/components/ui/code-block";
 
 import { fetchAsset, fetchAssetVerification, fetchIpfsJson, type AssetInfo, type AssetVerification } from "@/lib/api";
 import { parseAssetId } from "@/lib/config";
+import { BadgeEmbed } from "@/components/badge-embed";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -72,15 +73,15 @@ export default async function VerificationPage({ params }: Props) {
   }
 
   return (
-    <main className="flex-1 bg-canvas text-slate-900">
+    <main className="flex-1 bg-canvas text-foreground">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Q-Trust Attestation
             </h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               Public verification of cryptographic asset provenance on {verification.chain_name}
             </p>
           </div>
@@ -88,7 +89,7 @@ export default async function VerificationPage({ params }: Props) {
         </header>
 
         {/* Asset ID + key facts */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-xl border border-border bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-800">Asset details</h2>
           <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <Field label="Asset ID" value={asset.asset_id} mono />
@@ -107,11 +108,11 @@ export default async function VerificationPage({ params }: Props) {
         </section>
 
         {/* Provenance graph */}
-        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="mt-6 rounded-xl border border-border bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-800">
             Provenance graph
           </h2>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-4 text-sm text-muted-foreground">
             The chain of trust from source code scan to on-chain attestation.
           </p>
           <ProvenanceGraph asset={asset} verification={verification} />
@@ -119,7 +120,7 @@ export default async function VerificationPage({ params }: Props) {
 
         {/* IPFS metadata */}
         {ipfsMetadata && (
-          <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="mt-6 rounded-xl border border-border bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold text-slate-800">
               IPFS metadata
             </h2>
@@ -133,9 +134,9 @@ export default async function VerificationPage({ params }: Props) {
         )}
 
         {/* Verify independently */}
-        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="mt-6 rounded-xl border border-border bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-800">Verify independently</h2>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-sm text-muted-foreground">
             Anyone can verify this attestation without trusting Q-Trust. Run the CLI:
           </p>
           {safeAssetId ? (
@@ -165,7 +166,13 @@ crypto-inspector verify ${safeAssetId}`}</code>
           </p>
         </section>
 
-        <footer className="mt-8 flex flex-col gap-2 text-center text-xs text-slate-600 sm:flex-row sm:justify-between">
+        {/* Shareable badge */}
+        <BadgeEmbed
+          assetId={safeAssetId ?? id}
+          badgePath={`/api/badge/${encodeURIComponent(safeAssetId ?? id)}`}
+        />
+
+        <footer className="mt-8 flex flex-col gap-2 text-center text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>
             Verified at {new Date(verification.verified_at * 1000).toISOString()}
           </span>
@@ -173,7 +180,7 @@ crypto-inspector verify ${safeAssetId}`}</code>
             href={`${verification.chain_id === 8453 ? "https://basescan.org" : "https://sepolia.basescan.org"}/address/${verification.org_did}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900"
+            className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
           >
             View on Basescan
             <ArrowTopRightOnSquareIcon className="h-3 w-3" />
@@ -196,7 +203,7 @@ crypto-inspector verify ${safeAssetId}`}</code>
  */
 function VerificationUnavailable({ assetId }: { assetId: string }) {
   return (
-    <main className="flex-1 bg-canvas text-slate-900">
+    <main className="flex-1 bg-canvas text-foreground">
       <div className="mx-auto max-w-2xl px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-risk-medium">
           Record unreachable
@@ -204,20 +211,20 @@ function VerificationUnavailable({ assetId }: { assetId: string }) {
         <h1 className="mt-6 text-4xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl">
           We could not read this attestation.
         </h1>
-        <p className="mt-5 text-sm leading-7 text-slate-600">
+        <p className="mt-5 text-sm leading-7 text-muted-foreground">
           The verification service is not responding. This is an availability
           failure on our side — it says nothing about whether the record is
           valid, so please do not read it as one.
         </p>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
+        <div className="mt-8 rounded-xl border border-border bg-white p-5 shadow-sm">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Asset ID
           </p>
-          <p className="mt-2 break-all font-mono text-xs text-slate-900">{assetId}</p>
+          <p className="mt-2 break-all font-mono text-xs text-foreground">{assetId}</p>
         </div>
 
-        <p className="mt-8 text-sm leading-7 text-slate-600">
+        <p className="mt-8 text-sm leading-7 text-muted-foreground">
           Retry in a moment, or verify the same record without this deployment:
         </p>
         <CodeBlock
@@ -266,7 +273,7 @@ function Field({
       <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </dt>
-      <dd className={`mt-1 flex items-center gap-2 text-slate-900 ${mono ? "font-mono text-xs break-all" : ""}`}>
+      <dd className={`mt-1 flex items-center gap-2 text-foreground ${mono ? "font-mono text-xs break-all" : ""}`}>
         {icon}
         <span className="break-all">{value}</span>
       </dd>

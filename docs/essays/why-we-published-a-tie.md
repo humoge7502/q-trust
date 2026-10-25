@@ -38,7 +38,7 @@ data explicitly marked as such until the experts arrive).
 
 ## What we claim instead
 
-- Discovery: F1 **0.9525** finding crypto usage in held-out repos (usage
+- Discovery: F1 **0.9395** finding crypto usage in held-out repos (usage
   recall 0.877 on CryptoAPI-Bench) — a different, winnable task, stated as such.
 - Side-channel: 51/54 leak-injected trace sets caught, with the 3 misses
   (FALCON keygen, n≤200) recorded, not hidden.

@@ -114,8 +114,13 @@ def test_train_agent_saves_checkpoint(tmp_path):
     out = tmp_path / "agent.pt"
     train_agent(n_episodes=3, save_path=str(out))
     assert out.exists()
-    sd = torch.load(out, map_location="cpu", weights_only=True)
-    assert any("conv1" in k for k in sd.keys())
+    payload = torch.load(out, map_location="cpu", weights_only=True)
+    # Lineage-carrying checkpoint (2026-10-24): weights + provenance, never a
+    # bare state dict (checkpoint_manifest flags bare dicts NO-LINEAGE).
+    assert any("conv1" in k for k in payload["state_dict"].keys())
+    assert payload["seed"] == 42
+    assert payload["n_episodes"] == 3
+    assert "saved_at" in payload
 
 
 REAL_CBOM = {

@@ -24,7 +24,31 @@ import {
 
 const { Pool } = pg;
 
-export const pool = PG_URL ? new Pool({ connectionString: PG_URL, max: 10 }) : null;
+/**
+ * Managed Postgres (Neon) closes idle connections on its own schedule. When a
+ * pooled client dies while parked, node-postgres emits an `error` event on the
+ * Pool; with no listener Node treats it as an uncaught exception and the
+ * process exits. That crash-loop is what repeatedly took the local API offline
+ * (and with it the scanner/GPU bridge the hosted deployment proxies to).
+ *
+ * Recycling the dead client is the correct recovery — the pool reconnects on
+ * the next query — so log and continue instead of exiting.
+ */
+export const pool = PG_URL
+  ? new Pool({
+      connectionString: PG_URL,
+      max: 10,
+      // Drop idle clients before the pooler does, so we recycle them on our
+      // own terms rather than racing the server-side timeout.
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 10_000,
+      keepAlive: true,
+    })
+  : null;
+
+pool?.on("error", (err) => {
+  console.error(`[pg] idle client error, recycled by the pool: ${err.message}`);
+});
 
 export async function initSchema(): Promise<void> {
   if (!pool) return;

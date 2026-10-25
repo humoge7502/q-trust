@@ -1,0 +1,4 @@
+# Keep the token-ratchet baseline; ignore transient audit outputs.
+*
+!token-baseline.json
+!.gitignore

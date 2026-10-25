@@ -22,20 +22,20 @@ export function ProductPreview() {
   const current = views.find((view) => view.id === active) ?? views[0];
 
   return (
-    <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_25px_80px_rgba(15,23,42,0.14)]">
-      <div className="flex flex-col border-b border-slate-200 bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+    <div data-ui className="relative overflow-hidden rounded-[1.75rem] border border-border bg-white shadow-[0_25px_80px_rgba(15,23,42,0.14)]">
+      <div className="flex flex-col border-b border-border bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
         <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" /><span className="text-xs font-semibold text-slate-700">Q-Trust workspace</span><span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-700">Preview · sample data</span></div>
         <div className="mt-3 flex gap-1 rounded-lg bg-slate-200/70 p-1 sm:mt-0" role="tablist" aria-label="Product preview views">
-          {views.map((view) => <button key={view.id} type="button" role="tab" aria-selected={active === view.id} onClick={() => setActive(view.id)} className={`rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${active === view.id ? "bg-white text-slate-950 shadow-sm" : "text-slate-700 hover:text-slate-900"}`}>{view.label}</button>)}
+          {views.map((view) => <button key={view.id} type="button" role="tab" aria-selected={active === view.id} onClick={() => setActive(view.id)} className={`rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${active === view.id ? "bg-white text-slate-950 shadow-sm" : "text-slate-700 hover:text-foreground"}`}>{view.label}</button>)}
         </div>
       </div>
 
       <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
-        <div className="border-b border-slate-200 p-6 sm:p-8 lg:border-b-0 lg:border-r lg:p-10">
+        <div className="border-b border-border p-6 sm:p-8 lg:border-b-0 lg:border-r lg:p-10">
           <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-700">{current.eyebrow}</div>
           <h3 className="mt-5 text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-4xl">{current.title}</h3>
-          <p className="mt-5 text-sm leading-6 text-slate-600">{current.copy}</p>
-          <div className="mt-9 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-cyan-300"><ShieldCheckIcon className="h-5 w-5" aria-hidden="true" /></span><div><div className="text-xs font-semibold text-slate-900">One source of truth</div><div className="mt-1 text-[11px] text-slate-500">Updated from your latest scan</div></div></div>
+          <p className="mt-5 text-sm leading-6 text-muted-foreground">{current.copy}</p>
+          <div className="mt-9 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-cyan-300"><ShieldCheckIcon className="h-5 w-5" aria-hidden="true" /></span><div><div className="text-xs font-semibold text-foreground">One source of truth</div><div className="mt-1 text-[11px] text-slate-500">Updated from your latest scan</div></div></div>
         </div>
 
         <div className="bg-[#0c1424] p-5 text-white sm:p-7 lg:p-10">

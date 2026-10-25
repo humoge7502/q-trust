@@ -340,6 +340,11 @@ def merge_shards(out_path: Path) -> dict:
 
 
 if __name__ == "__main__":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     parser = argparse.ArgumentParser(description="LOO real-CBOM evaluation")
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--n-synthetic", type=int, default=2000)
@@ -348,6 +353,8 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--out", type=Path, default=RESULT_PATH)
+    parser.add_argument("--cbom-dir", type=Path, default=None,
+                        help="CBOM directory (default: planner/data/real_cboms)")
     parser.add_argument("--quick", action="store_true", help="3 folds (smoke test)")
     parser.add_argument("--fold-start", type=int, default=0,
                         help="first fold index for this shard (GPU-parallel LOO)")
@@ -360,6 +367,7 @@ if __name__ == "__main__":
         merge_shards(args.out)
         raise SystemExit(0)
     run_loo(
+        cbom_dir=args.cbom_dir or CBOM_DIR,
         epochs=args.epochs,
         n_synthetic=args.n_synthetic,
         batch_size=args.batch_size,

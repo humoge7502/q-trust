@@ -210,7 +210,7 @@ protocol bug fix):
   `planner/results/benchmark.json` 3-seed mean **0.9637**±0.0002; earlier
   revisions quoted τ=0.89 computed with the pre-fix
   index-correlation protocol)
-- GNN v3 (GPU, 100K graphs, BF16, per-graph ListMLE): held-out **τ 0.975**, the
+- GNN v3 (GPU, 100K graphs, BF16, per-graph ListMLE): held-out **τ 0.975 (synthetic-scale, held-out)**, the
   default shipped model (`planner/model_gpu_v3.pt`)
   (`planner/results/benchmark_v3.json` `v3` entry — refreshed 2026-09-02)
 - v3 DDP (2×A100 / larger scale, 400K graphs): held-out **τ 0.864** — a research

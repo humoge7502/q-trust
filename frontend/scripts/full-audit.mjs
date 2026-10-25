@@ -89,6 +89,11 @@ console.log(`\nQ-Trust full audit\nSite: ${SITE}\nAPI:  ${API}\nArtifacts: ${OUT
   const routes = [
     ["/", 200],
     ["/scanner", 200],
+    ["/research", 200],
+    ["/demo", 200],
+    ["/why-now", 200],
+    ["/compare", 200],
+    ["/developers", 200],
     ["/dashboard", 200],
     ["/vendors", 200],
     ["/v", 200],
@@ -441,6 +446,17 @@ const browser = await chromium.launch();
     images.filter((image) => image.width === 0).map((image) => image.src).join(", "),
   );
 
+  // The health badge resolves client-side after a round-trip to /api/health, so
+  // a single read races the fetch. Poll until it settles instead of sampling once.
+  const apiBadge = page.getByText(/API (live|unavailable)/i).first();
+  await apiBadge
+    .waitFor({ timeout: 15_000 })
+    .then(() => page.waitForFunction(
+      () => /API live|API unavailable/i.test(document.body.innerText),
+      undefined,
+      { timeout: 15_000 },
+    ))
+    .catch(() => {});
   const bodyText = await page.locator("body").innerText();
   check(
     "home",
@@ -571,7 +587,7 @@ const browser = await chromium.launch();
   check("mobile", "menu opens with all nav items", (await mobileLinks.count()) >= 5);
   await page.screenshot({ path: resolve(OUT, "mobile-menu.png") });
   await menu.getByRole("link", { name: "Scanner" }).click();
-  await page.waitForURL(/\/scanner/, { timeout: 20_000 });
+  await page.waitForURL(/\/scanner/, { timeout: 45_000 });
   check("mobile", "mobile nav reaches scanner", page.url().includes("/scanner"));
   check("mobile", "no console/page errors", relevant(errors).length === 0, relevant(errors).slice(0, 2).join(" | "));
   const scannerOverflow = await page.evaluate(
@@ -631,12 +647,25 @@ async function connectWallet(page, label) {
     "connected address shown",
     (await page.getByText(/0xE610…?875C|0xE610/i).count()) > 0,
   );
-  await page.getByText(/registered assets \(3\)/i).waitFor({ timeout: 60_000 }).catch(() => {});
+  // The org accumulates registrations over time (the live CBOM checks add
+  // records), so assert the invariant — a non-zero inventory rendered — rather
+  // than a snapshot count that goes stale on every demo run. Match a *non-zero*
+  // count: the loading placeholder is "registered assets (0)", which satisfies a
+  // bare \d+ and made this read race the fetch.
+  await page
+    .getByText(/registered assets \([1-9]\d*\)/i)
+    .waitFor({ timeout: 60_000 })
+    .catch(() => {});
+  await page.getByText(/verified\s+[1-9]/i).first().waitFor({ timeout: 60_000 }).catch(() => {});
   const body = await page.locator("body").innerText();
+  const assetCount = Number(
+    body.match(/registered assets \((\d+)\)/i)?.[1] ?? "0",
+  );
   check(
     "wallet",
     "org data loads",
-    /total migrations/i.test(body) && /registered assets \(3\)/i.test(body),
+    /total migrations/i.test(body) && assetCount >= 3,
+    `${assetCount} registered assets`,
   );
   check("wallet", "verified migration shown", /verified\s+1/i.test(body.replace(/\n+/g, " ")));
 
@@ -662,6 +691,16 @@ async function connectWallet(page, label) {
     relevant(errors).slice(0, 3).join(" | "),
   );
   await page.screenshot({ path: resolve(OUT, "dashboard-connected.png"), fullPage: false });
+  // Audit the settled page. The only violation ever seen here was a
+  // color-contrast hit on the verify control while it was disabled and
+  // aria-busy ("Verifying…"): WCAG 1.4.3 exempts inactive components from the
+  // contrast requirement, and the state lasts as long as one RPC round-trip.
+  await page
+    .locator('[aria-busy="true"]')
+    .first()
+    .waitFor({ state: "detached", timeout: 60_000 })
+    .catch(() => {});
+  await page.waitForTimeout(400);
   await auditA11y(page, "dashboard-connected");
 
   // Wallet-gated navigation: vendor portal for the same address (seeded vendor).

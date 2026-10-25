@@ -48,7 +48,7 @@ export function VerifyBox() {
             aria-describedby={error ? "verify-error verify-help" : "verify-help"}
             aria-invalid={error ? true : undefined}
             onChange={clearError}
-            className="min-w-0 flex-1 rounded-xl border border-white/15 bg-slate-950/60 px-3 py-3 font-mono text-xs text-white placeholder:text-slate-600 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/20"
+            className="min-w-0 flex-1 rounded-xl border border-white/15 bg-slate-950/60 px-3 py-3 font-mono text-xs text-white placeholder:text-muted-foreground focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/20"
           />
           <button type="submit" disabled={pending} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-60">
             {pending ? "Opening…" : "Verify"} <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden="true" />

@@ -35,9 +35,9 @@ export function VerifyForm() {
         verify(typeof value === "string" ? value : "");
       }}
     >
-      <label htmlFor="asset-id" className="block text-sm font-medium text-slate-900">
+      <label htmlFor="asset-id" className="block text-sm font-medium text-foreground">
         Asset ID
-        <span className="ml-2 font-mono text-xs font-normal text-slate-600">
+        <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">
           0x + 64 hex
         </span>
       </label>
@@ -54,7 +54,7 @@ export function VerifyForm() {
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? "asset-id-error asset-id-help" : "asset-id-help"}
           onChange={clearError}
-          className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-3 font-mono text-xs text-slate-900 placeholder:text-slate-500 transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25 aria-[invalid=true]:border-risk-critical"
+          className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-3 font-mono text-xs text-foreground placeholder:text-slate-500 transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25 aria-[invalid=true]:border-risk-critical"
         />
         <button
           type="submit"
@@ -65,7 +65,7 @@ export function VerifyForm() {
         </button>
       </div>
 
-      <p id="asset-id-help" className="mt-3 text-xs leading-6 text-slate-600">
+      <p id="asset-id-help" className="mt-3 text-xs leading-6 text-muted-foreground">
         Paste a full asset ID, or{" "}
         <button
           type="button"
@@ -77,7 +77,7 @@ export function VerifyForm() {
               input.focus();
             }
           }}
-          className="font-medium text-slate-900 underline decoration-slate-400 underline-offset-4 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+          className="font-medium text-foreground underline decoration-slate-400 underline-offset-4 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
         >
           use the example
         </button>
@@ -94,7 +94,7 @@ export function VerifyForm() {
         </p>
       ) : null}
 
-      <p className="mt-6 flex items-start gap-2 border-t border-slate-200 pt-5 text-xs leading-6 text-slate-600">
+      <p className="mt-6 flex items-start gap-2 border-t border-border pt-5 text-xs leading-6 text-muted-foreground">
         <ShieldCheckIcon className="mt-1 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
         <span>
           Verification reads the on-chain record directly: status, organization,

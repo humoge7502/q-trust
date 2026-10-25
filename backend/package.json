@@ -3,7 +3,7 @@
   "version": "2.2.0",
   "private": true,
   "type": "module",
-  "description": "Q-Trust backend — Fastify verification API, attestation relayer, webhook delivery.",
+  "description": "Q-Trust backend \u2014 Fastify verification API, attestation relayer, webhook delivery.",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -11,17 +11,22 @@
     "dev": "tsx src/server.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "certify:verify": "tsx scripts/verify-certification.ts",
+    "certify:issuer": "tsx scripts/issuer-identity.ts",
+    "certify:fixture": "tsx scripts/make-certification-fixture.ts",
+    "certify:bench": "tsx scripts/bench-certification.ts",
+    "test:mutation": "stryker run"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.0",
-    "@noble/curves": "^1.8.1",
-    "@scure/base": "^1.2.6",
     "@fastify/helmet": "^13.1.1",
     "@fastify/rate-limit": "^11.2.0",
     "@fastify/swagger": "^9.8.1",
     "@fastify/swagger-ui": "^6.1.1",
     "@fastify/type-provider-typebox": "^6.1.0",
+    "@noble/curves": "^1.8.1",
+    "@scure/base": "^1.2.6",
     "@sentry/node": "^10.70.0",
     "@sinclair/typebox": "^0.34.52",
     "dotenv": "^17.4.2",
@@ -37,11 +42,14 @@
     "fast-uri": "^4.1.4"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
     "@types/node": "^26.4.0",
     "@types/pg": "^8.23.1",
     "@vitest/coverage-v8": "^4.1.11",
     "tsx": "^4.19.0",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "yaml": "^2.9.0"
   }
 }

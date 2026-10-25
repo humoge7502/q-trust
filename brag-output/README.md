@@ -71,6 +71,54 @@ composition size / nested sections).
 `explainer/assets/music/bed.mp3` is the same third-party library track as the
 teaser (first 87.6 s), not committed - restore it before re-rendering.
 
+## Product tour (narrated, live app, 2:47.7)
+
+The tour is different in kind from the two films above: it is **screen
+recording of the deployed product**, not a composition. Playwright drives
+`https://q-trust-nu.vercel.app` at 1920x1080, scene by scene, against the live
+API and the real Base Sepolia records, and the result is cut together with
+narration.
+
+| File | What it is |
+|---|---|
+| `tour/q-trust-product-tour.mp4` | Rendered tour - 1920x1080, 30 fps, 2:47.7, H.264 + AAC, stereo, loudness-normalized to -16 LUFS |
+| `tour/q-trust-product-tour.jpg` | Poster frame |
+| `tour/q-trust-product-tour.srt` | 31 subtitle cues, timed from the edge-tts sentence boundaries |
+| `tour/clips/` | Raw per-scene `.webm` captures plus a manifest of scene length and the timestamp where real content landed |
+| `tour/vo/` | Narration script, nine mp3 clips, `timings.json` |
+
+| Window | Scene |
+|---|---|
+| 0:00.0 - 0:16.8 | Landing - the claim, and the live status surface |
+| 0:16.8 - 0:42.6 | Verify - an asset ID resolved straight from Base Sepolia, with provenance |
+| 0:42.6 - 1:07.2 | Scan - 20 findings across 3 services (14 source, 6 dependencies) |
+| 1:07.2 - 1:25.2 | Risk - per-finding quantum scoring (RSA-2048 → BROKEN / CRITICAL / 84) |
+| 1:25.2 - 1:41.6 | Compliance - CNSA 2.0 verdict: 0 compliant, 20 non-compliant |
+| 1:41.6 - 1:59.3 | Roadmap - 4 phases, 19.5 days, $29,250, completion date |
+| 1:59.3 - 2:19.9 | Wallet - injected EIP-1193 provider into the org dashboard |
+| 2:19.9 - 2:37.2 | Vendors - gasless attestation, product support check |
+| 2:37.2 - 2:47.7 | Outro |
+
+Two things worth knowing about the edit:
+
+- Scenes that wait on a network round-trip record a `content` mark, and the
+  assembler **speed-ramps** the dead lead-in instead of cutting it, so the
+  viewer sees work happening rather than a frozen empty form.
+- Where the narration outruns the footage, the last frame is held rather than
+  trimming the sentence.
+
+Rebuild:
+
+```bash
+node frontend/scripts/record-tour.mjs                 # all nine scenes
+node frontend/scripts/record-tour.mjs wallet vendors  # re-film only these
+python brag-output/tour/vo/generate.py                # narration + cue timings
+python brag-output/tour/assemble.py                   # cut, music, loudness, srt
+```
+
+The recorder injects an EIP-1193 provider that persists its authorization in
+`localStorage`, so wallet-gated pages survive a full page load.
+
 ## Re-render
 
 ```bash

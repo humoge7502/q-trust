@@ -13,7 +13,7 @@
  */
 export default function Loading() {
   return (
-    <main className="flex-1 bg-canvas text-slate-900">
+    <main className="flex-1 bg-canvas text-foreground">
       <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
         <div role="status" aria-live="polite" className="sr-only">
           Loading Q-Trust…
@@ -27,19 +27,19 @@ export default function Loading() {
 
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div key={index} className="rounded-xl border border-border bg-white p-5 shadow-sm">
                 <div className="h-3 w-20 rounded bg-slate-200" />
                 <div className="mt-4 h-7 w-24 rounded bg-slate-200" />
-                <div className="mt-3 h-3 w-full rounded bg-slate-100" />
+                <div className="mt-3 h-3 w-full rounded bg-neutral-surface" />
               </div>
             ))}
           </div>
 
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mt-6 rounded-xl border border-border bg-white p-6 shadow-sm">
             <div className="h-4 w-40 rounded bg-slate-200" />
             <div className="mt-5 space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="h-3 w-full rounded bg-slate-100" />
+                <div key={index} className="h-3 w-full rounded bg-neutral-surface" />
               ))}
             </div>
           </div>

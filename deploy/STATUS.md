@@ -150,7 +150,7 @@ powershell -File deploy/smoke-test.ps1 -RepoRoot <repo>   # API + planner + scan
 npm run audit:live --prefix frontend                      # 146 live checks, full stack
 node frontend/scripts/browser-check.mjs                   # quick anonymous browser pass
 npm test --prefix backend                                  # 109 tests
-npm test --prefix frontend                                 # 139 tests
+npm test --prefix frontend                                 # 150 tests
 pytest inspector/tests -q                                  # CI installs ./inspector[dev,ml]
 ```
 

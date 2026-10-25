@@ -59,7 +59,7 @@ Addendum 2026-09-18: model retrain (E-06/E-07), external head-to-head (E-08), AC
 - [x] Checkpoints load; `/health` reports model provenance (variant, config, eval metrics)
 - [x] Dataset split reproduction: seed 42 → 30/8 repos, 11,558/2,415 files, zero overlap
 - [x] Leakage audit recorded in `docs/TRUTH_AUDIT.md`
-- [x] Full retrain executed 2026-09-18 (CLOSED R-03): CodeBERTa CUDA fine-tune F1 0.9525; GNN 42-fold LOO τ-b 0.7168 on 2×A100 (42 CBOMs / 277 hosts, 0 overlaps); side-channel retrain on 54 trace sets — see EXPERIMENTS.md E-06/E-07
+- [x] Full retrain executed 2026-09-18 (CLOSED R-03): CodeBERTa CUDA fine-tune F1 0.9395; GNN 42-fold LOO τ-b 0.7168 on 2×A100 (42 CBOMs / 277 hosts, 0 overlaps); side-channel retrain on 54 trace sets — see EXPERIMENTS.md E-06/E-07
 
 ## Performance
 - [x] Planner `/plan` p50/p95 measured and recorded (`docs/PERFORMANCE.md`)
@@ -103,3 +103,6 @@ Addendum 2026-09-18: model retrain (E-06/E-07), external head-to-head (E-08), AC
 - [x] No untracked project files committed (`.agents/` skill tooling intentionally uncommitted)
 - [x] CHANGELOG entries for every change in this engagement
 - [x] `./scripts/check_golive_blockers.sh` — passed
+
+
+> **Metric-correction note (2026-10-23):** the discovery F1 quoted above as `0.9525` was corrected to **0.9395** (P 0.9279 / R 0.9514) by the re-audit in `paper/REANALYSIS.md` (no threshold reaches 0.9525). Update any downstream value accordingly.

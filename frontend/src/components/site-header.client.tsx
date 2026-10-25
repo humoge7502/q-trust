@@ -19,11 +19,11 @@ import { API_DOCS_URL } from "@/lib/api";
 import { ArrowRightIcon, ArrowTopRightOnSquareIcon } from "@/app/icons";
 
 function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" {...props}><path d="M4 6h16M4 12h16M4 18h16" /></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true" focusable="false" {...props}><path d="M4 6h16M4 12h16M4 18h16" /></svg>;
 }
 
 function CloseIcon(props: React.SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" {...props}><path d="M6 6l12 12M6 18L18 6" /></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true" focusable="false" {...props}><path d="M6 6l12 12M6 18L18 6" /></svg>;
 }
 
 /**
@@ -37,6 +37,11 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", match: "/dashboard" },
   { label: "Vendors", href: "/vendors", match: "/vendors" },
   { label: "Verify", href: "/v", match: "/v" },
+  { label: "Evidence", href: "/evidence", match: "/evidence" },
+  // Evaluation integrity is a first-class destination, not a footnote: the
+  // reproduction audit is the most defensible artifact in this project.
+  { label: "Research", href: "/research", match: "/research" },
+  { label: "Demo", href: "/demo", match: "/demo" },
 ];
 
 function isActive(pathname: string, match: string | null): boolean {

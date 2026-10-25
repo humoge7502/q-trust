@@ -59,23 +59,23 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
   if (resolved) redirect(`/v/${resolved}`);
 
   return (
-    <main className="flex-1 bg-canvas text-slate-900">
+    <main className="flex-1 bg-canvas text-foreground">
       <JsonLd />
       <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24 lg:px-12">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-600">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
           Public verification
         </p>
         <h1 className="mt-6 max-w-2xl text-4xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl">
           Check the record yourself.
         </h1>
-        <p className="mt-5 max-w-xl text-sm leading-7 text-slate-600">
+        <p className="mt-5 max-w-xl text-sm leading-7 text-muted-foreground">
           Q-Trust&apos;s claim is that a migration can be independently
           inspected. This is where that claim is tested — paste an asset ID and
           read the on-chain record without trusting this interface or anyone
           operating it.
         </p>
 
-        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="mt-10 rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
           <VerifyForm />
           {raw && !resolved ? (
             <p
@@ -93,13 +93,13 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
             <div
               key={item.label}
               className={`py-6 sm:px-6 first:sm:pl-0 last:sm:pr-0 ${
-                index > 0 ? "border-t border-slate-200 sm:border-l sm:border-t-0" : ""
+                index > 0 ? "border-t border-border sm:border-l sm:border-t-0" : ""
               }`}
             >
-              <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
+              <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 {item.label}
               </dt>
-              <dd className="mt-3 text-xs leading-6 text-slate-600">{item.body}</dd>
+              <dd className="mt-3 text-xs leading-6 text-muted-foreground">{item.body}</dd>
             </div>
           ))}
         </dl>
@@ -108,7 +108,7 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
           <h2 id="cli-heading" className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
             Prefer to verify outside the browser?
           </h2>
-          <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">
+          <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
             The SDK resolves the same record straight from the chain, with no
             dependency on this deployment:
           </p>
@@ -121,14 +121,21 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
           <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm font-semibold">
             <Link
               href="/scanner"
-              className="inline-flex items-center gap-2 text-slate-900 underline decoration-slate-300 underline-offset-8 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+              className="inline-flex items-center gap-2 text-foreground underline decoration-slate-300 underline-offset-8 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
             >
               Start your own scan
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
+              href="/certify"
+              className="inline-flex items-center gap-2 text-muted-foreground underline decoration-slate-300 underline-offset-8 transition hover:text-foreground hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+            >
+              Verify a certification bundle
+              <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <Link
               href="/#workflow"
-              className="inline-flex items-center gap-2 text-slate-600 underline decoration-slate-300 underline-offset-8 transition hover:text-slate-900 hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+              className="inline-flex items-center gap-2 text-muted-foreground underline decoration-slate-300 underline-offset-8 transition hover:text-foreground hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
             >
               How the protocol works
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

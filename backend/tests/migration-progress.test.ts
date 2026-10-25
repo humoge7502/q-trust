@@ -7,6 +7,9 @@ vi.mock("pg", () => {
     query = query;
     connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
     end = vi.fn().mockResolvedValue(undefined);
+    // Real pg.Pool is an EventEmitter; indexer.ts registers pool?.on("error").
+    on = vi.fn();
+    removeListener = vi.fn();
   }
   return { default: { Pool } };
 });

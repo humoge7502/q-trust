@@ -85,9 +85,16 @@ describe("ScannerDashboard", () => {
       includeManifests: true,
     });
 
-    expect(screen.getByText("2 findings")).toBeInTheDocument();
-    expect(screen.getByText("1 critical")).toBeInTheDocument();
-    expect(screen.getByText("1 high")).toBeInTheDocument();
+    // The headline is one large total; the severity mix is a stacked bar whose
+    // accessible name carries the exact counts, plus a legend with one count per
+    // band. Asserting the bar's label is stricter than the old per-pill text: it
+    // fails if a band is dropped from the bar *or* from the legend.
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Severity mix: 1 critical, 1 high" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Critical")).toBeInTheDocument();
+    expect(screen.getByText("High")).toBeInTheDocument();
     // Table + mobile card fallback both render - use getAllByText
     expect(screen.getAllByText("RSA-2048")[0]).toBeInTheDocument();
     // The table shows the basename and keeps the full path in the title.
