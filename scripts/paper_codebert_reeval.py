@@ -5,8 +5,11 @@ risk-coverage (human-review budget), per-language CIs, and contamination-
 corrected metrics from a single deterministic forward pass.
 """
 from __future__ import annotations
-import json, random, hashlib, math, statistics, sys
-from collections import Counter, defaultdict
+import json
+import random
+import math
+import statistics
+import sys
 from pathlib import Path
 
 import numpy as np

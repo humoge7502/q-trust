@@ -6,12 +6,14 @@ score measures what the checkpoint already encodes (key size), not what the
 fold-specific training learns.
 """
 from __future__ import annotations
-import json, math, statistics, sys
+import json
+import math
+import statistics
+import sys
 from pathlib import Path
 
 import torch
 import numpy as np
-from scipy.stats import kendalltau
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "planner"))

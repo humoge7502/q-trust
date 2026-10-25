@@ -22,7 +22,7 @@ import argparse
 import json
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -89,7 +89,6 @@ def main() -> None:
     args = ap.parse_args()
 
     import numpy as np
-    from sklearn.calibration import CalibratedClassifierCV
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import roc_auc_score

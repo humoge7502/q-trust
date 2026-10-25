@@ -4,7 +4,9 @@ Reads only released/regenerated artifacts; performs no new model fitting.
 Output: paper/analysis/final_stats.json
 """
 from __future__ import annotations
-import json, math, statistics, itertools
+import json
+import math
+import statistics
 from collections import Counter
 from pathlib import Path
 
@@ -63,7 +65,7 @@ def paired(model, doctrine):
 
 def ranking_block(loo_path, audit_key):
     loo = load(loo_path)
-    audit = load(A / "ceiling_audit.json")[audit_key]
+    load(A / "ceiling_audit.json")[audit_key]
     folds = loo["fold_metrics"]
     names = sorted(folds)
     model = [folds[n]["model"]["kendall"] for n in names]
@@ -156,7 +158,7 @@ def main():
     hosts = Counter()
     est_sizes = []
     for cdir in [DATA / "real_cboms", DATA / "real_cboms_v2_2026_09_18"]:
-        c = Counter(); cz = []
+        Counter() 
         for p in sorted(cdir.glob("*.json")):
             d = load(p)
             assets = d.get("assets") or []

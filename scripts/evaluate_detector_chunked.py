@@ -102,7 +102,7 @@ def _per_language(rows, probs, labels, threshold):
             out[key]["tn"] += 1
     metrics = {}
     for key, row in out.items():
-        tp, fp, fn, tn = row["tp"], row["fp"], row["fn"], row["tn"]
+        tp, fp, fn, _tn = row["tp"], row["fp"], row["fn"], row["tn"]
         precision = tp / (tp + fp) if tp + fp else 0.0
         recall = tp / (tp + fn) if tp + fn else 0.0
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0

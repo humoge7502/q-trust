@@ -31,6 +31,15 @@ description = "Public-by-construction dev keys and documented test fixtures"
 paths = [
   # Public NIST ACVP test-vector corpus (see header comment).
   '''inspector/data/acvp/''',
+  # Vendored public benchmark corpora (ApacheCryptoAPI-Bench / CryptoAPI-Bench):
+  # published Java test cases and their source/test jars. Their fixtures are the
+  # public test data itself and trip high-entropy rules; the whole tree is public
+  # benchmark material, not credentials.
+  '''benchmarks/external/''',
+  # Deterministic certification test fixture: an Ed25519 TEST signature over a
+  # known message. The key is a throwaway test key; the bundle is regenerated
+  # deterministically in CI and byte-diffed, so it is not a live credential.
+  '''sdk/tests/fixtures/''',
 ]
 regexes = [
   # Anvil/Foundry deterministic dev accounts #0, #1, #2 (published by the

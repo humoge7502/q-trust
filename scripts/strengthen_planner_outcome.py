@@ -44,15 +44,13 @@ PROBE_N = 40
 
 
 def main() -> None:
-    import random
 
     import torch
 
     from eval_outcome_loo import _gnn_scores, _train_fold
     from qtrust_planner.outcome_sim import (
         build_outcome_graph, feasible_projection, generate_synthetic_estates,
-        heuristic_priority_scores, load_estates, optimal_order,
-        smith_rule_order)
+        heuristic_priority_scores, load_estates, optimal_order)
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=3)
@@ -69,7 +67,6 @@ def main() -> None:
     probe_graphs = [build_outcome_graph(e) for e in probe]
     # build_outcome_graph already ran the exact DP for its labels — read the
     # optimal order back out of y_order instead of re-solving.
-    import torch as _torch
     def _order_from_graph(g):
         rank = g.y_order.tolist()
         return sorted(range(len(rank)), key=lambda i: rank[i])

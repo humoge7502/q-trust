@@ -7,7 +7,9 @@ legitimately quote 0.9525 as the *corrected-from* value.
 Canonical corrected values (source of truth: paper/REANALYSIS.md):
   F1 0.9395, precision 0.9279, recall 0.9514.
 """
-import io, os, sys
+import io
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

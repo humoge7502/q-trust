@@ -10,7 +10,10 @@ on a label- and language-stratified subsample and reports paired deltas against
 the 256-token baseline on exactly the same files. `--full` runs the whole split.
 """
 from __future__ import annotations
-import argparse, json, math, sys
+import argparse
+import json
+import math
+import sys
 from collections import defaultdict
 from pathlib import Path
 

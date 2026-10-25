@@ -145,7 +145,7 @@ def run(args) -> dict:
     from qtrust_planner.outcome_sim import (
         SIM_SPEC_VERSION, build_outcome_graph, feasible_projection,
         generate_synthetic_estates, heuristic_priority_scores,
-        load_estates, optimal_order, smith_rule_order,
+        load_estates, optimal_order,
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

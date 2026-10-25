@@ -52,7 +52,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from itertools import permutations
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from .data_generator import (
     _DEFAULT_KEY_SIZE,

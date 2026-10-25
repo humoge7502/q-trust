@@ -9,11 +9,14 @@ cannot express. Same architecture, same metric, same protocol shape.
 This is a controlled positive control, not a claim about real enterprises.
 """
 from __future__ import annotations
-import argparse, json, math, statistics, sys
+import argparse
+import json
+import math
+import statistics
+import sys
 from pathlib import Path
 import numpy as np
 import torch
-import torch.nn.functional as F
 from torch_geometric.loader import DataLoader
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,7 +47,7 @@ def relabel(g, graph_weight=0.9):
     n=int(g.num_nodes)
     reach=downstream_reach(g)
     rec=g.asset_records
-    indeg=np.zeros(n); 
+    indeg=np.zeros(n) 
     for d in g.edge_index[1].tolist(): indeg[d]+=1
     ks=np.array([r[1] for r in rec],dtype=float)
     crit=np.array([r[3] for r in rec],dtype=float)

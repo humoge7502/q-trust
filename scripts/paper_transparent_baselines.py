@@ -6,7 +6,12 @@ trained per fold on the other 41 estates and scored on the held-out estate with
 the same tie-aware metric and the same priority target as the GNN.
 """
 from __future__ import annotations
-import json, glob, os, math, itertools, statistics
+import json
+import glob
+import os
+import math
+import itertools
+import statistics
 import numpy as np
 from scipy.stats import kendalltau
 from sklearn.linear_model import LogisticRegression, Ridge

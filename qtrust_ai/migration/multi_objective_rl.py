@@ -37,7 +37,7 @@ import json
 import math
 import random
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import torch  # type: ignore

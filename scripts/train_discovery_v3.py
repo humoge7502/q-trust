@@ -97,8 +97,7 @@ def main() -> None:
             labels.append(rec["label"])
             fh.write(json.dumps(rec) + "\n")
     from qtrust_ai.discovery.calibration import (
-        TemperatureScaler, cross_fitted_calibration, brier_score,
-        expected_calibration_error)
+        TemperatureScaler, cross_fitted_calibration)
     cf = cross_fitted_calibration(probs, labels, n_folds=5, seed=42,
                                   method="temperature")
     import statistics

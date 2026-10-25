@@ -714,7 +714,7 @@ class CryptoCodeDetector:
                         raw_scores.append(self._score_single_chunked(text))
                     continue
                 mapping = mapping_obj.tolist() if hasattr(mapping_obj, "tolist") else list(mapping_obj)
-                counts: Counter[int] = Counter(mapping)
+                Counter(mapping)
                 seen: Counter[int] = Counter()
                 keep = []
                 for chunk_index, sample_index in enumerate(mapping):

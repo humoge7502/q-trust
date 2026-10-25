@@ -19,7 +19,6 @@ import json
 import math
 import os
 import random
-import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CBOM_DIR = os.path.join(ROOT, "q-trust-datasets", "planner", "data", "real_cboms")
