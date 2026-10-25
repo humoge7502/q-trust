@@ -129,7 +129,7 @@ describe("CertificationVerifier", () => {
         platformIssuer={{
           issuer: "did:key:z6MkPlatform",
           verification_method: "did:key:z6MkPlatform#key-1",
-          key_fingerprint: "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+          key_fingerprint: "a1b2c3d4e5f60718293a4b5c6d7e8f90", // gitleaks:allow  # fake test fixture fingerprint
         }}
       />,
     );
@@ -155,7 +155,7 @@ describe("CertificationVerifier", () => {
         platformIssuer={{
           issuer: "did:key:z6MkPlatform",
           verification_method: "did:key:z6MkPlatform#key-1",
-          key_fingerprint: "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+          key_fingerprint: "a1b2c3d4e5f60718293a4b5c6d7e8f90", // gitleaks:allow  # fake test fixture fingerprint
         }}
       />,
     );

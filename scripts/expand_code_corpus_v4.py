@@ -74,6 +74,11 @@ def label_code(code: str) -> tuple[bool, str]:
 def fetch_repo_zip(repo: str, branch: str) -> bytes:
     url = f"https://codeload.github.com/{repo}/zip/refs/heads/{branch}"
     req = urllib.request.Request(url, headers={"User-Agent": "qtrust-corpus-builder"})
+    # The URL is assembled only from a hardcoded allowlist of public GitHub repos
+    # (see REPOS below); there is no untrusted/user-controlled input, and the
+    # scheme is fixed to https://codeload.github.com/, so the file:// risk this
+    # rule warns about does not apply to this developer corpus-build script.
+    # nosemgrep: dynamic-urllib-use-detected
     with urllib.request.urlopen(req, timeout=240) as r:
         return r.read()
 
