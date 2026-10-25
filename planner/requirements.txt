@@ -1,6 +1,6 @@
 # REG-24: use pip-compile or uv lock for reproducible builds (was lower-bound only)
 torch>=2.14.0,<3.0
-torch-geometric>=2.5
+torch-geometric>=2.8.0.post1
 scipy>=1.12
 fastapi>=0.141.1
 uvicorn>=0.52.4
