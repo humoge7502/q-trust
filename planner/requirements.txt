@@ -9,5 +9,5 @@ numpy>=1.26
 redis>=8.1.0
 # Security floor (pip-audit 2026-09-19): anyio<4.14.2 carries
 # CVE-2026-63374/64847/63349; pulled in transitively via fastapi/starlette.
-anyio>=4.14.2
+anyio>=4.15.1
 # Lockfile: planner/requirements.lock (generate via pip-compile)
