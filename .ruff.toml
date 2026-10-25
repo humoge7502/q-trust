@@ -22,4 +22,8 @@ exclude = [
     "node_modules",
     "build",
     "dist",
+    # One-off paper-generation analysis scripts (compact one-liners; not shipped
+    # code, not imported by the product). Kept out of the lint contract so the
+    # E701/E702 style rules apply to production code, not throwaway analysis.
+    "scripts/paper_*.py",
 ]

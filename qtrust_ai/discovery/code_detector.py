@@ -677,7 +677,7 @@ class CryptoCodeDetector:
         licence header.
         """
         if self._hf_model is None or self._hf_tokenizer is None:
-            return [self._fallback_ml_score(t, l) for t, l in zip(texts, languages)]
+            return [self._fallback_ml_score(t, lang) for t, lang in zip(texts, languages)]
         max_chunks = max(1, int(self._hf_max_chunks))
         char_cap = max(1024, self._hf_max_len * 16 * max_chunks)
         raw_scores: List[float] = []
@@ -734,8 +734,8 @@ class CryptoCodeDetector:
                 raw_scores.extend(pooled)
             except Exception:
                 raw_scores.extend(
-                    self._fallback_ml_score(t, l)
-                    for t, l in zip(batch_texts, languages[start:start + batch_size])
+                    self._fallback_ml_score(t, lang)
+                    for t, lang in zip(batch_texts, languages[start:start + batch_size])
                 )
         return raw_scores
 

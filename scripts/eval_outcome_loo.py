@@ -299,8 +299,8 @@ def run(args) -> dict:
 def _wl(a: list[float], b: list[float]) -> str:
     w = sum(1 for x, y in zip(a, b) if x < y - 1e-9)
     t = sum(1 for x, y in zip(a, b) if abs(x - y) <= 1e-9)
-    l = sum(1 for x, y in zip(a, b) if x > y + 1e-9)
-    return f"{w}/{t}/{l}"
+    losses = sum(1 for x, y in zip(a, b) if x > y + 1e-9)
+    return f"{w}/{t}/{losses}"
 
 
 if __name__ == "__main__":
