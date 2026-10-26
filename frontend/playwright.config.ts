@@ -24,6 +24,10 @@ const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
+  // Compile every route before the first test: the dev server compiles on
+  // demand, and the wallet-gated pages expired their in-test budgets waiting
+  // on a cold compile under CI. See e2e/global-setup.ts.
+  globalSetup: "./e2e/global-setup.ts",
   // CI here only compiles the config + spec; browsers are installed in the CI
   // job that runs this suite.
   projects: [
@@ -49,6 +53,10 @@ export default defineConfig({
     baseURL: BASE_URL,
   },
   webServer: {
+    // Empty WalletConnect ID for e2e: with a placeholder ID RainbowKit fetches
+    // Reown's remote config, which 403s under CI and loops until the gated
+    // pages never render. Injected-connector flows need no cloud project.
+    env: { ...process.env, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "" },
     command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: true,

@@ -1012,7 +1012,8 @@ def plan_objective(req: ObjectiveRequest) -> dict[str, Any]:
         estate = estate_from_cbom({**req.cbom, "assets": asset_records},
                                   name=str(req.cbom.get("target", "api-estate")))
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        logger.warning({"event": "objective_request_rejected", "detail": str(exc)})
+        raise HTTPException(status_code=422, detail="invalid CBOM for objective planning") from exc
 
     n = estate.n
     opt_qrd = estate.total_quantum_risk_days(optimal_order(estate))

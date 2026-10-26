@@ -202,7 +202,23 @@ def load_dependency_graph(
         # Fall through to synthesis when the dict carries no usable edges.
 
     if isinstance(deps_path, str) and deps_path and os.path.exists(deps_path):
-        with open(deps_path, encoding="utf-8") as f:
+        # Path-containment guard (CodeQL py/path-injection): a request-supplied
+        # string is honored as a dependency-map file only when it resolves
+        # inside the configured data roots — never arbitrary host paths.
+        allowed_roots = [
+            Path(p.strip()).resolve()
+            for p in os.environ.get(
+                "QTRUST_DEPS_ALLOWED_ROOTS", str(Path.cwd() / "data")
+            ).split(";")
+            if p.strip()
+        ]
+        resolved = Path(deps_path).resolve()
+        if not any(resolved.is_relative_to(root) for root in allowed_roots):
+            raise ValueError(
+                "deps path is outside the allowed data roots "
+                "(set QTRUST_DEPS_ALLOWED_ROOTS to a ';'-separated list)"
+            )
+        with open(resolved, encoding="utf-8") as f:
             deps_data = json.load(f)
         return [[d["source"], d["target"]] for d in deps_data.get("dependencies", [])]
 
