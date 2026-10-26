@@ -4,7 +4,9 @@ Metric consistency gate for the Q-Trust project.
 
 Authoritative source of truth: the on-disk artifact files plus paper/REANALYSIS.md.
 This script fails CI if:
-  (a) a headline JSON artifact contradicts its reconciled value, or
+  (a) a headline JSON artifact contradicts its reconciled value — either the
+      legacy v1 record (0.9395, leaky) or the clean v4 headline (0.9205 at the
+      selected 0.50 gate) — or
   (b) a document asserts the stale discovery F1 (0.9525) as a *result*, or
   (c) a document claims the planner *outperforms* the doctrine heuristic
       (it ties; tau_b 0.71 vs 0.72, delta is negative / within noise).
@@ -24,10 +26,18 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Canonical reconciled values (paper/REANALYSIS.md).
+# Legacy v1 artifact values (paper/REANALYSIS.md). Retained because those
+# artifacts are historical records; they are NOT the clean detector claim
+# (87.6 % of the v1 eval paths were in training — E-14 leakage audit).
 CANON_DISCOVERY_F1 = 0.9395
 CANON_DISCOVERY_P = 0.9279
 CANON_DISCOVERY_R = 0.9514
+
+# Clean v4 headline (E-14/E-15/E-16): de-duplicated pinned digest split,
+# selected 0.50 ML gate, zero train/eval path overlap.
+CLEAN_V4_F1 = 0.9205
+CLEAN_V4_RAW_F1 = 0.9144
+CLEAN_V4_GATE = 0.5
 
 # Strings that must not appear as a *claimed result* in docs.
 # 0.9525 is the pre-reanalysis discovery F1 (never reproduced).
@@ -48,6 +58,12 @@ ARTIFACT_CHECKS = [
      {"comparisons[0].qtrust.f1": CANON_DISCOVERY_F1}),
     (os.path.join(ROOT, "qtrust_ai", "artifacts", "training_report_real.json"),
      {"results[0].train._eval.f1": CANON_DISCOVERY_F1}),
+    # Clean v4 headline: the de-duplicated pinned view at the selected gate,
+    # plus the raw view so a gate/dedupe regression is caught in CI.
+    (os.path.join(ROOT, "qtrust_ai", "artifacts", "eval_dedup_v4.json"),
+     {"gate": CLEAN_V4_GATE,
+      "policies.keep_longest.f1": CLEAN_V4_F1,
+      "policies.raw.f1": CLEAN_V4_RAW_F1}),
     # E-09 outcome LOO canonical values (added 2026-10-24): the GNN attains
     # the QRD optimum out-of-sample; the heuristic leaves ~4.7% excess.
     (os.path.join(ROOT, "planner", "results", "outcome_loo_42.json"),
@@ -176,8 +192,9 @@ def main():
             print("  -", p)
         sys.exit(1)
     print(f"METRIC CONSISTENCY: PASS "
-          f"(F1={CANON_DISCOVERY_F1}, P={CANON_DISCOVERY_P}, "
-          f"R={CANON_DISCOVERY_R}; no stale-F1 or 'outperform' claims)")
+          f"(legacy v1 F1={CANON_DISCOVERY_F1}, P={CANON_DISCOVERY_P}, "
+          f"R={CANON_DISCOVERY_R}; clean v4 F1={CLEAN_V4_F1} at gate "
+          f"{CLEAN_V4_GATE}; no stale-F1 or 'outperform' claims)")
     sys.exit(0)
 
 

@@ -33,20 +33,24 @@ described as "trained models" in external claims:
   research agent, not a production scheduler — the production roadmap is produced
   by `planner/`'s constrained optimizer, which the RL agent only *advises*.
 
-**Metric disambiguation (important):** the "F1 0.970" quoted below is the
-*code detector*'s held-out score on the real corpus **(one model, one dataset)**.
-It is **not** the system-wide accuracy. The system's canonical headline metrics
+**Metric disambiguation (important, revised 2026-10-26):** the legacy "F1 0.970"
+figure is a single-model training-time score whose split was not leakage-audited;
+do not cite it as the current detector claim. The shipped clean claim is v4
+**F1 0.9205** on the de-duplicated repo-disjoint digest eval (1,779 files) and
+**0.9235** on the native split, both at the selected 0.50 ML gate (E-14/E-15/E-16).
+It is **not** the system-wide accuracy. The system's canonical benchmark metrics
 are different and must not be conflated:
 
 | Metric | Value | Scope |
 |--------|-------|-------|
-| Code-detector F1 (real corpus, held-out) | 0.970 | one model |
-| Canonical benchmark F1 (`benchmark_comparison.json`) | **0.9395** | system benchmark |
+| Code-detector clean F1 (v4, repo-disjoint, de-duplicated) | **0.9205** (raw 0.9144; native 0.9235) | one model |
+| Legacy v1 benchmark F1 (`benchmark_comparison.json`) | 0.9395 (leaky split; historical record) | system benchmark |
 | Planner ranking Kendall τ_b | 0.975 (synthetic) / 0.7168–0.7263 (real LOO) | planner |
 
 Always cite the correct scope. The metric-consistency CI gate
-(`scripts/verify_metric_consistency.py`) enforces the 0.9395 canonical value and
-forbids stale/over-claimed numbers.
+(`scripts/verify_metric_consistency.py`) pins both the legacy v1 artifact value
+and the clean v4 headline (0.9205 at gate 0.50) and forbids stale/over-claimed
+numbers.
 
 ## Why not just train the GNN more?
 
@@ -111,17 +115,21 @@ Every `--real` run now also benchmarks each trained model against the
 obvious naive baseline (frequency prior, heuristic ordering, constant
 predictor, …) via `qtrust_ai/benchmark/compare.py`, writing
 `qtrust_ai/artifacts/benchmark_comparison.json` — 7 comparisons, 6/7 models
-beat their best baseline, mean relative gain **8.98×** — so the code detector's
-"F1 0.970" (real corpus, held-out) is a *defensible per-model* claim, not the
-system-wide accuracy (see the metric-disambiguation table above).
+beat their best baseline, mean relative gain **8.98×**. The historical
+code-detector figure **F1 0.970** came from an early real-corpus run and has
+**not** been leakage-audited; it is retained as a training record, not as the
+current claim. The clean claim is the v4 model's **F1 0.9205** on the
+de-duplicated repo-disjoint digest eval (see the metric-disambiguation table
+above and EXPERIMENTS.md E-14/E-15/E-16).
 
-The real corpus is **4,431 files across 11 languages** (Python, Go, Rust, C,
-C++, Java, C#, Swift, PHP, JS/TS, Solidity) from pyca/cryptography,
-cloudflare/circl (Go PQC), rustls, libsodium, SJCL, Bouncy Castle Java+C#,
-CryptoSwift, phpseclib, OpenQuantumSafe/liboqs (C PQC), OpenZeppelin + balanced
-non-crypto repos (click, jinja, serde, gson, express, tokio, requests,
-golang/example). Held-out org-level no-leakage evaluation (repos unseen in
-training): **P 0.964 / R 0.976 / F1 0.970**.
+The early real corpus (behind the legacy 0.970 figure) was **4,431 files across
+11 languages** (Python, Go, Rust, C, C++, Java, C#, Swift, PHP, JS/TS, Solidity)
+from pyca/cryptography, cloudflare/circl (Go PQC), rustls, libsodium, SJCL,
+Bouncy Castle Java+C#, CryptoSwift, phpseclib, OpenQuantumSafe/liboqs (C PQC),
+OpenZeppelin + balanced non-crypto repos. That run reported **P 0.964 / R 0.976 /
+F1 0.970** at the time; later leakage auditing showed the v1 evaluation cannot be
+treated as clean, so it is not cited as the current detector score. Corpus **v4**
+(17,171 files / 58 sources, E-14) is the active corpus.
 
 **GPU training** — the code detector also supports a real transformer
 fine-tune on CUDA (`--hf-epochs 3`; default `huggingface/CodeBERTa-small-v1`):

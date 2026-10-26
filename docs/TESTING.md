@@ -19,7 +19,7 @@ it cannot prove, and the conventions a new test is expected to follow.
 
 ## 2. Inventory
 
-Counts measured on 2026-10-25 by collecting each suite locally.
+Counts re-measured on 2026-10-26 by running each suite locally.
 
 | Package | Runner | Files | Tests | Run with |
 |---|---|---|---|---|
@@ -27,9 +27,9 @@ Counts measured on 2026-10-25 by collecting each suite locally.
 | `sdk` | pytest | 9 | 87 | `cd sdk && python -m pytest` |
 | `inspector` | pytest | 14 | 268 | `cd inspector && python -m pytest` |
 | `planner` | pytest | 11 | 99 | `cd planner && python -m pytest` |
-| `qtrust_ai` | pytest | 3 | 39 | `cd qtrust_ai && python -m pytest` |
-| `frontend` | Vitest 4 + jsdom | 21 | 161 | `cd frontend && npm test` |
-| `frontend` (browser) | Playwright | 7 specs | 56 (two viewports) | `cd frontend && npm run test:e2e` |
+| `qtrust_ai` | pytest | 5 | 60 | `cd qtrust_ai && python -m pytest` |
+| `frontend` | Vitest 4 + jsdom | 23 | 168 | `cd frontend && npm test` |
+| `frontend` (browser) | Playwright | 7 specs | 64 (two viewports) | `cd frontend && npm run test:e2e` |
 | `contracts` | Foundry | 18 `.t.sol` | 209 test functions | `cd contracts && forge test` |
 
 Type checking is a separate gate: `cd backend && npm run typecheck`. A test run

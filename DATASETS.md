@@ -139,8 +139,9 @@ keyword labelling; provenance in `stats.expansion`; builder:
 train / 3,181 eval across 40/10 repos; three new sources sit in eval, making
 the held-out set strictly harder than v1's (new languages: Rust, Zig).
 CryptoAPI-Bench / ApacheCryptoAPI-Bench remain evaluation-only (E-08).
-Detector fine-tuned on v3: see EXPERIMENTS.md E-13; v1 F1 0.9395 remains the
-canonical benchmark until v3 results are recorded there.
+Detector fine-tuned on v3: see EXPERIMENTS.md E-13. v1 F1 0.9395 is
+**superseded** — its eval was 87.6 % path-leaked (E-14); the clean model of
+record is corpus v4 at **F1 0.9205 de-duplicated / 0.9235 native** (E-15/E-16).
 
 ### Protocol correction (2026-10-24)
 
@@ -192,16 +193,24 @@ records** (17,171 raw → 14,470 unique), including 146 keys whose copies
 disagree on the crypto label. The pinned held-out set inherits 197 duplicated
 keys / 459 extras (22 label conflicts, 194 with different code). A fresh
 re-score of the unchanged checkpoint on one copy per path gives **F1 0.9039**
-(P 0.9492 / R 0.8626, n=1,779) versus **0.8966** on the inflated set — the
-shipped exact numbers for both views are in EXPERIMENTS.md E-15 and
-`qtrust_ai/artifacts/eval_dedup_v4.json`.
+(P 0.9492 / R 0.8626, n=1,779) versus **0.8966** on the inflated set at the
+legacy 0.85 ML gate. At the selected 0.50 gate (E-16) the same clean view is
+**F1 0.9205** (P 0.9264 / R 0.9146) and the raw view is 0.9144. The shipped
+numbers for every view are in EXPERIMENTS.md E-15/E-16 and
+`qtrust_ai/artifacts/eval_dedup_v4.json` / `ensemble_scores_v4_pinned.json`.
 
-For future work use `scripts/dedupe_code_corpus.py` (builds a
-`*_dedup.json` corpus with a `stats.hygiene` block) and
-`scripts/train_discovery_v4.py --dedupe-train keep_longest` (training split
-only; the pinned eval stays byte-identical). `keep_longest` was the
-pre-declared policy because it does not consult the label. Do not quote the
-raw-set F1 as the clean metric.
+For evaluation views use `keep_longest` via `scripts/dedupe_code_corpus.py`
+(builds a `*_dedup.json` corpus with a `stats.hygiene` block). For **training**
+use `scripts/train_discovery_v4.py --dedupe-train unique_content`: labels are
+per record, so distinct benchmark cases may share a path. E-17 measured the
+difference — `keep_longest` deleted 629/681 SolidiFI cases and 441 liboqs
+records and cut held-out F1 by 0.067; `unique_content` removes only 349 exact
+copies with zero label conflicts but also failed to improve the model (pinned
+F1 0.8885). E-17c then re-ran the canonical recipe on GPU **without** dedupe
+(pinned 0.9169 / native 0.9251, on par with the shipped 0.9144 / 0.9235),
+exonerating the environment: neither training-dedupe policy beat the shipped
+model, so the canonical corpus and checkpoint stay. The pinned eval stays
+byte-identical in both cases. Do not quote the raw-set F1 as the clean metric.
 
 CryptoAPI-Bench / ApacheCryptoAPI-Bench remain evaluation-only (E-08). See
 `qtrust_ai/artifacts/model_comparison_stable.md` for the v3-stable vs v4-stable

@@ -14,6 +14,8 @@ export const metadata: Metadata = {
 
 const REPO = "https://github.com/humoge7502/q-trust";
 const REANALYSIS = `${REPO}/blob/main/paper/REANALYSIS.md`;
+const EVAL_V4 = `${REPO}/blob/main/qtrust_ai/artifacts/eval_dedup_v4.json`;
+const EXPERIMENTS = `${REPO}/blob/main/EXPERIMENTS.md`;
 
 /* -------------------------------------------------------------------------- */
 /*  Content                                                                    */
@@ -185,7 +187,7 @@ export default function ResearchPage() {
               Evaluation integrity
             </p>
             <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-slate-400">
-              Re-executed 2026-10-22
+              Re-executed 2026-10-22 · updated 2026-10-26
             </p>
           </div>
 
@@ -228,6 +230,77 @@ export default function ResearchPage() {
           </div>
         </div>
       </header>
+
+      {/* Addendum — the audit of the audit */}
+      <section aria-labelledby="addendum-heading" className="border-b border-amber-300/70 bg-amber-50">
+        <div className="mx-auto max-w-[86rem] px-5 py-12 sm:px-8 sm:py-14 lg:px-12">
+          <div className="grid gap-10 border-t border-amber-300 pt-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-14">
+            <div className="max-w-3xl">
+              <p className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.28em] text-amber-700">
+                <span className="h-px w-8 bg-amber-600" aria-hidden="true" />
+                Update · 2026-10-26
+              </p>
+              <h2
+                id="addendum-heading"
+                className="mt-4 text-2xl font-semibold leading-[0.98] tracking-[-0.05em] text-amber-950 sm:text-3xl"
+              >
+                This page audited the old split. The old split was still leaking.
+              </h2>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-amber-950/80">
+                <p>
+                  A later path-level audit (<code className="font-mono text-micro">scripts/audit_eval_leakage.py</code>)
+                  found that <strong className="font-semibold text-amber-950">87.6 %</strong> of
+                  the v1 evaluation paths were present in its training set (92.2 % for v3).
+                  The 0.9395 re-measurement elsewhere on this page is therefore a{" "}
+                  <em>historical</em> record of a boundary shift on a leaky split — not a
+                  clean held-out score, and not the number to quote.
+                </p>
+                <p>
+                  The current model of record is corpus v4: retrained on 17,171 real files
+                  and evaluated with <strong className="font-semibold text-amber-950">0 % train/eval path overlap</strong>{" "}
+                  at the selected 0.50 ML gate — <strong className="font-semibold text-amber-950">F1 0.9205</strong>{" "}
+                  de-duplicated (1,779 files; P 0.9264 / R 0.9146) and{" "}
+                  <strong className="font-semibold text-amber-950">0.9235</strong> native. Two
+                  training-dedup policies and a GPU control were also run and regressed or tied;
+                  they are recorded as negative experiments, not shipped.
+                </p>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  href={EVAL_V4}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-2 rounded-full bg-amber-950 px-4 py-2.5 text-sm font-semibold text-amber-50 transition hover:-translate-y-0.5 hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700"
+                >
+                  eval_dedup_v4.json
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
+                </a>
+                <a
+                  href={EXPERIMENTS}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-700/40 px-4 py-2.5 text-sm font-semibold text-amber-900 transition hover:-translate-y-0.5 hover:border-amber-700 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700"
+                >
+                  EXPERIMENTS.md · E-14–E-16
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 content-start gap-8 border-amber-300/70 lg:border-l lg:pl-10">
+              <Stat
+                value="0.9205"
+                label="Clean v4 F1"
+                note="keep_longest de-dup view, 0.50 gate"
+              />
+              <Stat
+                value="0 %"
+                label="Path overlap"
+                note="v4 train/eval; v1 was 87.6 %"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Status table */}
       <section aria-labelledby="status-heading" className="bg-[#f4f5f2]">

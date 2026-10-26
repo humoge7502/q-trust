@@ -10,6 +10,12 @@ crypto and non-crypto.
 This module is deliberately independent of any model or split code so the
 same policy can be applied at corpus-build time, at training time, and when
 re-scoring a held-out set.
+
+Policy choice matters: path-based policies (``keep_*``) are for *evaluation*
+views, where one path should not be scored twice. Training corpora should use
+``unique_content`` — labels are per record, and benchmark cases can
+legitimately share a path (E-17: ``keep_longest`` deleted 629 of 681 SolidiFI
+cases and cut held-out F1 by 0.07).
 """
 from __future__ import annotations
 

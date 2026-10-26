@@ -25,6 +25,7 @@ Records for ML experiments and empirical validations. Metrics are copied from ar
 - **Method:** re-ran `_code_splits(seed=42)` on the 13,973-file corpus; hashed every file for cross-repo exact duplicates; computed full-record train/eval overlap; scanned the 16-record vendor dataset for duplicates.
 - **Result:** split reproduces exactly (38 repos → 30 train / 8 eval; 11,558 / 2,415 files; zero repo overlap). Cross-repo duplicate snippets: 11 affecting 58 files (0.4%). Full-record train/eval overlap: 11 files (0.46% of eval). Vendor dataset: 0 duplicates.
 - **Conclusion:** split discipline holds; duplication is organic and bounded far below the claimed +0.11 F1 gain. Claim stands as scientifically defensible.
+- **Correction (2026-10-25, E-14):** this audit checked repo-level and full-record overlap but **not path-level overlap**. `scripts/audit_eval_leakage.py` later found 87.6 % of the v1 eval *paths* were present in training — the E-04 conclusion is revoked for v1; see E-14–E-16 for the clean v4 evaluation.
 
 ## E-05 — Benchmark artifact coherence check (executed 2026-09-06)
 - **Hypothesis:** README headline claims trace to internally coherent artifacts.
@@ -32,7 +33,7 @@ Records for ML experiments and empirical validations. Metrics are copied from ar
 - **Conclusion:** all traced claims verified; the two stale citations found in this engagement were corrected (README SDK API, TRUTH_AUDIT split/epoch wording).
 
 ## Pre-existing experiments (authoritative, from TRUTH_AUDIT.md)
-CodeBERTa fine-tune (F1 0.9395, repo-disjoint held-out), GNN LOO τ-b 0.7263 across 40 real CBOMs (deterministic-kernel re-run, bit-identical 3-fold repro), RL on real CBOMs (reward 140.34 ± 8.13 vs heuristic 140.62 — tie), side-channel detector (5/5 on real liboqs traces). These are recorded in `docs/TRUTH_AUDIT.md` with lineage and are not re-derived here.
+CodeBERTa fine-tune (v1 **historical** F1 0.9395 — later shown to have 87.6 % eval-path leakage; the clean model of record is v4, E-14–E-16), GNN LOO τ-b 0.7263 across 40 real CBOMs (deterministic-kernel re-run, bit-identical 3-fold repro), RL on real CBOMs (reward 140.34 ± 8.13 vs heuristic 140.62 — tie), side-channel detector (5/5 on real liboqs traces). These are recorded in `docs/TRUTH_AUDIT.md` with lineage and are not re-derived here.
 
 ## E-06 — 42-fold LOO on GPU, host-disjoint 42-CBOM corpus (executed 2026-09-18)
 - **Hypothesis:** GNN ranking holds out-of-sample on the fixed 42-CBOM corpus (277 unique hosts, 0 overlaps — replaced the leaky 40-file corpus with 11 cross-CBOM dupes).
@@ -123,3 +124,60 @@ CodeBERTa fine-tune (F1 0.9395, repo-disjoint held-out), GNN LOO τ-b 0.7263 acr
 - **Conclusion:** the duplicate records were **depressing** the reported metric, not inflating it (the extras were disproportionately false negatives). The corrected, label-blind clean metric is **F1 0.9039** (+0.0073); the three path-level policies agree within 0.0022 (0.9030–0.9052), so the correction is robust to which copy is kept. `keep_last` is not adopted despite scoring 0.0006 higher, because choosing the policy by its own test score is test-set selection. This is a **re-scoring of the same checkpoint**, not a new model; no training claim is made.
 - **Durable fix:** `qtrust_ai/discovery/corpus_hygiene.py` + `scripts/dedupe_code_corpus.py` now produce a de-duplicated corpus (v4: **17,171 → 14,470 records**, 819 duplicated keys, **2,701 extras**, **146 label conflicts**). `scripts/train_discovery_v4.py --dedupe-train keep_longest` applies the policy to the training split only, leaving the pinned eval byte-identical for comparability. The next retrain should use it (recorded as E-16, not yet run).
 - **Residual labels:** 22 conflicting-label keys remain in the clean eval only as a single kept copy; the label itself can still be wrong because labels are regex-derived. Label quality — not model size — remains the binding constraint on a larger F1 claim.
+- **Superseded operating point:** these numbers were measured at the legacy 0.85 ML gate. E-16 selected a 0.50 gate on the independent native split and raised the de-duplicated pinned F1 to **0.9205**; E-15's raw/de-dupe comparison remains valid at both gates.
+
+## E-16 — Ensemble operating point: the 0.85 ML gate was suppressing correct detections (executed 2026-10-26)
+- **Observation:** on the shipped v4 held-out predictions, the **ML layer alone** scores F1 **0.9047** (P 0.9253 / R 0.8850), higher than the delivered ensemble's **0.8966**. The ensemble contains a hard-coded gate: when no rule/AST/dataflow layer fires, an ML hit is only accepted at `p ≥ 0.85`. That value was a hand-set precision guard, never selected on held-out data.
+- **Protocol:** `scripts/analyze_ensemble_threshold.py` scores the deterministic layers and transformer once per file, then recomputes the exact ensemble decision across gate values without re-running inference. The **source-disjoint native v4 split** (2,566 files / 10 repos) was used to *select* the gate; the **pinned 8-repo split** (2,238 files) and its de-duplicated view (1,779) are reporting sets. Artifacts: `qtrust_ai/artifacts/ensemble_scores_v4_native.json`, `ensemble_scores_v4_pinned.json`.
+- **Result — gate selected on native:**
+
+| Split | Gate 0.85 (old) | Gate 0.50 (selected) | Δ F1 |
+|---|---:|---:|---:|
+| Native, raw (2,566) | P 0.9444 / R 0.8737 / **F1 0.9077** | P 0.9232 / R 0.9238 / **F1 0.9235** | **+0.0158** |
+| Pinned, raw (2,238) | P 0.9429 / R 0.8546 / **F1 0.8966** | P 0.9201 / R 0.9088 / **F1 0.9144** | **+0.0178** |
+| Pinned, de-duplicated (1,779) | P 0.9492 / R 0.8626 / **F1 0.9039** | P 0.9264 / R 0.9146 / **F1 0.9205** | **+0.0166** |
+| Native, de-duplicated (2,107) | — | P 0.9287 / R 0.9309 / **F1 0.9298** | — |
+
+  Per-language on the de-duplicated pinned view (F1 at 0.85 → 0.50): C 0.9246→0.9431, C++ 0.3636→0.5000, JavaScript 0.60→0.6667, Python 0.7847→0.8000, shell 0.8451→0.8919, Rust 0.9497→0.9457, C# 0.96→0.96, Solidity 1.0→1.0. The gain is not driven by one language; the only small regression is Rust (−0.004).
+- **Decision:** `DetectorConfig.ml_decisive_threshold` is now **0.5**, matching the model's own threshold. This is an **operating-point correction, not a retrain** — the checkpoint is unchanged. A live `predict` run on 80 sampled files matched the simulation exactly (0 mismatches); 10 unit tests in `qtrust_ai/tests/test_ensemble_gate.py` pin the gate semantics (static remains decisive; two layers still decide; gate is configurable).
+- **Honesty:** 0.50 buys recall with precision (native P 0.9444→0.9232); it is the F1-optimal point on the selection split, not a universal best. The old 0.85 also had no validated provenance. Both splits agree on 0.50, and the gate is now a named, testable parameter rather than a magic number. Report F1 **0.9205** (de-duplicated pinned) / **0.9235** (native) as the detector ensemble's current clean numbers; the E-14/E-15 rows are retained as the legacy-gate record.
+- **De-duplication sensitivity:** the clean metric depends on which copy is kept. The pinned duplicates are different code revisions of ordinary repo paths (svelte, wolfssl, cryptography, numpy, serde) — only 7 exact-content groups exist, and 194/197 duplicated keys differ in code. At gate 0.50 the three one-per-path policies score keep-first **0.9208**, keep-last **0.9223** and keep-longest **0.9205** (the primary); the stricter `unique_content` policy (removes 14 exact copies only, n=2,224) scores P 0.9198 / R 0.9137 / **F1 0.9167**. All four beat raw 0.9144. `keep_longest` was chosen a priori as the most complete copy, not as the maximum, so the defensible clean range is **0.9167–0.9223** and the headline stays **0.9205**; the extras are stale snapshots of the same file, not distinct cases. Regenerated artifact: `qtrust_ai/artifacts/eval_dedup_v4.json` (`gate: 0.5`, `raw_reproduces_shipped: true`).
+
+## E-17 — De-duplicated training corpus: path-based dedupe is the wrong unit (executed 2026-10-26)
+
+- **Hypothesis:** the canonical v4 training split repeats `(source, path)` 2,242 times. Removing those records should reduce duplicate weighting and label noise, improving the clean held-out score.
+- **Setup (controlled):** identical recipe to the canonical v4 run — CodeBERTa-small, 3 epochs, max_len 256, batch 16, GPU — with the **only** change being `--dedupe-train keep_longest` (training split 14,933 → 12,691). Pinned eval is byte-identical. Checkpoint: `crypto_codebert_v4-dedup`; report: `training_report_v4-dedup.json`.
+- **Result — a clear negative:**
+
+| Split | Canonical v4 (gate 0.50) | keep_longest dedupe | Δ F1 |
+|---|---:|---:|---:|
+| Pinned, raw (2,238) | P 0.9201 / R 0.9088 / **F1 0.9144** | P 0.9276 / R 0.7790 / **F1 0.8468** | **−0.0676** |
+| Native, raw (2,566) | P 0.9232 / R 0.9238 / **F1 0.9235** | P 0.9323 / R 0.8126 / **F1 0.8684** | **−0.0551** |
+
+  Train accuracy was normal (0.9526 vs 0.9514), so this is not underfitting: the model became conservative and lost crypto recall (FN 269 vs 111 on pinned).
+- **Diagnosis (why):** `(source, path)` is not the record identity for benchmark corpora. `keep_longest` collapsed **solidifi-benchmark 681 → 52** records (254 crypto cases removed) and **liboqs 800 → 359** (304 crypto), because distinct labeled cases and re-fetched files share a path. The training labels are per-case, not per-path.
+- **Correct policy:** `unique_content` de-duplicates on `(source, path, content)`. It removes only **349 exact copies (100 groups, 0 label conflicts)** while preserving all distinct cases: 14,584 records / 7,391 crypto, including all 681 SolidiFI and 525 liboqs records. E-17b re-runs the same recipe with this policy; the result is recorded below.
+- **Lesson:** clean the *evaluation* by path (E-15) because one path should not be scored twice, but clean *training* by content only — otherwise the cleaner silently deletes legitimate benchmark cases.
+- **Scope of the lesson:** the pinned eval's 197 duplicated keys are ordinary-repo revisions (svelte, wolfssl, cryptography, numpy, serde), so one-per-path is valid *there*. If a benchmark with per-case labels is ever used as an eval set, score it with `unique_content`, not `keep_longest`.
+
+### E-17b — exact-content training dedupe (executed 2026-10-26)
+
+- **Setup:** same recipe as E-17 but `--dedupe-train unique_content`: 14,933 → 14,584 records (349 exact copies dropped, 100 groups, **0 label conflicts**), 7,391 crypto; all 681 SolidiFI and 525 liboqs records preserved. Checkpoint `crypto_codebert_v4-dedupcontent`, report `training_report_v4-dedupcontent.json`.
+- **Result:**
+
+| Split | Canonical v4 (gate 0.50) | unique_content | Δ F1 |
+|---|---:|---:|---:|
+| Pinned, raw (2,238) | P 0.9201 / R 0.9088 / **F1 0.9144** | P 0.8618 / R 0.9170 / **F1 0.8885** | **−0.0259** |
+| Native, raw (2,566) | P 0.9232 / R 0.9238 / **F1 0.9235** | P 0.8691 / R 0.9300 / **F1 0.8985** | **−0.0250** |
+
+  Train accuracy was 0.9494 (canonical 0.9514). Unlike E-17a, recall held or improved but **precision fell ~6 points**, so this is a different failure mode, not a data-composition collapse.
+- **Interpretation (updated after E-17c):** removing 2.3 % exact duplicates cannot plausibly cost 2.6 F1 points by itself, so the GPU environment was the first suspect. E-17c — a GPU control on the **unmodified** corpus — scored pinned **0.9169** / native **0.9251**, at or slightly above canonical (0.9144 / 0.9235). The environment is therefore **exonerated**: the unique_content drop is attributable to the data change and/or single-run variance (each result is one run, so the split between the two is not measured). Either way, the dedupe did not improve the model, and no training-dedupe benefit is claimed. The canonical CPU checkpoint stays shipped.
+
+### E-17c — GPU control on the canonical corpus (executed 2026-10-26; environment exonerated)
+
+- **Purpose:** E-17/E-17b changed the training data *and* ran on the GPU venv (torch 2.6.0+cu124 / transformers 5.20.2), whereas the canonical v4 was trained on CPU. This control runs the **identical corpus, split and recipe** (3 epochs, max_len 256, batch 16, 14,933 records) on GPU with **no dedupe**, so any gap is environmental.
+- **Result:** 32.5 min (vs 388 min CPU, ~12× faster), train_acc **0.9498**, loss 0.1215; pinned **P 0.9184 / R 0.9154 / F1 0.9169**; native **P 0.9217 / R 0.9286 / F1 0.9251**; calibration T 1.8971. Checkpoint `crypto_codebert_v4-gpucontrol`, report `training_report_v4-gpucontrol.json`, log `train_gpucontrol.log`.
+- **Clean-view re-score** (`eval_dedup_v4_gpucontrol.json`, gate 0.50): keep_longest **P 0.9222 / R 0.9195 / F1 0.9209** vs canonical 0.9205; unique_content 0.9192 vs 0.9167; keep-last 0.9249. Every view is within ±0.0025 of canonical.
+- **Against canonical (gate 0.50):** pinned 0.9169 vs 0.9144 (**+0.0025**), native 0.9251 vs 0.9235 (**+0.0016**), clean keep_longest 0.9209 vs 0.9205 (**+0.0004**) — within run-to-run noise, not a demonstrated improvement.
+- **Interpretation:** the GPU stack does **not** degrade the detector. E-14b's regression was 5-epoch overfitting and E-14c's was the v5 data shift; neither was a device effect. E-17b's drop is likewise **not** an environment artifact.
+- **Decision:** do not replace the shipped checkpoint on a +0.0004 clean/noisy difference; the canonical CPU v4 (clean F1 0.9205) remains the model of record. The control checkpoint is kept for reproducibility.

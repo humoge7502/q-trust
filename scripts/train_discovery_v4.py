@@ -125,7 +125,8 @@ def main() -> None:
         print(
             f"train de-dupe [{args.dedupe_train}]: "
             f"{dedupe_report['raw_records']} -> {dedupe_report['kept_records']} "
-            f"records ({dedupe_report['extra_records']} extra, "
+            f"records ({dedupe_report['dropped_records']} dropped, "
+            f"{dedupe_report['extra_records']} path-extra, "
             f"{dedupe_report['keys_with_conflicting_labels']} label conflicts)"
         )
 

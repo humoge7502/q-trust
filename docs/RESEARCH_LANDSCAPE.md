@@ -54,10 +54,11 @@ people who must act on it.
 4. **On-chain anchoring** (11 UUPS contracts, 209 forge test functions, 7-day timelock) — an immutable audit
    trail no dashboard competitor offers.
 5. **Honest, clean ML.** The v4 detector is evaluated with **0 % train/eval file overlap** (E-14,
-   `eval_leakage_audit.json`): F1 **0.9039** on the de-duplicated digest eval (1,779 files; E-15) /
-   **0.9077** (native), +0.24 over a TF-IDF
-   baseline. Note this is **usage discovery**, a different task from CryptoAPI-Bench misuse detection,
-   so no cross-task SOTA claim is made.
+   `eval_leakage_audit.json`): F1 **0.9205** on the de-duplicated digest eval (1,779 files; P 0.9264 /
+   R 0.9146; E-15/E-16) / **0.9235** (native), +0.24 over a TF-IDF
+   baseline. (The legacy hand-set 0.85 ML gate scored 0.9039/0.9077; the 0.50 gate was selected on the
+   independent native split, not on the pinned eval.) Note this is **usage discovery**, a different task
+   from CryptoAPI-Bench misuse detection, so no cross-task SOTA claim is made.
 
 ---
 

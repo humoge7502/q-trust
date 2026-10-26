@@ -12,8 +12,12 @@ therefore NOT reproducible under current code.
 
 This script removes the ambiguity: it loads every released checkpoint via
 ``load_fine_tuned`` and evaluates v1, v3 and v4 on the IDENTICAL current digest
-eval of corpus v3, each at the max_len it was trained with. The only fair
-"did v4 make the model stronger?" question is answered on one fixed file set.
+eval of corpus v3, each at the max_len it was trained with. That makes the
+numbers directly comparable to each other, but it does **not** make them clean:
+``scripts/audit_eval_leakage.py`` shows 87.6 % (v1) / 92.2 % (v3) of these eval
+paths were in their training corpora. Use this output only to quantify
+memorization, never as a model-selection claim. The clean model of record is v4
+on the repo-disjoint v4 splits (E-14/E-15/E-16).
 
 Run: python scripts/compare_v1_v4_checkpoint.py
 """

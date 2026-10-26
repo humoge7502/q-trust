@@ -38,5 +38,6 @@ jobs:
 | `version` | `2.2.0` | Pinned `qtrust-inspector` from PyPI |
 
 Powered by [`qtrust-inspector`](https://pypi.org/project/qtrust-inspector/)
-(F1 0.9395 discovery, repo-disjoint eval). Scanner reference:
+(F1 0.9205 clean discovery on corpus v4, 0 % train/eval path overlap; 0.9235
+native). Scanner reference:
 [humoge7502/q-trust](https://github.com/humoge7502/q-trust).

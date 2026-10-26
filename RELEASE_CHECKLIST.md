@@ -59,7 +59,7 @@ Addendum 2026-09-18: model retrain (E-06/E-07), external head-to-head (E-08), AC
 - [x] Checkpoints load; `/health` reports model provenance (variant, config, eval metrics)
 - [x] Dataset split reproduction: seed 42 → 30/8 repos, 11,558/2,415 files, zero overlap
 - [x] Leakage audit recorded in `docs/TRUTH_AUDIT.md`
-- [x] Full retrain executed 2026-09-18 (CLOSED R-03): CodeBERTa CUDA fine-tune F1 0.9395; GNN 42-fold LOO τ-b 0.7168 on 2×A100 (42 CBOMs / 277 hosts, 0 overlaps); side-channel retrain on 54 trace sets — see EXPERIMENTS.md E-06/E-07
+- [x] Full retrain executed 2026-09-18 (CLOSED R-03): CodeBERTa CUDA fine-tune F1 0.9395 *(later superseded — v1 eval had 87.6 % path leakage; clean v4 is 0.9205/0.9235, see EXPERIMENTS.md E-14)*; GNN 42-fold LOO τ-b 0.7168 on 2×A100 (42 CBOMs / 277 hosts, 0 overlaps); side-channel retrain on 54 trace sets — see EXPERIMENTS.md E-06/E-07
 
 ## Performance
 - [x] Planner `/plan` p50/p95 measured and recorded (`docs/PERFORMANCE.md`)

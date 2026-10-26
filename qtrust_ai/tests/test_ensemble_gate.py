@@ -34,9 +34,15 @@ def _predict(detector: CryptoCodeDetector) -> bool:
     return detector._ensemble("x = 1", "python")[0]
 
 
-def test_default_gate_keeps_weak_ml_hits_out():
+def test_default_gate_is_the_held_out_selected_point():
     detector = _detector(ml_prob=0.60)
-    assert detector.config.ml_decisive_threshold == 0.85
+    assert detector.config.ml_decisive_threshold == 0.5
+    assert _predict(detector) is True
+
+
+def test_legacy_high_gate_would_suppress_the_same_hit():
+    detector = _detector(ml_prob=0.60)
+    detector.config.ml_decisive_threshold = 0.85
     assert _predict(detector) is False
 
 

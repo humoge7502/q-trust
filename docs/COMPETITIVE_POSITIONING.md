@@ -29,7 +29,7 @@
 | Open research artifact | ✅ 16-page paper, ceiling theorem, 53/53 claims harness | ✗ | ✗ | ✗ | ✗ | **AHEAD** |
 | Privacy (hash-only) | ✅ hash-only evidence model | ~ | ~ | ~ | ~ | **PARITY/AHEAD** |
 | Self-hostable / open | ✅ Docker compose, self-host | ✗ SaaS | ✗ SaaS | ✗ | ✅ | **AHEAD vs SaaS** |
-| Detector accuracy (clean eval) | ✅ F1 **0.9039** on the de-duplicated digest eval (1,779 files; P 0.9492 / R 0.8626) and **0.9077** native, **0 % train overlap**, +0.24 over TF-IDF baseline (E-14/E-15) | ? | ? | ? | ? | **UNKNOWN vs them** (no shared benchmark) |
+| Detector accuracy (clean eval) | ✅ F1 **0.9205** on the de-duplicated digest eval (1,779 files; P 0.9264 / R 0.9146) and **0.9235** native, **0 % train overlap**, +0.24 over TF-IDF baseline (E-14/E-15/E-16; legacy 0.85 gate scored 0.9039/0.9077) | ? | ? | ? | ? | **UNKNOWN vs them** (no shared benchmark) |
 
 ---
 
@@ -60,7 +60,7 @@
 | Move | Why it creates distance | Effort |
 |---|---|---|
 | Ship a **signed attestation an auditor verifies offline** as the front-door demo | Nobody else offers verifiable migration proof | S (primitives exist) |
-| Publish a **clean v1-vs-v4 head-to-head** on one split | Converts the leakage negative into a defensible claim | M (GPU retrain) |
+| Publish the **leakage-audited, de-duplicated v4 evaluation** (E-15/E-16: F1 0.9205 clean, 0.9235 native) | Converts the leakage negative into a defensible, reproducible claim; a "v4 beats v1" comparison is not claimed because 87.6 % of v1's eval paths were in its training set | S (done) |
 | Land **1 paying regulated design partner** + a reference attestation | Turns capability into market proof | L (GTM) |
 | External contract audit + FTO opinion | Unblocks enterprise procurement | L (external) |
 | Sector-pack depth (control-by-control crosswalk) | Content IP competitors can't copy fast | M |

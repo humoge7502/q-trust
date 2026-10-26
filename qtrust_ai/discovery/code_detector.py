@@ -335,9 +335,11 @@ class DetectorConfig:
     ml_weight: float = 0.20
     threshold: float = 0.5
     # A confident ML hit with no rule/AST/dataflow corroboration is allowed to
-    # decide alone only above this probability. Select it on a held-out split;
-    # at 0.5 the gate matches the model's own operating point.
-    ml_decisive_threshold: float = 0.85
+    # decide alone only above this probability. 0.5 was selected on the
+    # source-disjoint native v4 split (F1 0.9235 vs 0.9077 at 0.85) and
+    # confirmed on the pinned split (0.9144 vs 0.8966); it matches the model's
+    # own operating point instead of suppressing its mid-confidence detections.
+    ml_decisive_threshold: float = 0.5
     seed: int = 42
     max_file_size_bytes: int = 2_000_000
     context_lines: int = 2
