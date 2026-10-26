@@ -18,15 +18,24 @@ this script measures the size of the problem without retraining:
      keep-first, keep-last, keep-longest, and unique content;
   3. report label conflicts and code conflicts inside each duplicated key.
 
-The raw-policy row is an assertion target: it must reproduce the shipped
-``eval_pinned`` numbers (P 0.9429 / R 0.8546 / F1 0.8966). If it does not, the
-checkpoint, split or corpus changed and the comparison is not valid.
+The raw-policy row is an assertion target for the canonical checkpoint: at the
+legacy 0.85 gate it must reproduce E-15's P 0.9429 / R 0.8546 / F1 0.8966; at
+the selected 0.50 gate it must reproduce E-16's P 0.9201 / R 0.9088 / F1 0.9144.
+Other gate values are scored without the assertion, as are non-canonical
+checkpoints (a candidate model is not expected to reproduce the shipped
+numbers), which lets the same script re-check a candidate checkpoint or a
+different inference environment. ``raw_reproduces_shipped`` is therefore
+``true``/``false`` only for the canonical checkpoint at a known gate and
+``null`` otherwise.
 
 Run:
-    python scripts/evaluate_dedup_eval.py
+    python scripts/evaluate_dedup_eval.py --gate 0.85
+    python scripts/evaluate_dedup_eval.py --checkpoint qtrust_ai/artifacts/crypto_codebert_v4-dedup \
+        --out qtrust_ai/artifacts/eval_dedup_v4_dedupmodel.json
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sys
@@ -44,7 +53,10 @@ CORPUS_V4 = DATASETS / "code_corpus_v4.json"
 CHECKPOINT = REPO_ROOT / "qtrust_ai" / "artifacts" / "crypto_codebert_v4"
 OUT = REPO_ROOT / "qtrust_ai" / "artifacts" / "eval_dedup_v4.json"
 
-EXPECTED_RAW = {"precision": 0.9429, "recall": 0.8546, "f1": 0.8966}
+EXPECTED_RAW_BY_GATE = {
+    0.85: {"precision": 0.9429, "recall": 0.8546, "f1": 0.8966},
+    0.50: {"precision": 0.9201, "recall": 0.9088, "f1": 0.9144},
+}
 
 
 def metrics(rows: list[dict]) -> dict:
@@ -90,7 +102,7 @@ def dedupe(rows: list[dict], policy: str) -> list[dict]:
         seen = set()
         out = []
         for r in rows:
-            key = (r["source"], r["path"], r["content_sha1"])
+            key = (r["source"], r["path"], r["content_sha256"])
             if key in seen:
                 continue
             seen.add(key)
@@ -111,6 +123,20 @@ def dedupe(rows: list[dict], policy: str) -> list[dict]:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--checkpoint", default=str(CHECKPOINT))
+    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument(
+        "--gate",
+        type=float,
+        default=0.5,
+        help="ml_decisive_threshold for the ensemble (default: selected 0.50 gate)",
+    )
+    args = ap.parse_args()
+    checkpoint = Path(args.checkpoint).resolve()
+    out_path = Path(args.out).resolve()
+    expected = EXPECTED_RAW_BY_GATE.get(round(args.gate, 2))
+
     from train_qtrust_all import _code_splits
     from qtrust_ai.discovery.code_detector import CryptoCodeDetector
 
@@ -121,11 +147,8 @@ def main() -> int:
     raw = [r for r in v4["corpus"] if r["source"] in eval_sources]
 
     for r in raw:
-        # nosemgrep: python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1
-        # SHA-1 here is a content-identity key for duplicate detection only
-        # (never a signature or credential); changing the algorithm would
-        # break exact reproduction of the committed eval_dedup_v4.json.
-        r["content_sha1"] = hashlib.sha1(r["code"].encode("utf-8")).hexdigest()
+        # content-identity digest for duplicate detection (not a credential)
+        r["content_sha256"] = hashlib.sha256(r["code"].encode("utf-8")).hexdigest()
 
     groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
     for r in raw:
@@ -134,7 +157,7 @@ def main() -> int:
     conflicting_labels = sum(
         1 for v in duplicated.values() if len({bool(r["is_crypto"]) for r in v}) > 1
     )
-    differing_code = sum(1 for v in duplicated.values() if len({r["content_sha1"] for r in v}) > 1)
+    differing_code = sum(1 for v in duplicated.values() if len({r["content_sha256"] for r in v}) > 1)
 
     print(
         f"raw eval {len(raw)} records / {len(groups)} keys; "
@@ -143,12 +166,13 @@ def main() -> int:
     )
 
     det = CryptoCodeDetector(seed=42)
-    if not det.load_fine_tuned(str(CHECKPOINT)):
-        raise SystemExit(f"could not load checkpoint at {CHECKPOINT}")
+    if not det.load_fine_tuned(str(checkpoint)):
+        raise SystemExit(f"could not load checkpoint at {checkpoint}")
+    det.config.ml_decisive_threshold = args.gate
     print(
-        f"device={getattr(det, 'device', 'cpu')} "
-        f"max_len={getattr(det.config, 'max_len', '?')} "
-        f"threshold={det.config.threshold}"
+        f"device={getattr(det, '_hf_device', 'cpu')} "
+        f"max_len={getattr(det, '_hf_max_len', '?')} "
+        f"threshold={det.config.threshold} gate={args.gate}"
     )
 
     started = time.time()
@@ -168,17 +192,21 @@ def main() -> int:
         results[policy] = kept[policy]
 
     longest_rows = dedupe(raw, "keep_longest")
-    reproduced = all(
-        abs(results["raw"][key] - value) < 1e-4 for key, value in EXPECTED_RAW.items()
-    )
-    if not reproduced:
-        raise SystemExit(
-            "raw metrics did not reproduce the shipped eval_pinned numbers: "
-            f"{results['raw']} vs {EXPECTED_RAW}"
+    reproduced = None
+    if expected is not None and checkpoint == CHECKPOINT.resolve():
+        reproduced = all(
+            abs(results["raw"][key] - value) < 1e-4 for key, value in expected.items()
         )
+        if reproduced is False:
+            raise SystemExit(
+                "raw metrics did not reproduce the shipped eval_pinned numbers at "
+                f"gate {args.gate}: {results['raw']} vs {expected}"
+            )
 
     artifact = {
-        "checkpoint": str(CHECKPOINT.relative_to(REPO_ROOT)),
+        "checkpoint": str(checkpoint.relative_to(REPO_ROOT))
+        if checkpoint.is_relative_to(REPO_ROOT) else str(checkpoint),
+        "gate": args.gate,
         "corpus": str(CORPUS_V4),
         "split": "pinned digest split of corpus v3 (seed 42), repo-disjoint",
         "duplicates": {
@@ -191,7 +219,7 @@ def main() -> int:
         },
         "policies": results,
         "per_language_keep_longest": per_language(longest_rows),
-        "raw_reproduces_shipped": True,
+        "raw_reproduces_shipped": reproduced,
         "notes": (
             "Ensemble detector.predict is used, matching training_report_v4.json's "
             "eval_pinned. The spread across de-duplication policies bounds how much "
@@ -201,14 +229,16 @@ def main() -> int:
         ),
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
-    OUT.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
+    out_path.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
 
     for name, row in results.items():
         print(
             f"{name:14s} n={row['n']:4d} P={row['precision']:.4f} "
             f"R={row['recall']:.4f} F1={row['f1']:.4f} FN={row['fn']}"
         )
-    print(f"artifact: {OUT}")
+    if reproduced is not None:
+        print(f"raw reproduces shipped gate {args.gate} numbers: {reproduced}")
+    print(f"artifact: {out_path}")
     return 0
 
 

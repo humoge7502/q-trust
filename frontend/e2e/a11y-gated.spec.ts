@@ -49,6 +49,11 @@ const ETH_PROVIDER_INIT = `
 `;
 
 test.describe("wallet-gated a11y (TD-12)", () => {
+  // CI compiles /dashboard and /vendors on first hit (Next dev on-demand);
+  // the 30s default expires mid-compile. 120s covers a cold compile + the
+  // connect flow on both viewports.
+  test.setTimeout(120_000);
+
   for (const route of ["/dashboard", "/vendors"]) {
     test(`${route} connected state has no critical or serious violations`, async ({ page }) => {
       await page.addInitScript(ETH_PROVIDER_INIT);
@@ -61,6 +66,14 @@ test.describe("wallet-gated a11y (TD-12)", () => {
       // connected state has not appeared, so the test is deterministic in
       // both environments rather than depending on a third-party endpoint.
       const connected = page.getByText(/wallet is connected/i).first();
+      // Wait out a possible cold on-demand compile before starting the
+      // connect flow: the gate h1 or the connected state must appear.
+      await page
+        .getByRole("heading", { name: "Connect your wallet" })
+        .waitFor({ state: "visible", timeout: 60_000 })
+        .catch(async () => {
+          await connected.waitFor({ state: "visible", timeout: 10_000 });
+        });
       try {
         await connected.waitFor({ state: "visible", timeout: 8_000 });
       } catch {
