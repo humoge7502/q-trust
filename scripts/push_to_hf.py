@@ -116,7 +116,7 @@ def upload_model(api: HfApi) -> None:
         allow_patterns=[name for name in MODEL_FILES if name != "model.safetensors"],
         commit_message="Publish v4 detector with int8 ONNX export and corrected metrics",
     )
-    print(f"[model] card + tokenizer + onnx uploaded ({info.commit_id[:10]})")
+    print(f"[model] card + tokenizer + onnx uploaded ({info.oid[:10]})")
     for name in MODEL_ARTIFACTS:
         path = ART / name
         if not path.exists():
@@ -191,7 +191,7 @@ def upload_space(api: HfApi) -> None:
         allow_patterns=SPACE_FILES,
         commit_message="Serve the v4 int8 detector with corrected metrics",
     )
-    print(f"[space] uploaded ({info.commit_id[:10]})")
+    print(f"[space] uploaded ({info.oid[:10]})")
 
 
 TASKS = {
