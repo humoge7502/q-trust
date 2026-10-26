@@ -264,3 +264,10 @@ if (isStandalone) {
   };
   await start();
 }
+
+// The Vercel project carries the Fastify framework preset, whose lambda wraps
+// this module and requires a default function/server export (it receives no
+// traffic — routes send /api/* to api/index.mjs — but an invalid export fails
+// the whole deployment at boot). Under serverless the IS_SERVERLESS guard
+// above keeps this module from ever binding a port.
+export default buildServer;
