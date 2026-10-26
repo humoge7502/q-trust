@@ -53,10 +53,12 @@ export default defineConfig({
     baseURL: BASE_URL,
   },
   webServer: {
-    // Empty WalletConnect ID for e2e: with a placeholder ID RainbowKit fetches
-    // Reown's remote config, which 403s under CI and loops until the gated
-    // pages never render. Injected-connector flows need no cloud project.
-    env: { ...process.env, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "" },
+    // Pin the 32-zero placeholder for e2e: wagmi.ts rejects an empty ID at
+    // module scope, while any real-looking ID makes RainbowKit fetch Reown's
+    // remote config (403 loop under CI). The placeholder is the accepted
+    // no-cloud mode; e2e/global-setup.ts pre-warms routes to absorb the
+    // residual config-fetch latency.
+    env: { ...process.env, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "00000000000000000000000000000000" },
     command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: true,

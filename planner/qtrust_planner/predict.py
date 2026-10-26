@@ -172,13 +172,16 @@ def load_cbom(cbom_path: str) -> dict[str, Any]:
 
 
 def load_dependency_graph(
-    deps_path: str | dict[str, Any] | None, n_assets: int
+    deps: dict[str, Any] | None, n_assets: int
 ) -> list[list[int]]:
     """Load or synthesize a dependency graph.
 
     Args:
-        deps_path: Path to a deps.json file, an inline ``{"edges": [[src,
-            tgt], ...]}`` dict (as accepted by POST /plan), or None.
+        deps: Inline ``{"edges": [[src, tgt], ...]}`` dict (as accepted by
+            POST /plan), or None. Filesystem paths are deliberately NOT
+            accepted from callers (CodeQL py/path-injection): request data
+            must never address host files. Offline tooling that needs a file
+            reads the JSON itself and passes the dict.
         n_assets: Number of assets (used to synthesize a trivial graph).
 
     Returns:
@@ -187,8 +190,8 @@ def load_dependency_graph(
     """
     # Audit P-4: /plan used to stringify the inline deps dict and pass it as a
     # path — os.path.exists always failed and edges were silently dropped.
-    if isinstance(deps_path, dict):
-        raw_edges = deps_path.get("edges", [])
+    if isinstance(deps, dict):
+        raw_edges = deps.get("edges", [])
         parsed: list[list[int]] = []
         for e in raw_edges:
             try:
@@ -200,27 +203,6 @@ def load_dependency_graph(
         if parsed:
             return parsed
         # Fall through to synthesis when the dict carries no usable edges.
-
-    if isinstance(deps_path, str) and deps_path and os.path.exists(deps_path):
-        # Path-containment guard (CodeQL py/path-injection): a request-supplied
-        # string is honored as a dependency-map file only when it resolves
-        # inside the configured data roots — never arbitrary host paths.
-        allowed_roots = [
-            Path(p.strip()).resolve()
-            for p in os.environ.get(
-                "QTRUST_DEPS_ALLOWED_ROOTS", str(Path.cwd() / "data")
-            ).split(";")
-            if p.strip()
-        ]
-        resolved = Path(deps_path).resolve()
-        if not any(resolved.is_relative_to(root) for root in allowed_roots):
-            raise ValueError(
-                "deps path is outside the allowed data roots "
-                "(set QTRUST_DEPS_ALLOWED_ROOTS to a ';'-separated list)"
-            )
-        with open(resolved, encoding="utf-8") as f:
-            deps_data = json.load(f)
-        return [[d["source"], d["target"]] for d in deps_data.get("dependencies", [])]
 
     # Synthesize a trivial graph: asset 0 is a root that everything depends on.
     # This is a sensible default for orgs without an explicit dependency map.
@@ -392,13 +374,20 @@ def predict_detailed(
     Args:
         cbom_path: Path to a CBOM JSON file.
         model_path: Path to the trained model checkpoint.
-        deps_path: Optional path to a dependency JSON file.
+        deps_path: Optional path to a dependency JSON file (CLI-only — this
+            function is offline tooling, not request-facing).
 
     Returns:
         A dict with: migration_order (list of dicts), total_assets, model_info.
     """
     cbom = load_cbom(cbom_path)
-    data, asset_records = cbom_to_graph(cbom, deps_path)
+    deps: dict[str, Any] | None = None
+    if deps_path:
+        # CLI boundary: read the file here so request-facing cbom_to_graph
+        # never accepts filesystem paths (CodeQL py/path-injection).
+        with open(deps_path, encoding="utf-8") as f:
+            deps = json.load(f)
+    data, asset_records = cbom_to_graph(cbom, deps)
 
     if not os.path.exists(model_path):
         _warn_heuristic_mode(f"model file not found at {model_path}")
