@@ -53,12 +53,15 @@ export default defineConfig({
     baseURL: BASE_URL,
   },
   webServer: {
-    // Pin the 32-zero placeholder for e2e: wagmi.ts rejects an empty ID at
-    // module scope, while any real-looking ID makes RainbowKit fetch Reown's
-    // remote config (403 loop under CI). The placeholder is the accepted
-    // no-cloud mode; e2e/global-setup.ts pre-warms routes to absorb the
-    // residual config-fetch latency.
-    env: { ...process.env, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "00000000000000000000000000000000" },
+    // "demo" for e2e: wagmi.ts needs a non-empty ID, and any non-"demo" value
+    // makes HAS_REAL_WALLETCONNECT true — RainbowKit then lists the
+    // WalletConnect wallet, whose relay rejects unknown origins over a
+    // WebSocket ("Origin ... not found on Allowlist") that page.route cannot
+    // intercept, hanging app init before the gate renders. "demo" is the
+    // codebase's own no-cloud signal: injected-only wallets, no relay. The
+    // spec additionally aborts Reown/web3modal HTTP fetches, and
+    // e2e/global-setup.ts pre-warms routes.
+    env: { ...process.env, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "demo" },
     command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: true,
