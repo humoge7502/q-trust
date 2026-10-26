@@ -58,10 +58,14 @@ test.describe("wallet-gated a11y (TD-12)", () => {
     test(`${route} connected state has no critical or serious violations`, async ({ page }) => {
       await page.addInitScript(ETH_PROVIDER_INIT);
       // No third-party egress: RainbowKit's remote-config fetch 403s under CI
-      // (placeholder project ID) and retries for the whole test window. The
-      // app already degrades to local/default values, so aborting the request
-      // makes that degradation instant and deterministic.
-      await page.route(/reown\.com|walletconnect\.com|web3modal\.org/, (r) => r.abort());
+      // (placeholder project ID) and retries for the whole test window; and
+      // after connect, useUserRole issues two eth_calls through viem's HTTP
+      // public client (sepolia.base.org) — public-RPC latency from CI runners
+      // kept the page in "Checking wallet…" past every budget. Aborting these
+      // hosts makes the degradation instant and deterministic: RainbowKit
+      // falls back to local/default values, and the role queries error out
+      // immediately (retry: false) so the connected empty state renders.
+      await page.route(/reown\.com|walletconnect\.com|web3modal\.org|sepolia\.base\.org/, (r) => r.abort());
       await page.goto(route);
       await expectQTrustApp(page);
 
