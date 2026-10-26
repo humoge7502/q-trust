@@ -51,17 +51,6 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
   if (!path.isAbsolute(rawDir)) {
     throw Object.assign(new Error("directory must be an absolute path"), { statusCode: 400 });
   }
-  // Resolve symlinks/.. segments so the allowed-roots check cannot be bypassed.
-  let resolved: string;
-  try {
-    resolved = await fsp.realpath(path.resolve(rawDir));
-  } catch {
-    throw Object.assign(new Error("directory does not exist"), { statusCode: 400 });
-  }
-  const stat = await fsp.stat(resolved).catch(() => null);
-  if (!stat?.isDirectory()) {
-    throw Object.assign(new Error("path is not a directory"), { statusCode: 400 });
-  }
   const allowedRootsRaw = process.env.QTRUST_SCAN_ALLOWED_ROOTS;
   if (!allowedRootsRaw && process.env.NODE_ENV === "production") {
     // Fail closed: in production an unset allowlist would let any caller scan
@@ -71,8 +60,13 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
       { statusCode: 503 },
     );
   }
+
+  // String-level normalization only — no filesystem call touches the
+  // caller-supplied path until it has passed the allowed-roots guard below.
+  const normalized = path.resolve(rawDir);
+  let roots: string[] = [];
   if (allowedRootsRaw) {
-    const roots = await Promise.all(
+    roots = await Promise.all(
       allowedRootsRaw
         .split(",")
         .map((r) => r.trim())
@@ -97,8 +91,30 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
           }
         }),
     );
-    const allowed = roots.some((root) => resolved === root || resolved.startsWith(root + path.sep));
+    const allowed = roots.some((root) => normalized === root || normalized.startsWith(root + path.sep));
     if (!allowed) {
+      throw Object.assign(
+        new Error("directory is outside the configured scan roots"),
+        { statusCode: 403 },
+      );
+    }
+  }
+
+  // The path is inside an allowed root: now resolve symlinks/.. segments and
+  // re-check, so a symlink inside an allowed root cannot point outside it.
+  let resolved: string;
+  try {
+    resolved = await fsp.realpath(normalized);
+  } catch {
+    throw Object.assign(new Error("directory does not exist"), { statusCode: 400 });
+  }
+  const stat = await fsp.stat(resolved).catch(() => null);
+  if (!stat?.isDirectory()) {
+    throw Object.assign(new Error("path is not a directory"), { statusCode: 400 });
+  }
+  if (roots.length > 0) {
+    const stillAllowed = roots.some((root) => resolved === root || resolved.startsWith(root + path.sep));
+    if (!stillAllowed) {
       throw Object.assign(
         new Error("directory is outside the configured scan roots"),
         { statusCode: 403 },

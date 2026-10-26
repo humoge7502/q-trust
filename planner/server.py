@@ -518,7 +518,7 @@ def _load_model() -> None:
     candidates_status = {k: os.path.exists(v) for k, v in _MODEL_CANDIDATES.items()}
     if resolved_path is None:
         _warn_heuristic_mode(f"model file not found — checked {list(_MODEL_CANDIDATES.values())}")
-        _model_info = {"mode": "heuristic", "reason": "no checkpoint found", "candidates": candidates_status, "tried": list(_MODEL_CANDIDATES.values())}
+        _model_info = {"mode": "heuristic", "reason": "no checkpoint found", "candidates": candidates_status}
         return
 
     # TM-PL-02: verify the resolved GNN checkpoint before torch.load — a
@@ -551,7 +551,9 @@ def _load_model() -> None:
             "mode": "gnn",
             "arch": arch,
             "variant": variant,
-            "path": resolved_path,
+            # Basename only: the API is anonymous, and absolute server paths
+            # have no consumer here (provenance value is the checkpoint name).
+            "path": Path(resolved_path).name,
             "config": cfg,
             "eval_metrics": eval_metrics,
             "candidates": candidates_status,
@@ -560,8 +562,10 @@ def _load_model() -> None:
         }
         logger.info(json.dumps({"event": "planner_model_loaded", "path": resolved_path, "arch": arch, "variant": variant}))
     except Exception as exc:
+        # Full detail goes to the log only — the response carries just the
+        # exception class, since str(exc) can embed filesystem paths.
         _warn_heuristic_mode(f"model load failed at {resolved_path}: {type(exc).__name__}: {exc}")
-        _model_info = {"mode": "heuristic", "reason": f"model load failed: {exc}", "candidates": candidates_status, "tried_path": resolved_path}
+        _model_info = {"mode": "heuristic", "reason": f"model load failed ({type(exc).__name__})", "candidates": candidates_status}
 
 
 def _heuristic_priority(asset: dict[str, Any]) -> float:

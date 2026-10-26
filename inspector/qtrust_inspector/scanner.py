@@ -165,6 +165,9 @@ class CryptoScanner:
             An AssetFinding object or None if failed.
         """
         ctx = ssl.create_default_context()
+        # Certificate metadata is fetched like a modern client would; endpoints
+        # that only speak pre-TLS1.2 are handled by the isolated cipher probe.
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
 
         try:
             with socket.create_connection((host, port), timeout=self.timeout) as sock:

@@ -27,6 +27,9 @@ class RuntimeObservation:
 def observe_tls(host: str, port: int = 443, timeout: float = 5.0) -> RuntimeObservation | None:
     try:
         ctx = ssl.create_default_context()
+        # Observe what a modern client negotiates; pre-TLS1.2 endpoints fail
+        # the observation (returned as None) rather than being probed.
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         with socket.create_connection((host, port), timeout=timeout) as sock:
             with ctx.wrap_socket(sock, server_hostname=host) as ssock:
                 cipher = ssock.cipher()
