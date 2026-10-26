@@ -64,6 +64,11 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
   // String-level normalization only — no filesystem call touches the
   // caller-supplied path until it has passed the allowed-roots guard below.
   const normalized = path.resolve(rawDir);
+  /** CodeQL-recognized containment guard: the canonical path.relative idiom. */
+  const isInsideRoot = (candidate: string, root: string): boolean => {
+    const rel = path.relative(root, candidate);
+    return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+  };
   let roots: string[] = [];
   if (allowedRootsRaw) {
     roots = await Promise.all(
@@ -91,8 +96,7 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
           }
         }),
     );
-    const allowed = roots.some((root) => normalized === root || normalized.startsWith(root + path.sep));
-    if (!allowed) {
+    if (!roots.some((root) => isInsideRoot(normalized, root))) {
       throw Object.assign(
         new Error("directory is outside the configured scan roots"),
         { statusCode: 403 },
@@ -112,14 +116,11 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
   if (!stat?.isDirectory()) {
     throw Object.assign(new Error("path is not a directory"), { statusCode: 400 });
   }
-  if (roots.length > 0) {
-    const stillAllowed = roots.some((root) => resolved === root || resolved.startsWith(root + path.sep));
-    if (!stillAllowed) {
-      throw Object.assign(
-        new Error("directory is outside the configured scan roots"),
-        { statusCode: 403 },
-      );
-    }
+  if (roots.length > 0 && !roots.some((root) => isInsideRoot(resolved, root))) {
+    throw Object.assign(
+      new Error("directory is outside the configured scan roots"),
+      { statusCode: 403 },
+    );
   }
   return resolved;
 }
