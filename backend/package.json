@@ -3,7 +3,7 @@
   "version": "2.2.0",
   "private": true,
   "type": "module",
-  "description": "Q-Trust backend \u2014 Fastify verification API, attestation relayer, webhook delivery.",
+  "description": "Q-Trust backend — Fastify verification API, attestation relayer, webhook delivery.",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -39,7 +39,8 @@
     "viem": "^2.16.0"
   },
   "overrides": {
-    "fast-uri": "^4.1.4"
+    "fast-uri": "^4.1.4",
+    "content-disposition": "0.5.4"
   },
   "devDependencies": {
     "@stryker-mutator/core": "^10.1.1",
