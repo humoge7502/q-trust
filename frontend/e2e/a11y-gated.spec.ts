@@ -84,8 +84,9 @@ test.describe("wallet-gated a11y (TD-12)", () => {
           : page.getByRole("heading", { name: "Connect your wallet" });
       await readyTarget
         .waitFor({ state: "visible", timeout: 60_000 })
-        .catch(async () => {
-          await connected.waitFor({ state: "visible", timeout: 10_000 });
+        .catch(() => {
+          // Connected already (ready target never renders when connected) —
+          // fall through; the try/catch below confirms it.
         });
       try {
         await connected.waitFor({ state: "visible", timeout: 8_000 });
