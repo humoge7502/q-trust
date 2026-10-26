@@ -72,9 +72,13 @@ test.describe("wallet-gated a11y (TD-12)", () => {
       // both environments rather than depending on a third-party endpoint.
       const connected = page.getByText(/wallet is connected/i).first();
       // Wait out a possible cold on-demand compile before starting the
-      // connect flow: the gate h1 or the connected state must appear.
-      await page
-        .getByRole("heading", { name: "Connect your wallet" })
+      // connect flow. The dashboard's unauthenticated state is the
+      // "Org dashboard" CenteredNote; vendors still renders the WalletGate.
+      const readyTarget =
+        route === "/dashboard"
+          ? page.getByRole("heading", { name: "Org dashboard" })
+          : page.getByRole("heading", { name: "Connect your wallet" });
+      await readyTarget
         .waitFor({ state: "visible", timeout: 60_000 })
         .catch(async () => {
           await connected.waitFor({ state: "visible", timeout: 10_000 });
@@ -91,11 +95,11 @@ test.describe("wallet-gated a11y (TD-12)", () => {
           .first()
           .click({ timeout: 10_000 });
       }
-      // The gate's h1 must be gone and the connected surface must state the
-      // wallet is connected (empty state on a clean chain) — asserting the
-      // connected state keeps this test from passing vacuously against the
-      // gate.
-      await expect(page.getByRole("heading", { name: "Connect your wallet" })).toBeHidden({ timeout: 20_000 });
+      // The connect prompt must be gone and the connected surface must
+      // state the wallet is connected (empty state on a clean chain) —
+      // asserting the connected state keeps this test from passing vacuously
+      // against the gate.
+      await expect(page.getByText(/connect a wallet/i).first()).toBeHidden({ timeout: 20_000 });
       await expect(connected).toBeVisible({ timeout: 20_000 });
 
       await waitForSettledAnimations(page);
