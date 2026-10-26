@@ -43,3 +43,12 @@ Clones live in the sibling `.skills-cache/` directory (outside git).
   fixes; PRODUCT.md + DESIGN.md locked.
 - 2026-10-26: ui-ux-pro-max + addyosmani/frontend-ui-engineering integrated;
   command palette (⌘K) + scanner content skeletons shipped from their gaps.
+- 2026-10-27: the four remaining user-listed repos triaged — trailhq/Trail-Code
+  (agent code-map/learnings) and DeusData/codebase-memory-mcp (LSP code-intel MCP)
+  are developer-workflow tooling, not product features; calesthio/OpenMontage
+  (agentic video production) is a potential marketing-asset tool; msitarzewski/
+  agency-agents (persona collection) not relevant. Cloned to .skills-cache.
+  Taste inspector re-run: 11 FAIL / 3 WARN — identical to the locked baseline;
+  every FAIL is an on-record waiver (micro-labels, hairlines, orb gradients,
+  mono-for-data, 14px body). No new craft regressions from /pricing, /evidence,
+  /certify or the command palette.

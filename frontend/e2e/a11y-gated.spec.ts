@@ -57,6 +57,11 @@ test.describe("wallet-gated a11y (TD-12)", () => {
   for (const route of ["/dashboard", "/vendors"]) {
     test(`${route} connected state has no critical or serious violations`, async ({ page }) => {
       await page.addInitScript(ETH_PROVIDER_INIT);
+      // No third-party egress: RainbowKit's remote-config fetch 403s under CI
+      // (placeholder project ID) and retries for the whole test window. The
+      // app already degrades to local/default values, so aborting the request
+      // makes that degradation instant and deterministic.
+      await page.route(/reown\.com|walletconnect\.com|web3modal\.org/, (r) => r.abort());
       await page.goto(route);
       await expectQTrustApp(page);
 

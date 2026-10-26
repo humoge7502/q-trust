@@ -40,6 +40,13 @@ A CycloneDX CBOM of every cryptographic asset in your tree — algorithms, key
 sizes, quantum exposure, NIST/CNSA compliance — in about a minute. No account,
 no upload ([GitHub Action](cbom-action) too).
 
+Surface the same findings natively in GitHub's code scanning UI:
+
+```bash
+crypto-inspector scan-source . --sarif qtrust.sarif
+# then: github/codeql-action/upload-sarif@v3 with sarif_file: qtrust.sarif
+```
+
 <br/>
 
 <div align="center">

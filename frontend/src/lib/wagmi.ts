@@ -59,7 +59,10 @@ if (!RAW_WALLETCONNECT_PROJECT_ID || RAW_WALLETCONNECT_PROJECT_ID === "demo") {
   }
 }
 
-const WALLETCONNECT_PROJECT_ID = RAW_WALLETCONNECT_PROJECT_ID ?? "demo";
+// `||` (not `??`): the e2e webServer deliberately sets NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=""
+// so CI never fetches Reown's remote config; an empty string must fall through to "demo"
+// exactly like an unset var, or the invariant below throws and the dev server cannot boot.
+const WALLETCONNECT_PROJECT_ID = RAW_WALLETCONNECT_PROJECT_ID || "demo";
 
 if (!WALLETCONNECT_PROJECT_ID || typeof WALLETCONNECT_PROJECT_ID !== "string") {
   throw new Error("[Q-Trust] WALLETCONNECT_PROJECT_ID resolved to empty — wagmi config cannot initialize.");
