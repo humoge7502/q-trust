@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q-Trust — crypto-usage scanner</title>
+<meta name="description" content="Find cryptographic API usage in source code. A leakage-audited CodeBERTa classifier runs entirely in your browser.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="https://github.com/humoge7502/q-trust" target="_blank" rel="noreferrer">
+    <span class="brand-mark" aria-hidden="true">Q</span>
+    <span>Q-Trust</span>
+  </a>
+  <div class="nav-meta">
+    <span class="pill">On-device inference</span>
+    <a href="https://github.com/humoge7502/q-trust" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://huggingface.co/KRISHNAPURI/q-trust-crypto-detector" target="_blank" rel="noreferrer">Model</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow"><span class="signal" aria-hidden="true"></span> Private by default — code never leaves this tab</p>
+    <h1>Crypto usage,<br><span>visible in seconds.</span></h1>
+    <p class="lede">
+      Paste a file or a snippet. A CodeBERTa classifier finds cryptographic primitives —
+      including post-quantum algorithms — and tells you what to migrate.
+    </p>
+    <ul class="hero-facts" aria-label="Model facts">
+      <li><strong>F1 0.9205</strong><span>de-duplicated held-out</span></li>
+      <li><strong>0 %</strong><span>train/eval path overlap</span></li>
+      <li><strong>12</strong><span>languages</span></li>
+      <li><strong>~84 MB</strong><span>int8 ONNX, loaded once</span></li>
+    </ul>
+  </section>
+
+  <section class="workspace" aria-label="Scanner">
+    <article class="panel editor-panel">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Input</p>
+          <h2>Source code</h2>
+        </div>
+        <span class="mono-tag">max 256 tokens</span>
+      </div>
+
+      <label class="sr-only" for="code">Source code to scan</label>
+      <div class="editor-shell">
+        <pre class="gutter" id="gutter" aria-hidden="true">1</pre>
+        <textarea id="code" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off"
+          placeholder="Paste a file, or start from one of the examples below…"></textarea>
+      </div>
+
+      <div class="examples" role="group" aria-label="Example snippets">
+        <button type="button" class="chip" data-example="rsa">RSA keygen</button>
+        <button type="button" class="chip" data-example="mlkem">ML-KEM keypair</button>
+        <button type="button" class="chip" data-example="aes">AES-GCM</button>
+        <button type="button" class="chip" data-example="clean">Clean code</button>
+      </div>
+
+      <div class="actions">
+        <span id="count" class="micro">0 characters</span>
+        <button id="scan" class="primary" type="button" disabled>
+          <span class="btn-label">Analyze code</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p class="hint">Tip: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to scan.</p>
+    </article>
+
+    <aside class="panel result-panel" aria-live="polite">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Output</p>
+          <h2>Assessment</h2>
+        </div>
+        <span class="mono-tag">gate 0.50</span>
+      </div>
+
+      <div id="loading" class="state">
+        <div class="loader" aria-hidden="true"></div>
+        <p id="status" class="state-title">Loading the model…</p>
+        <p class="state-body">First run downloads ~84 MB of quantized weights. Inference then runs locally in WebAssembly.</p>
+      </div>
+
+      <div id="idle" class="state" hidden>
+        <p class="state-title">Nothing scanned yet</p>
+        <p class="state-body">Add code on the left. The classifier returns a verdict, a calibrated confidence score, and migration notes for the primitives it recognizes.</p>
+      </div>
+
+      <div id="error" class="state" hidden>
+        <p class="state-title">The model could not start</p>
+        <p class="state-body" id="error-body">Try a current version of Chrome, Edge, Firefox, or Safari with WebAssembly enabled.</p>
+      </div>
+
+      <div id="output" class="output" hidden>
+        <div id="verdict" class="verdict"></div>
+        <div class="probability">
+          <div class="probability-head">
+            <span>Crypto probability</span>
+            <strong id="prob">—</strong>
+          </div>
+          <div class="meter" role="img" aria-label="Crypto probability meter">
+            <span id="meter-fill"></span>
+            <i class="threshold" aria-hidden="true"></i>
+          </div>
+          <p class="micro">Decision threshold 0.50 · calibrated temperature 1.84</p>
+        </div>
+        <div id="notes-wrap" hidden>
+          <p class="kicker">What this means</p>
+          <ul id="notes" class="notes"></ul>
+        </div>
+        <p id="timing" class="micro timing" hidden></p>
+        <p class="disclaimer">Usage discovery only. This is not a misuse audit, a vulnerability scan, or a substitute for human review.</p>
+      </div>
+    </aside>
+  </section>
+
+  <section class="provenance" aria-label="Provenance and limits">
+    <div>
+      <p class="kicker">Model</p>
+      <h2>Leakage-audited, not leaderboard-tuned.</h2>
+      <p>
+        Corpus v4: 17,171 real files across 58 repositories, regex-derived weak labels,
+        repo-disjoint split. The primary score is <strong>F1 0.9205</strong> on the
+        de-duplicated held-out view at a 0.50 gate; the native split scores
+        <strong>0.9235</strong>. Earlier v1 models trained on 87.6 % of their own eval
+        paths — that result is retired, not quoted.
+      </p>
+    </div>
+    <div class="link-grid">
+      <a href="https://huggingface.co/KRISHNAPURI/q-trust-crypto-detector" target="_blank" rel="noreferrer">
+        <span>Model card</span>
+        <small>q-trust-crypto-detector</small>
+      </a>
+      <a href="https://huggingface.co/datasets/KRISHNAPURI/q-trust-code-corpus-v4" target="_blank" rel="noreferrer">
+        <span>Dataset</span>
+        <small>code corpus v4</small>
+      </a>
+      <a href="https://github.com/humoge7502/q-trust/blob/main/EXPERIMENTS.md" target="_blank" rel="noreferrer">
+        <span>Experiment log</span>
+        <small>E-14 → E-17c</small>
+      </a>
+      <a href="https://github.com/humoge7502/q-trust" target="_blank" rel="noreferrer">
+        <span>Source</span>
+        <small>humoge7502/q-trust</small>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Q-Trust · post-quantum migration assurance</span>
+  <span>Apache-2.0 · model runs in your browser</span>
+</footer>
+
+<script type="module">
+import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2";
+
+env.allowLocalModels = false;
+
+const MODEL = "KRISHNAPURI/q-trust-crypto-detector";
+const THRESHOLD = 0.5;
+const MAX_TOKENS = 256;
+
+const EXAMPLES = {
+  rsa: `#include <openssl/rsa.h>
+#include <openssl/evp.h>
+
+EVP_PKEY *make_key(void) {
+    RSA *rsa = RSA_new();
+    BIGNUM *e = BN_new();
+    BN_set_word(e, RSA_F4);
+    RSA_generate_key_ex(rsa, 2048, e, NULL);
+    EVP_PKEY *pkey = EVP_PKEY_new();
+    EVP_PKEY_assign_RSA(pkey, rsa);
+    BN_free(e);
+    return pkey;
+}`,
+  mlkem: `#include <oqs/oqs.h>
+
+OQS_KEM *kem = OQS_KEM_new(OQS_KEM_alg_ml_kem_768);
+uint8_t pk[OQS_KEM_ml_kem_768_length_public_key];
+uint8_t sk[OQS_KEM_ml_kem_768_length_secret_key];
+
+OQS_KEM_keypair(kem, pk, sk);`,
+  aes: `from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
+
+key = AESGCM.generate_key(bit_length=256)
+aesgcm = AESGCM(key)
+nonce = os.urandom(12)
+ciphertext = aesgcm.encrypt(nonce, b"quantum-ready payload", None)`,
+  clean: `import pandas as pd
+
+def summarize(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    return df.describe(include="all")`,
+};
+
+const NOTES = [
+  [/RSA_generate_key|\bRSA\b|rsa\.generate/i, "RSA is quantum-vulnerable. Inventory the key and plan migration to ML-KEM (FIPS 203) under the NIST IR 8547 window."],
+  [/AES\/ECB|ECB_PKCS|\bECB\b/i, "ECB mode leaks plaintext structure. Replace it with an AEAD mode such as AES-GCM or ChaCha20-Poly1305 regardless of PQC."],
+  [/OQS_KEM|ML[-_]?KEM|Kyber/i, "ML-KEM (FIPS 203) is post-quantum safe. Verify parameter sets and hybrid deployment at the protocol layer."],
+  [/ML[-_]?DSA|Dilithium/i, "ML-DSA (FIPS 204) is post-quantum safe. Check key and signature sizes against your transport limits."],
+  [/SLH[-_]?DSA|SPHINCS/i, "SLH-DSA (FIPS 205) is post-quantum safe, with larger signatures and slower signing than lattice schemes."],
+  [/SHA[-_]?1|SHA1/i, "SHA-1 is collision-broken. Migrate to SHA-256 or SHA-3 before treating the surrounding signature scheme as sound."],
+  [/AESGCM|AES[-_]?GCM|\bAES\b/i, "AES is symmetric, so Grover's algorithm only halves its effective strength. Prefer 256-bit keys for long-lived data."],
+];
+
+const el = (id) => document.getElementById(id);
+const codeEl = el("code");
+const scanBtn = el("scan");
+const statusEl = el("status");
+const countEl = el("count");
+const gutterEl = el("gutter");
+
+let classifier = null;
+let ready = false;
+
+function setState(which) {
+  for (const id of ["loading", "idle", "error", "output"]) {
+    const node = el(id);
+    if (node) node.hidden = id !== which;
+  }
+}
+
+function updateCount() {
+  const n = codeEl.value.length;
+  countEl.textContent = `${n.toLocaleString()} character${n === 1 ? "" : "s"}`;
+}
+
+function updateGutter() {
+  const lines = codeEl.value.split("\n").length;
+  gutterEl.textContent = Array.from({ length: Math.max(lines, 1) }, (_, i) => i + 1).join("\n");
+}
+
+function loadExample(key) {
+  codeEl.value = EXAMPLES[key] || "";
+  updateCount();
+  updateGutter();
+  codeEl.focus();
+  codeEl.setSelectionRange(codeEl.value.length, codeEl.value.length);
+}
+
+async function init() {
+  updateCount();
+  updateGutter();
+  try {
+    classifier = await pipeline("text-classification", MODEL, {
+      dtype: "q8",
+      device: "wasm",
+    });
+    ready = true;
+    scanBtn.disabled = false;
+    statusEl.textContent = "Model ready. Inference runs locally.";
+    setState("idle");
+  } catch (err) {
+    console.error(err);
+    setState("error");
+    el("error-body").textContent =
+      "The quantized ONNX model could not be loaded. Check your connection, then reload the page. " +
+      "WebAssembly is required; no code is uploaded.";
+  }
+}
+
+function setBusy(busy) {
+  scanBtn.disabled = busy || !ready;
+  scanBtn.classList.toggle("busy", busy);
+}
+
+async function scan() {
+  const code = codeEl.value.trim();
+  if (!code || !ready) return;
+  setBusy(true);
+  setState("output");
+  el("verdict").textContent = "Analyzing…";
+  el("verdict").className = "verdict pending";
+  el("prob").textContent = "—";
+  el("meter-fill").style.width = "0%";
+  el("notes-wrap").hidden = true;
+  el("notes").replaceChildren();
+
+  const started = performance.now();
+  try {
+    const [result] = await classifier(code, { truncation: true, max_length: MAX_TOKENS });
+    const pCrypto = result.label === "LABEL_1" ? result.score : 1 - result.score;
+    const isCrypto = pCrypto >= THRESHOLD;
+    const ms = Math.round(performance.now() - started);
+
+    el("verdict").textContent = isCrypto ? "Crypto usage detected" : "No crypto usage detected";
+    el("verdict").className = `verdict ${isCrypto ? "positive" : "negative"}`;
+    el("prob").textContent = `${(pCrypto * 100).toFixed(1)} %`;
+    requestAnimationFrame(() => {
+      el("meter-fill").style.width = `${Math.max(1.5, pCrypto * 100)}%`;
+      el("meter-fill").dataset.tone = isCrypto ? "positive" : "negative";
+    });
+
+    const matches = NOTES.filter(([re]) => re.test(code)).map(([, text]) => text);
+    if (isCrypto && matches.length) {
+      const list = el("notes");
+      for (const text of [...new Set(matches)]) {
+        const li = document.createElement("li");
+        li.textContent = text;
+        list.appendChild(li);
+      }
+      el("notes-wrap").hidden = false;
+    }
+    const timing = el("timing");
+    timing.hidden = false;
+    timing.textContent = `Analyzed ${code.length.toLocaleString()} characters in ${ms} ms on this device.`;
+  } catch (err) {
+    console.error(err);
+    el("verdict").textContent = "Analysis failed";
+    el("verdict").className = "verdict negative";
+    el("prob").textContent = "—";
+  } finally {
+    setBusy(false);
+  }
+}
+
+document.querySelectorAll("[data-example]").forEach((button) => {
+  button.addEventListener("click", () => loadExample(button.dataset.example));
+});
+
+codeEl.addEventListener("input", () => {
+  updateCount();
+  updateGutter();
+});
+codeEl.addEventListener("scroll", () => {
+  gutterEl.scrollTop = codeEl.scrollTop;
+});
+codeEl.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    event.preventDefault();
+    scan();
+  }
+});
+scanBtn.addEventListener("click", scan);
+
+init();
+</script>
+</body>
+</html>
