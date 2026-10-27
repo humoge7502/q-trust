@@ -1008,7 +1008,7 @@ class ObjectiveRequest(BaseModel):
 @app.post("/v1/plan/objective")
 def plan_objective(req: ObjectiveRequest) -> dict[str, Any]:
     from qtrust_planner.outcome_sim import (
-        SIM_SPEC_VERSION, estate_from_cbom, feasible_projection,
+        SIM_SPEC_VERSION, estate_from_cbom, explain_order, feasible_projection,
         heuristic_priority_scores, optimal_order, smith_rule_order)
 
     asset_records = _parse_assets(req.cbom)
@@ -1022,21 +1022,26 @@ def plan_objective(req: ObjectiveRequest) -> dict[str, Any]:
     n = estate.n
     opt_qrd = estate.total_quantum_risk_days(optimal_order(estate))
 
-    def _lane(name: str, description: str, order: list[int]) -> dict[str, Any]:
+    def _lane(name: str, description: str, order: list[int],
+              explain: bool = False) -> dict[str, Any]:
         qrd = estate.total_quantum_risk_days(order)
+        facts = explain_order(estate, order) if explain else None
         elapsed = 0.0
         steps = []
         for rank, idx in enumerate(order):
             asset = estate.assets[idx]
             elapsed += asset.duration_days
-            steps.append({
+            step = {
                 "rank": rank + 1,
                 "asset_id": asset_records[idx].get("asset_id", f"asset-{idx:04d}"),
                 "algorithm": asset.algorithm,
                 "host": asset.host,
                 "completion_day": round(elapsed, 2),
                 "exposure_weight": round(asset.exposure_weight, 4),
-            })
+            }
+            if facts is not None:
+                step["why"] = facts[rank]
+            steps.append(step)
         return {
             "strategy": name,
             "description": description,
@@ -1054,12 +1059,23 @@ def plan_objective(req: ObjectiveRequest) -> dict[str, Any]:
             "documented qrd-sim/1.0 assumptions — not observed organizational "
             "outcomes. The optimal lane is exact for estates of up to 14 "
             "assets (subset DP) and beam-approximated beyond that."),
+        "why_fields": {
+            "qrd_share": "asset's own w×C objective term as a share of total QRD",
+            "smith_ratio": "exposure_weight / duration_days (Smith's rule key; "
+                           "high = short, heavy job)",
+            "unlocks": "direct dependents blocked until this asset migrates",
+            "neighbor_swap_delta_qrd": "total QRD delta if the asset swapped "
+                                       "places with the next-ranked asset; null "
+                                       "when the swap is dependency-infeasible; "
+                                       "≥0 at every locally-optimal position",
+        },
         "n_assets": n,
         "qrd_optimal": round(opt_qrd, 2),
         "plans": [
             _lane("outcome_optimal",
                   "exact optimum (subset DP; beam-approximated above 14 assets)",
-                  optimal_order(estate, beam_width=req.beam_width)),
+                  optimal_order(estate, beam_width=req.beam_width),
+                  explain=True),
             _lane("smith_rule",
                   "shortest-weighted-job-first — provably optimal without "
                   "dependency constraints",

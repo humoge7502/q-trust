@@ -23,6 +23,7 @@ from qtrust_planner.outcome_sim import (  # noqa: E402
     build_outcome_graph,
     brute_force_optimal_qrd,
     estate_from_cbom,
+    explain_order,
     feasible_projection,
     generate_synthetic_estate,
     generate_synthetic_estates,
@@ -249,3 +250,60 @@ class TestSyntheticGenerator:
 
     def test_spec_version(self):
         assert SIM_SPEC_VERSION.startswith("qrd-sim/")
+
+
+class TestExplainOrder:
+    """Per-asset attribution (explain_order) — deterministic, model-free."""
+
+    def test_swap_delta_matches_brute_recompute(self):
+        # For every feasible adjacent swap in the explained order, the
+        # reported delta must equal a from-scratch QRD recomputation.
+        for seed in range(10):
+            e = generate_synthetic_estate(7, seed=seed)
+            order = optimal_order(e)
+            preds = e.predecessors()
+            facts = explain_order(e, order)
+            for pos, f in enumerate(facts):
+                if pos + 1 >= len(order):
+                    assert f["neighbor_swap_delta_qrd"] is None
+                    continue
+                nxt = order[pos + 1]
+                if order[pos] in preds[nxt]:
+                    assert f["neighbor_swap_delta_qrd"] is None
+                    continue
+                swapped = list(order)
+                swapped[pos], swapped[pos + 1] = swapped[pos + 1], swapped[pos]
+                expected = (e.total_quantum_risk_days(swapped)
+                            - e.total_quantum_risk_days(order))
+                assert f["neighbor_swap_delta_qrd"] == pytest.approx(
+                    round(expected, 2))
+
+    def test_exact_optimum_is_locally_swap_optimal(self):
+        # An exact-DP optimum cannot be improved by any adjacent swap:
+        # every feasible neighbor_swap_delta_qrd must be >= 0.
+        for seed in range(10):
+            e = generate_synthetic_estate(7, seed=seed)
+            facts = explain_order(e, optimal_order(e))
+            for f in facts:
+                if f["neighbor_swap_delta_qrd"] is not None:
+                    assert f["neighbor_swap_delta_qrd"] >= 0
+
+    def test_unlocks_counts_direct_dependents(self):
+        e = generate_synthetic_estate(8, seed=41)
+        successors: dict[int, set[int]] = {}
+        for dep, dependent in e.dependencies:
+            successors.setdefault(dep, set()).add(dependent)
+        facts = explain_order(e, optimal_order(e))
+        by_idx = {f["asset_idx"]: f for f in facts}
+        for i in range(e.n):
+            assert by_idx[i]["unlocks"] == len(successors.get(i, set()))
+
+    def test_qrd_shares_sum_to_one(self):
+        e = generate_synthetic_estate(6, seed=13)
+        facts = explain_order(e, optimal_order(e))
+        assert sum(f["qrd_share"] for f in facts) == pytest.approx(1.0, abs=1e-3)
+
+    def test_determinism(self):
+        e = generate_synthetic_estate(6, seed=5)
+        assert explain_order(e, optimal_order(e)) == \
+               explain_order(e, optimal_order(e))

@@ -397,6 +397,65 @@ def brute_force_optimal_qrd(estate: MigrationEstate) -> float:
     return best
 
 
+def explain_order(estate: MigrationEstate,
+                  order: Sequence[int]) -> list[dict]:
+    """Per-asset attribution for a dependency-feasible order.
+
+    Every field is computed from the estate and the order alone — no model,
+    no learned state — so an explanation is exactly as reproducible as the
+    plan it annotates (SIM_SPEC_VERSION applies). Four facts per step:
+
+    - ``qrd_share``: this asset's own objective term (w_i × C_i) as a share
+      of the order's total QRD.
+    - ``smith_ratio``: exposure_weight / duration_days (Smith's rule key).
+      High ratio = short, heavy job; the reason it sits early absent
+      precedence.
+    - ``unlocks``: number of direct dependents that cannot start until this
+      asset migrates (blocking work).
+    - ``neighbor_swap_delta_qrd``: total QRD if this asset swapped places
+      with the NEXT-ranked asset, minus the order's QRD. Positive means the
+      chosen position strictly beats the adjacent alternative; 0 means
+      slack/tie; ``None`` when the swap is dependency-infeasible or there is
+      no next asset. For a locally-optimal order every feasible swap is >= 0.
+    """
+    preds = estate.predecessors()
+    successors: list[set[int]] = [set() for _ in estate.assets]
+    for dep, dependent in estate.dependencies:
+        successors[dep].add(dependent)
+
+    base_qrd = estate.total_quantum_risk_days(order)
+
+    out: list[dict] = []
+    elapsed = 0.0
+    for pos, idx in enumerate(order):
+        asset = estate.assets[idx]
+        completion = elapsed + asset.duration_days
+        swap_delta: float | None = None
+        if pos + 1 < len(order):
+            nxt = order[pos + 1]
+            # Adjacent swap (idx, nxt) -> (nxt, idx) is feasible iff the next
+            # asset does not directly depend on this one: only these two
+            # positions move, so a direct-edge check is sufficient.
+            if idx not in preds[nxt]:
+                swapped = list(order)
+                swapped[pos], swapped[pos + 1] = swapped[pos + 1], swapped[pos]
+                swap_delta = (estate.total_quantum_risk_days(swapped)
+                              - estate.total_quantum_risk_days(order))
+        out.append({
+            "asset_idx": idx,
+            "qrd_share": round(asset.exposure_weight * completion / base_qrd, 4)
+            if base_qrd > 0 else 0.0,
+            "exposure_weight": round(asset.exposure_weight, 4),
+            "duration_days": round(asset.duration_days, 2),
+            "smith_ratio": round(asset.exposure_weight / asset.duration_days, 6),
+            "unlocks": len(successors[idx]),
+            "neighbor_swap_delta_qrd": (round(swap_delta, 2)
+                                        if swap_delta is not None else None),
+        })
+        elapsed = completion
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Synthetic estates with precedence (training augmentation)
 # ---------------------------------------------------------------------------
