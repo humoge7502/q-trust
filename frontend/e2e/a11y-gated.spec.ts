@@ -72,6 +72,19 @@ test.describe("wallet-gated a11y (TD-12)", () => {
       await page.route(/reown\.com|walletconnect\.com|web3modal\.org|sepolia\.base\.org/, (r) =>
         r.fulfill({ status: 403, contentType: "application/json", body: "{}" }),
       );
+      // The connected EMPTY states ("Your wallet is connected, but you
+      // haven't registered any assets yet.") settle only after the backend
+      // read-model queries resolve. CI does not start the backend on :3001,
+      // so those queries must be answered here — a fulfilled 200 with a
+      // valid empty payload settles them deterministically, independent of
+      // whether a backend happens to be running (hermetic in CI and local).
+      await page.route(/localhost:3001|127\.0\.0\.1:3001|\/v1\//, (r) => {
+        const url = r.request().url();
+        const body = /attestations/.test(url)
+          ? JSON.stringify({ vendor: "", items: [], total: 0 })
+          : "[]";
+        r.fulfill({ status: 200, contentType: "application/json", body });
+      });
       await page.goto(route);
       await expectQTrustApp(page);
 
