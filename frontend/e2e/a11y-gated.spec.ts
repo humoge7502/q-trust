@@ -62,15 +62,16 @@ test.describe("wallet-gated a11y (TD-12)", () => {
   for (const route of ["/dashboard", "/vendors"]) {
     test(`${route} connected state has no critical or serious violations`, async ({ page }) => {
       await page.addInitScript(ETH_PROVIDER_INIT);
-      // No third-party egress: RainbowKit's remote-config fetch 403s under CI
-      // (placeholder project ID) and retries for the whole test window; and
-      // after connect, useUserRole issues two eth_calls through viem's HTTP
-      // public client (sepolia.base.org) — public-RPC latency from CI runners
-      // kept the page in "Checking wallet…" past every budget. Aborting these
-      // hosts makes the degradation instant and deterministic: RainbowKit
-      // falls back to local/default values, and the role queries error out
-      // immediately (retry: false) so the connected empty state renders.
-      await page.route(/reown\.com|walletconnect\.com|web3modal\.org|sepolia\.base\.org/, (r) => r.abort());
+      // No third-party egress — but respond 403 rather than abort: a network
+      // error triggers fetchers' retry/backoff (appkit's remote-config loop,
+      // viem's transport), which is exactly the stall this stub exists to
+      // prevent. A 403 is the definitive answer every consumer here already
+      // degrades on: RainbowKit logs "Using local/default values", and the
+      // role queries error out immediately (retry: false) so the connected
+      // empty state renders.
+      await page.route(/reown\.com|walletconnect\.com|web3modal\.org|sepolia\.base\.org/, (r) =>
+        r.fulfill({ status: 403, contentType: "application/json", body: "{}" }),
+      );
       await page.goto(route);
       await expectQTrustApp(page);
 
