@@ -17,9 +17,11 @@ describe("DeadlineCountdown", () => {
     expect(screen.getByText("Disallowed")).toBeInTheDocument();
   });
 
-  it("labels the draft status of IR 8547 (no false certainty)", () => {
+  it("labels IR 8547 as final with its finalization date (no false uncertainty)", () => {
     render(<DeadlineCountdown />);
-    expect(screen.getByText(/initial public draft/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/final, 2026-10-27/i).length).toBeGreaterThan(0);
+    // The draft era is over: no copy may still call IR 8547 a draft.
+    expect(screen.queryByText(/draft/i)).not.toBeInTheDocument();
   });
 
   it("computes live day counters after mount, nearest deadline first", () => {

@@ -36,7 +36,7 @@ const TIMELINE = [
   {
     year: "2024–2026",
     title: "Inventories become mandates",
-    copy: "OMB M-23-08 required agencies to inventory cryptographic assets; OMB M-26-15 (June 2026) goes further — phased migration plans with evidence, and Executive Order 14409 directs agencies to accelerate adoption with NIST IR 8547 (still a draft) as the technical reference. The discovery-and-proof step most organizations have not done is now the deliverable.",
+    copy: "OMB M-23-08 required agencies to inventory cryptographic assets; OMB M-26-15 (June 2026) goes further — phased migration plans with evidence, and Executive Order 14409 directs agencies to accelerate adoption with NIST IR 8547 (finalized October 2026) as the technical reference. The discovery-and-proof step most organizations have not done is now the deliverable.",
   },
   {
     year: "2030→",

@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
  *
  * Live day counters to the four canonical transition dates, computed in the
  * visitor's browser (hydration-safe: labels render server-side, numbers fill
- * in after mount). Dates are the published targets; NIST IR 8547 is still an
- * initial public draft and is labelled as such — no false certainty.
+ * in after mount). NIST IR 8547 was finalized on 2026-10-27 — the 2030/2035
+ * dates below are official NIST guidance, cited as such.
  */
 
 const DEADLINES = [
@@ -22,8 +22,8 @@ const DEADLINES = [
   {
     date: "2030-01-01",
     label: "Deprecation begins",
-    copy: "NIST IR 8547 (draft) deprecates quantum-vulnerable algorithms; CNSA 2.0 classical exclusivity starts.",
-    source: "NIST IR 8547 (draft) · NSA",
+    copy: "NIST IR 8547 (final, 2026-10-27) deprecates quantum-vulnerable algorithms; CNSA 2.0 classical exclusivity starts.",
+    source: "NIST IR 8547 (final) · NSA",
   },
   {
     date: "2033-01-01",
@@ -34,8 +34,8 @@ const DEADLINES = [
   {
     date: "2035-01-01",
     label: "Disallowed",
-    copy: "NIST IR 8547 (draft) disallows quantum-vulnerable cryptography entirely.",
-    source: "NIST IR 8547 (draft)",
+    copy: "NIST IR 8547 (final, 2026-10-27) disallows quantum-vulnerable cryptography entirely.",
+    source: "NIST IR 8547 (final)",
   },
 ] as const;
 
@@ -107,8 +107,8 @@ export function DeadlineCountdown() {
         {soonest !== null
           ? `${soonest.toLocaleString("en-US")} days until the first binding date. Counters are computed live in your browser.`
           : "Counters are computed live in your browser."}{" "}
-        IR 8547 dates are from the initial public draft (Nov 2024) and move
-        when the final version lands. The window, not the day, is the point.
+        IR 8547 was finalized on 2026-10-27 — the 2030/2035 dates are now
+        official NIST guidance. The window, not the day, is the point.
       </p>
     </div>
   );

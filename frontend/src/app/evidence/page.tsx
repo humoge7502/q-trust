@@ -134,9 +134,9 @@ export default function EvidencePage() {
               <p className="mt-10 max-w-3xl text-xs leading-6 text-muted-foreground">
                 Requirements paraphrased from Executive Order and OMB M-26-15,
                 “Execution of the Migration to Post-Quantum Cryptography”
-                (June 2026), and NIST IR 8547 (initial public draft). Deadlines
-                below are the published targets; the IR remains a draft and
-                moves when finalized.
+                (June 2026), and NIST IR 8547 (final, October 2026).
+                Deadlines below are the published targets; the IR is now
+                official NIST guidance.
               </p>
             </Reveal>
           </div>
