@@ -52,3 +52,13 @@ Clones live in the sibling `.skills-cache/` directory (outside git).
   every FAIL is an on-record waiver (micro-labels, hairlines, orb gradients,
   mono-for-data, 14px body). No new craft regressions from /pricing, /evidence,
   /certify or the command palette.
+
+## Evaluated tooling repos (2026-10-26) — parked, with reasons
+
+| Repo | What it is | Verdict |
+|---|---|---|
+| trailhq/Trail-Code | Self-learning code-map + team-learnings layer for coding agents | **Parked** — valuable for future agent sessions on this repo; requires runtime adoption (plugin install), not a build dependency. |
+| DeusData/codebase-memory-mcp | Local code-intelligence MCP server | **Parked** — same class as Trail-Code; worth wiring into an agent harness later. |
+| msitarzewski/agency-agents | Persona/role prompt packs for agents | **Parked** — prompt content, overlapping the active skills above. |
+| calesthio/OpenMontage | AI video/montage production tooling | **Parked** — relevant only when producing the next demo film (the repo already ships `brag-output/` + HyperFrames compositions for that). |
+| SciPhi-AI/agent-search | RAG search-agent framework (requires SCIPHI_API_KEY) | **Parked** — its search→summarize→follow-up pattern is the design reference for a future "live threat-intel feed" feature. |
