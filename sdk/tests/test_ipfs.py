@@ -8,6 +8,7 @@ import pytest
 import requests
 
 from qtrust.ipfs import (
+    KuboProvider,
     MultiPinataClient,
     MultiProviderClient,
     PinataClient,
@@ -216,3 +217,40 @@ def test_multi_pinata_client_still_works():
         with patch("qtrust.ipfs.time.sleep"):
             cid = clients.pin_json('{"fallback": true}')
     assert cid == "QmFallback"
+
+
+# ---------------------------------------------------------------------------
+# Endpoint URL validation (SSRF guard)
+# ---------------------------------------------------------------------------
+
+class TestValidateEndpointUrl:
+    def test_rejects_non_http_schemes(self):
+        from qtrust.ipfs import validate_endpoint_url
+        with pytest.raises(ValueError, match="http/https"):
+            validate_endpoint_url("ftp://api.pinata.cloud")
+        with pytest.raises(ValueError, match="http/https"):
+            validate_endpoint_url("file:///etc/passwd")
+
+    def test_rejects_private_literals_unless_allowed(self):
+        from qtrust.ipfs import validate_endpoint_url
+        for host in ("127.0.0.1", "10.0.0.5", "192.168.1.4",
+                     "169.254.169.254", "[::1]", "0.0.0.0"):
+            with pytest.raises(ValueError, match="non-public"):
+                validate_endpoint_url(f"http://{host}:5001")
+            # allow_private is the Kubo policy: operator's own node.
+            assert validate_endpoint_url(f"http://{host}:5001",
+                                         allow_private=True)
+
+    def test_hostnames_pass(self):
+        from qtrust.ipfs import validate_endpoint_url
+        assert validate_endpoint_url("https://api.pinata.cloud/x")
+
+    def test_rejects_missing_host(self):
+        from qtrust.ipfs import validate_endpoint_url
+        with pytest.raises(ValueError, match="no host"):
+            validate_endpoint_url("http:///path")
+
+    def test_kubo_default_endpoint_constructs(self):
+        # The documented default (operator's local node) must keep working.
+        provider = KuboProvider(api_url="http://127.0.0.1:5001")
+        assert provider.api_url == "http://127.0.0.1:5001"

@@ -24,11 +24,17 @@ const columns = [
       { label: "Dashboard", href: "/dashboard" },
       { label: "Vendor portal", href: "/vendors" },
       { label: "Verify", href: "/v" },
+      { label: "Certification", href: "/certify" },
+      { label: "Evidence", href: "/evidence" },
+      { label: "Pricing", href: "/pricing" },
     ],
   },
   {
     label: "Resources",
     links: [
+      { label: "Evaluation integrity", href: "/research" },
+      { label: "Watch demo", href: "/demo" },
+      { label: "For developers", href: "/developers" },
       { label: "API reference", href: `${docsBase}/docs`, external: true },
       { label: "Documentation", href: "https://humoge7502.github.io/q-trust/", external: true },
       { label: "GitHub", href: "https://github.com/humoge7502/q-trust", external: true },
@@ -39,6 +45,8 @@ const columns = [
     label: "Protocol",
     links: [
       { label: "Why Q-Trust", href: "/#why" },
+      { label: "Why now (the threat)", href: "/why-now" },
+      { label: "Q-Trust vs. alternatives", href: "/compare" },
       { label: "The operating loop", href: "/#workflow" },
     ],
   },

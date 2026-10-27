@@ -38,8 +38,13 @@ data explicitly marked as such until the experts arrive).
 
 ## What we claim instead
 
-- Discovery: F1 **0.9525** finding crypto usage in held-out repos (usage
-  recall 0.877 on CryptoAPI-Bench) — a different, winnable task, stated as such.
+- Discovery: F1 **0.9205** de-duplicated (**0.9235** native) finding crypto
+  usage in held-out repos on the repo-disjoint corpus-v4 split (usage
+  recall 0.877 on CryptoAPI-Bench) — a different, winnable task, stated as
+  such. *(Updated 2026-10-26: the earlier F1 0.9395 v1 figure is retired —
+  a later audit found 87.6 % of its eval paths overlapped training and it
+  must not be cited as a clean result. The v4 number is artifact-pinned by
+  `scripts/verify_metric_consistency.py`.)*
 - Side-channel: 51/54 leak-injected trace sets caught, with the 3 misses
   (FALCON keygen, n≤200) recorded, not hidden.
 - Provenance: every artifact carries config + seed + metrics; every demo data

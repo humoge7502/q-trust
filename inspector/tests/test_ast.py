@@ -81,6 +81,19 @@ class TestPythonAstDetection:
         assert r.metadata["end_lineno"] == 11
         assert r.key_type == "asymmetric"
 
+    def test_ml_kem_import_is_reported_as_pqc(self, tmp_path):
+        code = (
+            "from pqcrypto.kem import ml_kem_768\n"
+            "\n"
+            "def exchange():\n"
+            "    return ml_kem_768.generate_keypair()\n"
+        )
+        findings = self._scan_snippet(tmp_path, code)
+        pqc = [f for f in findings if f.key_type == "pqc"]
+        assert pqc, findings
+        assert pqc[0].algorithm == "ML-KEM-768"
+        assert pqc[0].metadata["line"] == 4
+
     def test_hashlib_new_constant_string(self, tmp_path):
         code = (
             "import hashlib\n"

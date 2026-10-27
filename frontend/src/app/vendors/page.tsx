@@ -146,19 +146,27 @@ function VendorsInner() {
             if you&rsquo;re an organization.
           </p>
         </div>
+        <div className="mt-6 flex justify-center">
+          <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
-      <header>
-        <h1 className="font-display text-2xl font-semibold tracking-[-0.035em] text-foreground">
-          Vendor portal
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Attestations issued by a vendor and product support lookups.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-[-0.035em] text-foreground">
+            Vendor portal
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Attestations issued by a vendor and product support lookups.
+          </p>
+        </div>
+        {/* Same persistent account control as the org dashboard: vendors need
+            to verify which wallet is signing and be able to switch/disconnect. */}
+        <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
       </header>
 
       {!loading && !vendor ? (

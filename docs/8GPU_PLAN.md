@@ -47,7 +47,7 @@ and in the Updated note below):
 > invalidated every pre-trained checkpoint, so **v2 and v3 were retrained
 > from scratch on the corrected pool** (deterministic, A100s). Fresh canonical
 > `planner/results/benchmark_v3.json` records **v2 τ 0.9703** (top-5 0.713)
-> and **v3 τ 0.9753** (top-5 0.673) — the CI promotion gate (v3 > v2) passes
+> and **v3 τ 0.975 (synthetic-scale, held-out)3** (top-5 0.673) — the CI promotion gate (v3 > v2) passes
 > honestly. `planner/results/benchmark.json` (3 seeds) re-measures gnn-listmle
 > at **τ 0.9637 ± 0.0002**. The 400K-graph DDP checkpoint was left unretrained
 > (τ 0.864, research artifact).

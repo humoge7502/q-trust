@@ -1,4 +1,5 @@
 import { test, expect, type ConsoleMessage } from "@playwright/test";
+import { siteUrl } from "../src/lib/site";
 import { expectQTrustApp } from "./app-identity";
 
 test("home page renders the hero heading with no console errors", async ({ page }) => {
@@ -182,6 +183,57 @@ test("routes have distinct, descriptive titles", async ({ page }) => {
       `${route} shares its title with ${seen.get(title)}`,
     ).toBe(false);
     seen.set(title, route);
+  }
+});
+
+test("public routes are self-canonical, and brand the title once", async ({
+  request,
+}) => {
+  // Metadata is server-rendered, so this reads the HTML the crawler sees
+  // instead of mounting each page. Three defects motivated the gate:
+  //   - `layout.tsx` set `alternates.canonical = "/"`, and any route that did
+  //     not override it declared itself a duplicate of the home page;
+  //   - five routes hard-coded "— Q-Trust" in their title, which the root
+  //     template then suffixed again ("… — Q-Trust · Q-Trust");
+  //   - the unconfigured `SITE_URL` fallback pointed at the MkDocs deployment,
+  //     so canonicals and og:image resolved to a host without these routes.
+  //
+  // `noindex` routes are deliberately absent: their canonical is irrelevant
+  // because they should never be indexed in the first place.
+  const routes = [
+    "/",
+    "/scanner",
+    "/research",
+    "/demo",
+    "/why-now",
+    "/evidence",
+    "/compare",
+    "/developers",
+    "/v",
+    "/certify",
+    "/pricing",
+  ];
+  const origin = siteUrl("/").replace(/\/$/, "");
+
+  for (const route of routes) {
+    const response = await request.get(route);
+    expect(response.status(), `${route} did not render`).toBeLessThan(400);
+    const html = await response.text();
+
+    const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+    expect(title, `${route} has no <title>`).not.toBe("");
+    expect(title, `${route} repeats the brand`).not.toMatch(/Q-Trust.*Q-Trust/);
+
+    const canonical =
+      html.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/)?.[1] ?? "";
+    expect(canonical.replace(/\/$/, ""), `${route} canonical`).toBe(
+      `${origin}${route === "/" ? "" : route}`,
+    );
+
+    const ogImage =
+      html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/)?.[1] ??
+      "";
+    expect(ogImage, `${route} og:image is not absolute`).toMatch(/^https?:\/\//);
   }
 });
 

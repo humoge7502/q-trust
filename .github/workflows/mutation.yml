@@ -1,0 +1,55 @@
+name: Mutation Gate
+
+# Mutation testing measures whether the tests *kill* invented bugs, which unit
+# counts and line coverage cannot. It is slow (thousands of test runs) and its
+# result only changes when the mutated file or its tests change, so it runs on a
+# schedule and on pull requests that touch certification — never on every push.
+#
+# `stryker.config.json` exits non-zero below `thresholds.break`, so the gate is
+# the config, not this file. Raising the score means writing better tests, and
+# the number in docs/TESTING.md is the record of that bargain.
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "backend/src/services/certification.ts"
+      - "backend/tests/certification*.test.ts"
+      - "backend/tests/certify*.test.ts"
+      - "backend/stryker.config.json"
+      - "backend/vitest.mutation.config.ts"
+      - ".github/workflows/mutation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  certification:
+    name: Certification mutation score
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v4.11.0
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - name: Mutate src/services/certification.ts
+        working-directory: backend
+        run: npx stryker run stryker.config.json
+      - name: Publish the score in the run summary
+        if: always()
+        working-directory: backend
+        run: node scripts/mutation-summary.mjs >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-certification
+          path: backend/reports/mutation/certification.json
+          if-no-files-found: warn
+          retention-days: 30

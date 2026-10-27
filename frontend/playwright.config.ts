@@ -24,6 +24,10 @@ const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
+  // Compile every route before the first test: the dev server compiles on
+  // demand, and the wallet-gated pages expired their in-test budgets waiting
+  // on a cold compile under CI. See e2e/global-setup.ts.
+  globalSetup: "./e2e/global-setup.ts",
   // CI here only compiles the config + spec; browsers are installed in the CI
   // job that runs this suite.
   projects: [
@@ -49,6 +53,15 @@ export default defineConfig({
     baseURL: BASE_URL,
   },
   webServer: {
+    // "demo" for e2e: wagmi.ts needs a non-empty ID, and any non-"demo" value
+    // makes HAS_REAL_WALLETCONNECT true — RainbowKit then lists the
+    // WalletConnect wallet, whose relay rejects unknown origins over a
+    // WebSocket ("Origin ... not found on Allowlist") that page.route cannot
+    // intercept, hanging app init before the gate renders. "demo" is the
+    // codebase's own no-cloud signal: injected-only wallets, no relay. The
+    // spec additionally aborts Reown/web3modal HTTP fetches, and
+    // e2e/global-setup.ts pre-warms routes.
+    env: { ...process.env, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "demo" },
     command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: true,

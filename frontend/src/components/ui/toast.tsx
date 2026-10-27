@@ -12,7 +12,7 @@ export interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<string, string> = {
-  default: "border-slate-200 bg-white text-slate-900",
+  default: "border-border bg-white text-foreground",
   success: "border-emerald-200 bg-emerald-50 text-emerald-900",
   destructive: "border-rose-200 bg-rose-50 text-rose-900",
 };
@@ -54,7 +54,7 @@ export function Toast({
           type="button"
           onClick={onClose}
           aria-label="Dismiss"
-          className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
+          className="shrink-0 rounded p-1 text-slate-400 hover:bg-neutral-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
         >
           <span aria-hidden="true">×</span>
         </button>

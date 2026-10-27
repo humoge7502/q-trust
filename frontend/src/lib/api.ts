@@ -314,16 +314,37 @@ export interface ProductSupportInfo {
  * because several of these are called from server components as well as from
  * the browser.
  */
+/**
+ * Read timeout for GET-style API calls.
+ *
+ * Without it a slow upstream blocked the server render of /v/[id] indefinitely:
+ * the navigation never settled, so the page could not reach its own
+ * "record could not be reached" state. Every route that goes through
+ * `apiFetch` is an indexer/RPC read, so a 15 s ceiling is generous; long
+ * compute calls go through `apiPostJson` and keep their own budget.
+ */
+const API_READ_TIMEOUT_MS = 15_000;
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const { url, headers } = resolveRequest(path);
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-      ...(init?.headers ?? {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      signal: init?.signal ?? AbortSignal.timeout(API_READ_TIMEOUT_MS),
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "";
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new Error(`Upstream timed out after ${API_READ_TIMEOUT_MS}ms: ${path}`);
+    }
+    throw err;
+  }
   return handleResponse<T>(response, path);
 }
 

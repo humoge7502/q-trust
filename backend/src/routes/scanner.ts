@@ -51,17 +51,6 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
   if (!path.isAbsolute(rawDir)) {
     throw Object.assign(new Error("directory must be an absolute path"), { statusCode: 400 });
   }
-  // Resolve symlinks/.. segments so the allowed-roots check cannot be bypassed.
-  let resolved: string;
-  try {
-    resolved = await fsp.realpath(path.resolve(rawDir));
-  } catch {
-    throw Object.assign(new Error("directory does not exist"), { statusCode: 400 });
-  }
-  const stat = await fsp.stat(resolved).catch(() => null);
-  if (!stat?.isDirectory()) {
-    throw Object.assign(new Error("path is not a directory"), { statusCode: 400 });
-  }
   const allowedRootsRaw = process.env.QTRUST_SCAN_ALLOWED_ROOTS;
   if (!allowedRootsRaw && process.env.NODE_ENV === "production") {
     // Fail closed: in production an unset allowlist would let any caller scan
@@ -71,8 +60,18 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
       { statusCode: 503 },
     );
   }
+
+  // String-level normalization only — no filesystem call touches the
+  // caller-supplied path until it has passed the allowed-roots guard below.
+  const normalized = path.resolve(rawDir);
+  /** CodeQL-recognized containment guard: the canonical path.relative idiom. */
+  const isInsideRoot = (candidate: string, root: string): boolean => {
+    const rel = path.relative(root, candidate);
+    return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+  };
+  let roots: string[] = [];
   if (allowedRootsRaw) {
-    const roots = await Promise.all(
+    roots = await Promise.all(
       allowedRootsRaw
         .split(",")
         .map((r) => r.trim())
@@ -97,13 +96,31 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
           }
         }),
     );
-    const allowed = roots.some((root) => resolved === root || resolved.startsWith(root + path.sep));
-    if (!allowed) {
+    if (!roots.some((root) => isInsideRoot(normalized, root))) {
       throw Object.assign(
         new Error("directory is outside the configured scan roots"),
         { statusCode: 403 },
       );
     }
+  }
+
+  // The path is inside an allowed root: now resolve symlinks/.. segments and
+  // re-check, so a symlink inside an allowed root cannot point outside it.
+  let resolved: string;
+  try {
+    resolved = await fsp.realpath(normalized);
+  } catch {
+    throw Object.assign(new Error("directory does not exist"), { statusCode: 400 });
+  }
+  const stat = await fsp.stat(resolved).catch(() => null);
+  if (!stat?.isDirectory()) {
+    throw Object.assign(new Error("path is not a directory"), { statusCode: 400 });
+  }
+  if (roots.length > 0 && !roots.some((root) => isInsideRoot(resolved, root))) {
+    throw Object.assign(
+      new Error("directory is outside the configured scan roots"),
+      { statusCode: 403 },
+    );
   }
   return resolved;
 }
@@ -185,7 +202,91 @@ function classifyRisk(score: number): string {
   if (score > 0) return "LOW";
   return "NONE";
 }
+const LIBRARY_ALGORITHMS = new Set([
+  "HAZMAT", "OPENSSL", "BORINGSSL", "LIBGCRYPT", "LIBOQS", "WOLFSSL",
+  "CRYPTOGRAPHY", "CRYPTO", "NODEFORGE", "NODE-FORGE", "PYOPENSSL",
+]);
+const PROTOCOL_ALGORITHMS = new Set(["TLS", "JWT", "SSH"]);
+
+/**
+ * Not every finding's `algorithm` is an algorithm.
+ *
+ * The scanner emits library names (hazmat, OpenSSL, liboqs) and protocol
+ * markers (TLS, JWT) alongside real algorithms. Scoring those through
+ * ALGORITHM_VULNERABILITY_DB used to fall through to BROKEN/84 for every
+ * unknown name — a scan of a healthy estate reported fifteen criticals,
+ * including liboqs (a post-quantum library) and BoringSSL (ships ML-KEM).
+ *
+ * This branch keeps the score honest:
+ *   - library with supports_pqc=true   -> PQC_READY / 6  / LOW
+ *   - library with supports_pqc=false  -> WEAKENED  / 62 / HIGH
+ *   - library with no capability flag  -> INVENTORY / 18 / LOW
+ *   - dependency inventory             -> INVENTORY / 30 / MEDIUM
+ *   - TLS / JWT / SSH                  -> DEPENDENCY / 45 / MEDIUM
+ *
+ * `riskLevel` (not the classification string) drives the roadmap buckets, so
+ * the new labels are additive and do not change phase assignment.
+ */
+function _classifyNonAlgorithm(finding: any): Record<string, unknown> | null {
+  const algorithm = finding.algorithm || finding.name || "unknown";
+  const up = _normalizeAlg(algorithm);
+  const meta = finding.metadata ?? {};
+  const assetType = String(finding.asset_type ?? "");
+
+  if (assetType === "dependency_crypto_library") {
+    const score = meta.supports_pqc === true ? 8 : 30;
+    return _inventory(finding, algorithm, score,
+      meta.supports_pqc === true
+        ? `${algorithm} dependency ships post-quantum algorithms`
+        : `${algorithm} dependency — inventory only, inherited from the manifest`,
+      meta.supports_pqc === true ? "PQC_READY" : "INVENTORY");
+  }
+
+  const isLibrary =
+    LIBRARY_ALGORITHMS.has(up) ||
+    assetType === "binary_crypto_artifact" ||
+    Boolean(meta.library);
+  if (isLibrary) {
+    if (meta.supports_pqc === true) {
+      return _inventory(finding, algorithm, 6,
+        `${meta.library ?? algorithm} ships post-quantum algorithms (ML-KEM / ML-DSA)`, "PQC_READY");
+    }
+    if (meta.supports_pqc === false) {
+      return _inventory(finding, algorithm, 62,
+        `${meta.library ?? algorithm} is classical-only: no ML-KEM or ML-DSA support`, "WEAKENED");
+    }
+    return _inventory(finding, algorithm, 18,
+      `Crypto library inventory — resolve to the algorithms it provides`, "INVENTORY");
+  }
+
+  if (PROTOCOL_ALGORITHMS.has(up)) {
+    return _inventory(finding, algorithm, 45,
+      `${algorithm} usage — inherits the negotiated cipher suite`, "DEPENDENCY");
+  }
+  return null;
+}
+
+function _inventory(
+  finding: any, algorithm: string, score: number, message: string, classification: string,
+): Record<string, unknown> {
+  return {
+    ...finding,
+    algorithm,
+    algorithmClassification: classification,
+    quantumVulnerability: classification,
+    nist800131aCompliant: classification === "PQC_READY",
+    cnsa2Compliant: classification === "PQC_READY",
+    hndlExposureScore: 0,
+    riskScore: score,
+    overallRiskScore: score,
+    riskLevel: classifyRisk(score),
+    message,
+  };
+}
+
 function computeRiskFinding(finding: any) {
+  const inventory = _classifyNonAlgorithm(finding);
+  if (inventory) return inventory;
   const algorithm = finding.algorithm || finding.name || "unknown";
   const keySize = finding.key_size ?? finding.keySize ?? null;
   const vuln = _lookupVuln(algorithm, keySize);

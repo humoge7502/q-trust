@@ -34,7 +34,7 @@ function useCountUp(target: number, duration = 1100, enabled = true): number {
 }
 
 export function StatsTicker() {
-  return <div className="overflow-hidden border-y border-white/10 bg-white/[0.03] py-3 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">{CHAIN.name} · ID {CHAIN.id} <span className="mx-3 text-cyan-300">●</span> Public verification layer · Hash-only on-chain</div>;
+  return <div className="overflow-hidden border-y border-white/10 bg-white/[0.03] px-5 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">{CHAIN.name} · ID {CHAIN.id} <span className="mx-3 text-cyan-300">●</span> Public verification layer · Hash-only on-chain</div>;
 }
 
 export function PublicStatsClient() {

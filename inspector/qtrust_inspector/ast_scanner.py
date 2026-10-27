@@ -115,6 +115,22 @@ WEAK_TLS_CIPHER_MARKERS: dict[str, tuple[str, str]] = {
 
 _WEAK_TLS_MARKER_RE = re.compile(r"3DES|DES-CBC3|RC4|RC2|DES-|MD5")
 
+# Ordered longest-token-first so `ml_kem` wins over `kem`. A token is matched
+# against every dotted segment of the resolved import chain.
+_PQC_MODULE_TOKENS: tuple[tuple[str, str], ...] = (
+    ("ml_kem", "ML-KEM"),
+    ("mlkem", "ML-KEM"),
+    ("kyber", "ML-KEM"),
+    ("ml_dsa", "ML-DSA"),
+    ("mldsa", "ML-DSA"),
+    ("dilithium", "ML-DSA"),
+    ("slh_dsa", "SLH-DSA"),
+    ("slhdsa", "SLH-DSA"),
+    ("sphincs", "SLH-DSA"),
+)
+_PQC_LEVEL_RE = re.compile(r"ml[_-]?kem[_-]?(512|768|1024)|kyber[_-]?(512|768|1024)")
+
+
 try:
     import tree_sitter_javascript as _ts_javascript
     from tree_sitter import Language as _TSLanguage
@@ -307,6 +323,38 @@ def _evaluate_py_call(call: ast.Call, imports: _ImportMap) -> list[tuple[str, st
     ):
         if "asymmetric" in chain and module in chain and chain[-1] in {"generate", "sign"}:
             results.append((algo, "asymmetric"))
+
+    # Post-quantum KEM and signature modules. The parameter set is often part
+    # of the imported module name (pqcrypto.kem.ml_kem_768, oqs ML-DSA-65,
+    # Dilithium3), so recover it when present instead of emitting a bare
+    # family name. This is what lets the scanner say an asset is *already*
+    # migrated rather than only what is broken.
+    lowered_chain = [part.lower() for part in chain]
+    for token, family in _PQC_MODULE_TOKENS:
+        if not any(token in part for part in lowered_chain):
+            continue
+        level = None
+        for part in lowered_chain:
+            match = _PQC_LEVEL_RE.search(part) if family == "ML-KEM" else None
+            if match:
+                level = match.group(1)
+                break
+            if family == "ML-DSA":
+                for candidate in ("44", "65", "87"):
+                    if token in part and part.endswith(candidate):
+                        level = candidate
+                        break
+                if level:
+                    break
+            if family == "SLH-DSA":
+                for candidate in ("128s", "128f", "192s", "192f", "256s", "256f"):
+                    if candidate in part:
+                        level = candidate
+                        break
+                if level:
+                    break
+        results.append((f"{family}-{level}" if level else family, "pqc"))
+        break
     if _endswith_suffix(chain, ("asymmetric", "dsa", "generate_private_key")) or _endswith_suffix(
         chain, ("publickey", "dsa", "generate")
     ):

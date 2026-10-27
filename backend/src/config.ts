@@ -52,7 +52,18 @@ export const publicClient = createPublicClient({
   transport: http(RPC_URL, { timeout: 30_000 }),
 });
 
-/** Contract addresses, sourced from environment. */
+/**
+ * Contract addresses, sourced from environment.
+ *
+ * The `"0x0"` default is an explicit "NOT DEPLOYED / NOT CONFIGURED" sentinel —
+ * it is NOT a real on-chain address. In a real deployment, `deploy-contracts.ps1`
+ * writes the eight proxy addresses (plus `QTRUST_INDEXER_FROM_BLOCK`) into `.env`,
+ * and the four frontend addresses into `frontend/.env.local`. Until then, these
+ * stay `0x0` and `allContractsConfigured()` returns false, which disables the
+ * indexer and webhooks (the API still serves scans/plans against local data).
+ * Never hardcode a real address here; they are chain-specific (Base Sepolia
+ * chain-id 84532) and must come from the deploy artifact.
+ */
 export const CONTRACTS = {
   assetRegistry: (optionalEnv("QTRUST_ASSET_REGISTRY_ADDRESS", "0x0")) as Address,
   vendorRegistry: (optionalEnv("QTRUST_VENDOR_REGISTRY_ADDRESS", "0x0")) as Address,

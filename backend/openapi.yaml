@@ -57,6 +57,10 @@ tags:
     description: Policy-based trust evaluation
   - name: credentials
     description: Verifiable credential issuance and verification
+  - name: certification
+    description: Validity-gated assurance bundles and offline verification
+  - name: assurance
+    description: Crypto-agility, CRQC exposure, and sector assurance packs
   - name: revocation
     description: On-chain revocation root queries
   - name: policies
@@ -829,6 +833,180 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CredentialVerification"
+
+  # ── Assurance analytics ────────────────────────────────────────────
+  /v1/assurance/report:
+    post:
+      operationId: assuranceReport
+      tags: [assurance]
+      summary: Crypto-agility, CRQC exposure, and sector-pack verdicts
+      description: |
+        Runs the real Python inspector engines over a caller-supplied CBOM
+        findings array: six-factor crypto-agility scoring, Monte-Carlo CRQC
+        financial exposure, and the sector assurance packs (CNSA 2.0, PCI DSS
+        4.0, DORA, HIPAA, FedRAMP Rev.5). `op` selects a single engine;
+        `report` (default) returns all of them. Manual controls are reported
+        as MANUAL, never PASS; an empty estate is NOT_READY.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssuranceReportRequest"
+      responses:
+        "200":
+          description: Assurance report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssuranceReport"
+        "400":
+          description: Invalid request shape
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Findings failed inspector validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Inspector bridge unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Certification bundles ──────────────────────────────────────────
+  /v1/certify:
+    post:
+      operationId: issueCertificationBundle
+      tags: [certification]
+      summary: Issue a signed, policy-gated assurance bundle
+      description: |
+        Snapshot an organisation's on-chain assurance state (assets, migrations,
+        attestations, latest audit) at the current block, commit it to a
+        sha256 Merkle root, and sign the whole bundle with Ed25519. Validity is
+        gated by the selected policy: issuance returns **409** with the failed
+        reasons rather than signing a claim the evidence cannot support.
+
+        The returned bundle is self-contained and verifiable offline with
+        `POST /v1/certify/verify`, `npm run certify:verify`, or
+        `python -m qtrust.bundle`.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificationIssueRequest"
+      responses:
+        "200":
+          description: Signed certification bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationBundle"
+        "400":
+          description: Invalid org, policy, or validity window
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Evidence does not satisfy the selected policy (refused, never signed)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationRefusal"
+        "503":
+          description: Evidence source (indexer/RPC) unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/certify/verify:
+    post:
+      operationId: verifyCertificationBundle
+      tags: [certification]
+      security: []
+      summary: Verify a certification bundle (offline by default)
+      description: |
+        Fail-closed verification of structure, digest, Merkle root, Ed25519
+        signature, and validity window. No network access is used unless
+        `check_chain: true` is requested to re-anchor the bundle's block hash.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificationVerifyRequest"
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationVerification"
+        "400":
+          description: Missing or malformed bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/certify/policies:
+    get:
+      operationId: listCertificationPolicies
+      tags: [certification]
+      security: []
+      summary: List certification admission policies
+      responses:
+        "200":
+          description: Available policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schema:
+                    type: string
+                  policies:
+                    type: array
+                    items:
+                      type: object
+
+  /v1/certify/issuer:
+    get:
+      operationId: getCertificationIssuerIdentity
+      tags: [certification]
+      security: []
+      summary: Discover the issuer identity this deployment signs with
+      description: |
+        Public key material only — never the seed. A verifier needs the issuer
+        DID *before* a bundle arrives in order to pin it: an unpinned
+        verification accepts any self-consistent key, so a pin is what turns
+        "signed by someone" into "signed by who I expected". Publish this value,
+        then pass it as `trust_anchor_did` to `/v1/certify/verify`.
+      responses:
+        "200":
+          description: Issuer identity for the configured signing key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationIssuerIdentity"
+        "503":
+          description: No usable issuer key is configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   # ── Revocation ─────────────────────────────────────────────────────
   /v1/revocation/{issuer}:
@@ -2360,6 +2538,319 @@ components:
         error:
           type: string
           description: Present when validation fails
+
+    # ── Assurance ──────────────────────────────────────────────────
+    AssuranceReportRequest:
+      type: object
+      required: [findings]
+      properties:
+        findings:
+          type: array
+          maxItems: 2000
+          items:
+            type: object
+            description: AssetFinding (asset_type, host, algorithm, key_size, criticality, metadata)
+        op:
+          type: string
+          enum: [report, agility, crqc, packs]
+          default: report
+        pack:
+          type: string
+          description: Pack id for op=packs (cnsa-2.0, pci-dss-4.0, dora, hipaa, fedramp-rev5).
+        top:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 5
+        crqc:
+          type: object
+          description: Optional CRQC assumption overrides (trials, seed, median_arrival_year, ...).
+
+    AssuranceReport:
+      type: object
+      properties:
+        op:
+          type: string
+        asset_count:
+          type: integer
+        input_digest:
+          type: string
+          example: "sha256:…"
+        agility:
+          type: object
+          description: EstateAgility (grade, score, factors, weakest assets, levers)
+        crqc:
+          type: object
+          description: CRQCReport (P10/P50/P90 loss, p_any_exposure, assumptions, digest)
+        packs:
+          type: object
+          additionalProperties:
+            type: object
+            description: PackReport keyed by pack id
+        available_packs:
+          type: array
+          items:
+            type: object
+
+    # ── Certification ──────────────────────────────────────────────
+    CertificationIssueRequest:
+      type: object
+      required: [org]
+      properties:
+        org:
+          type: string
+          pattern: "^0x[0-9a-fA-F]{40}$"
+        policy:
+          type: string
+          enum: [default, regulated, strict]
+          default: default
+        validity_days:
+          type: integer
+          minimum: 1
+          description: Bounded by the selected policy's max_validity_days.
+        evidence_limit:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 200
+          description: Maximum records committed per evidence kind.
+
+    CertificationIssuerIdentity:
+      type: object
+      required: [schema, issuer, verification_method, public_key_multibase, key_fingerprint]
+      properties:
+        schema:
+          type: string
+          description: Bundle schema the key signs, so a pin can be tied to a format version.
+        issuer:
+          type: string
+          description: did:key of the signing key — the value to pass as trust_anchor_did.
+          pattern: "^did:key:z6Mk[1-9A-HJ-NP-Za-km-z]{43,44}$"
+        verification_method:
+          type: string
+          description: The proof's verificationMethod id, for exact comparison.
+        public_key_multibase:
+          type: string
+          description: Ed25519 public key in multibase (z = base58btc) form.
+        key_fingerprint:
+          type: string
+          description: SHA-256 of the raw 32-byte public key, hex. Short enough to read aloud.
+          pattern: "^[0-9a-f]{64}$"
+
+    CertificationVerifyRequest:
+      type: object
+      required: [bundle]
+      properties:
+        bundle:
+          type: object
+          description: Certification bundle previously returned by POST /v1/certify
+        check_chain:
+          type: boolean
+          default: false
+          description: Re-fetch the anchored block and compare its hash (requires RPC).
+        trust_anchor_did:
+          type: string
+          maxLength: 512
+          description: |
+            Pin the expected issuer DID. Required for admission decisions: without
+            it a bundle signed by any self-consistent Ed25519 key verifies, because
+            the signature proves key possession, not that the key is the party you
+            intended to trust. A mismatch fails the signature check.
+            GET /v1/certify/issuer publishes the DID this deployment signs with.
+
+    CertificationBundle:
+      type: object
+      required: [schema, bundle_id, issued_at, valid_from, valid_until, issuer, subject, verdict, policy, claims, evidence, anchor, digest, proof]
+      properties:
+        schema:
+          type: string
+          example: qtrust.certification.v1
+        bundle_id:
+          type: string
+        issued_at:
+          type: string
+          format: date-time
+        valid_from:
+          type: string
+          format: date-time
+        valid_until:
+          type: string
+          format: date-time
+        issuer:
+          type: string
+          description: did:key of the issuing backend
+        subject:
+          type: object
+          properties:
+            org:
+              type: string
+            chain_id:
+              type: integer
+        verdict:
+          type: string
+          enum: [CERTIFIED, CONDITIONAL]
+        policy:
+          $ref: "#/components/schemas/CertificationPolicy"
+        claims:
+          type: object
+          properties:
+            asset_count:
+              type: integer
+            migration_counts:
+              type: object
+            latest_audit:
+              type: object
+              nullable: true
+            attestation_count:
+              type: integer
+            revocation:
+              type: object
+        evidence:
+          type: object
+          properties:
+            hash_algorithm:
+              type: string
+              enum: [sha256]
+            leaf_count:
+              type: integer
+            merkle_root:
+              type: string
+              pattern: "^0x[0-9a-f]{64}$"
+            leaves:
+              type: array
+              items:
+                type: object
+        anchor:
+          type: object
+          properties:
+            chain_id:
+              type: integer
+            chain_name:
+              type: string
+            block_number:
+              type: integer
+              nullable: true
+            block_hash:
+              type: string
+              nullable: true
+            block_timestamp:
+              type: integer
+              nullable: true
+            anchored:
+              type: boolean
+        caveats:
+          type: array
+          items:
+            type: string
+        digest:
+          type: string
+          example: "sha256:…"
+        proof:
+          type: object
+          properties:
+            type:
+              type: string
+              example: Ed25519Signature2020
+            created:
+              type: string
+              format: date-time
+            verificationMethod:
+              type: string
+            proofPurpose:
+              type: string
+            proofValue:
+              type: string
+
+    CertificationPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        require_asset_evidence:
+          type: boolean
+        require_audit:
+          type: boolean
+        max_audit_age_days:
+          type: integer
+        reject_failed_audit:
+          type: boolean
+        min_verified_migration_ratio:
+          type: number
+        require_revocation_root:
+          type: boolean
+        max_validity_days:
+          type: integer
+        default_validity_days:
+          type: integer
+
+    CertificationRefusal:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+          example: certification_refused
+        reasons:
+          type: array
+          items:
+            type: string
+        policy:
+          $ref: "#/components/schemas/CertificationPolicy"
+
+    CertificationVerification:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        bundle_id:
+          type: string
+          nullable: true
+        issuer:
+          type: string
+          nullable: true
+        subject:
+          type: string
+          nullable: true
+        verdict:
+          type: string
+          nullable: true
+        reasons:
+          type: array
+          items:
+            type: string
+        caveats:
+          type: array
+          items:
+            type: string
+        valid_until:
+          type: string
+          nullable: true
+        expired:
+          type: boolean
+        checked:
+          type: object
+          properties:
+            structure:
+              type: boolean
+            digest:
+              type: boolean
+            merkle:
+              type: boolean
+            signature:
+              type: boolean
+            validity:
+              type: boolean
+        chain_anchor:
+          type: string
+          enum: [verified, mismatch, unavailable, skipped]
+        timestamp:
+          type: string
+          format: date-time
 
     # ── Revocation ─────────────────────────────────────────────────
     RevocationRoot:

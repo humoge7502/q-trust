@@ -77,6 +77,26 @@ for (const width of [320, 375]) {
       expect(scrollWidth).toBeLessThanOrEqual(width);
     });
 
+    test(`pricing page has no horizontal overflow`, async ({ page }) => {
+      // Pricing is a dense three-column schedule. On a phone it stacks, but the
+      // mono price rows and the bordered tier grid are exactly the sort of
+      // thing that can exceed a 320px viewport and be silently clipped by
+      // `overflow-x: clip` rather than reported as a scrollbar.
+      await page.goto("/pricing");
+      await expectQTrustApp(page);
+      await page.waitForLoadState("networkidle");
+      const scrollWidth = await page.evaluate(
+        () => document.documentElement.scrollWidth,
+      );
+      expect(scrollWidth).toBeLessThanOrEqual(width);
+
+      const offenders = await overflowingElements(page);
+      expect(
+        offenders,
+        `elements wider than ${width}px:\n${offenders.join("\n")}`,
+      ).toEqual([]);
+    });
+
     test(`scanner page keeps every tab reachable`, async ({ page }) => {
       // `scrollWidth` cannot see this: the document sets `overflow-x: clip`, so
       // content that overflows is silently cut off rather than producing a

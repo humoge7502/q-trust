@@ -1,10 +1,24 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual } from 'node:crypto';
 
-/** Length-independent comparison that never short-circuits on content. */
+/**
+ * Constant-time string comparison.
+ *
+ * Both sides are zero-padded to a common length so `timingSafeEqual` never
+ * throws on a length mismatch and no comparison path short-circuits on
+ * content. (The previous sha256-then-compare version also re-introduced a
+ * plain `a === b` after the timing-safe step, which early-exits on the first
+ * differing byte — defeating the point.)
+ */
 function safeEquals(a: string, b: string): boolean {
-  const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest();
-  return timingSafeEqual(sha(a), sha(b)) && a === b;
+  const ab = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  const n = Math.max(ab.length, bb.length);
+  const pa = Buffer.alloc(n);
+  const pb = Buffer.alloc(n);
+  ab.copy(pa);
+  bb.copy(pb);
+  return timingSafeEqual(pa, pb);
 }
 
 /**

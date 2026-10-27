@@ -1,0 +1,336 @@
+{
+  "api": "https://qtrust-backend.vercel.app/api",
+  "at": "2026-10-22T16:37:46.935Z",
+  "rows": [
+    {
+      "section": "get",
+      "name": "GET /health",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/health",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /docs/json",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/assets/0x125fad1d7f435ea1dfeb014bdcbbbe0636fe7043b1e4e4ac90975768e3d1a349",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/assets/0x125fad1d7f435ea1dfeb014bdcbbbe0636fe7043b1e4e4ac90975768e3d1a349/verify",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/orgs/0xE610569aE0352DC3262419bb051a86145f52875c/summary",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/orgs/0xE610569aE0352DC3262419bb051a86145f52875c/assets",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/orgs/0xE610569aE0352DC3262419bb051a86145f52875c/migrations",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/orgs/0xE610569aE0352DC3262419bb051a86145f52875c/audit",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/vendors/0xE610569aE0352DC3262419bb051a86145f52875c/attestations",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/products/QTrust-PQC-Lib/support?version=1.4.0&algorithm=ML-KEM-768",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/relay/nonce/0xE610569aE0352DC3262419bb051a86145f52875c",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/relay/cbom-nonce/0xE610569aE0352DC3262419bb051a86145f52875c",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/relay/audit-nonce/0xE610569aE0352DC3262419bb051a86145f52875c",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/revocation/0xE610569aE0352DC3262419bb051a86145f52875c",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/trust-anchors/0xE610569aE0352DC3262419bb051a86145f52875c",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/gpu/status",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/gpu/quantum/estimate/2048",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/stats",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "get",
+      "name": "GET /v1/webhooks/subscribers",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "auth",
+      "name": "GET /v1/stats anonymous → 401",
+      "pass": true,
+      "detail": "401"
+    },
+    {
+      "section": "auth",
+      "name": "GET /v1/stats with key is not rejected",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "auth",
+      "name": "GET /v1/webhooks/subscribers anonymous → 401",
+      "pass": true,
+      "detail": "401"
+    },
+    {
+      "section": "auth",
+      "name": "GET /v1/webhooks/subscribers with key is not rejected",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "auth",
+      "name": "GET /v1/gpu/status anonymous → 401",
+      "pass": true,
+      "detail": "401"
+    },
+    {
+      "section": "auth",
+      "name": "GET /v1/gpu/status with key is not rejected",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "auth",
+      "name": "POST /v1/write/assets anonymous → 401",
+      "pass": true,
+      "detail": "401"
+    },
+    {
+      "section": "auth",
+      "name": "POST /v1/relay/cbom anonymous → 401",
+      "pass": true,
+      "detail": "401"
+    },
+    {
+      "section": "auth",
+      "name": "POST /v1/relay/cbom with key is not rejected",
+      "pass": true,
+      "detail": "400"
+    },
+    {
+      "section": "auth",
+      "name": "POST /v1/credentials/issue anonymous → 401",
+      "pass": true,
+      "detail": "401"
+    },
+    {
+      "section": "auth",
+      "name": "POST /v1/credentials/issue with key is not rejected",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "auth",
+      "name": "POST /v1/plans anonymous → 401",
+      "pass": true,
+      "detail": "401"
+    },
+    {
+      "section": "auth",
+      "name": "POST /v1/plans with key is not rejected",
+      "pass": true,
+      "detail": "400"
+    },
+    {
+      "section": "chain",
+      "name": "scan/source returns findings",
+      "pass": true,
+      "detail": "200, 14 findings"
+    },
+    {
+      "section": "chain",
+      "name": "risk/score scores every finding",
+      "pass": true,
+      "detail": "200, 14/14"
+    },
+    {
+      "section": "chain",
+      "name": "risk/summary counts by severity",
+      "pass": true,
+      "detail": "200, total=14"
+    },
+    {
+      "section": "chain",
+      "name": "compliance/evaluate returns a verdict",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "chain",
+      "name": "roadmap/generate returns phases",
+      "pass": true,
+      "detail": "200, 4 phases"
+    },
+    {
+      "section": "chain",
+      "name": "evidence/create returns a ledger",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "chain",
+      "name": "evidence/verify accepts the ledger",
+      "pass": true,
+      "detail": "200, valid=true"
+    },
+    {
+      "section": "chain",
+      "name": "plans returns a migration order",
+      "pass": true,
+      "detail": "200, 3 steps"
+    },
+    {
+      "section": "chain",
+      "name": "credentials/issue returns a VC",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "chain",
+      "name": "credentials/verify accepts the issued VC",
+      "pass": true,
+      "detail": "200, valid=true"
+    },
+    {
+      "section": "gpu",
+      "name": "/v1/gpu/quantum/estimate/2048",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "gpu",
+      "name": "/v1/gpu/anomaly/score",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "gpu",
+      "name": "/v1/gpu/side-channel/analyze",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "gpu",
+      "name": "/v1/gpu/rl/plan",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "section": "webhooks",
+      "name": "subscribe accepts a new endpoint",
+      "pass": true,
+      "detail": "200, storage=memory"
+    },
+    {
+      "section": "webhooks",
+      "name": "subscriber appears in the list",
+      "pass": true,
+      "detail": "1 subscribers"
+    },
+    {
+      "section": "webhooks",
+      "name": "subscriber list exposes the org address (needed to unsubscribe)",
+      "pass": true,
+      "detail": "fields=id,url,address,events"
+    },
+    {
+      "section": "webhooks",
+      "name": "unsubscribe without `events` removes the endpoint",
+      "pass": true,
+      "detail": "status 200, removed=1, still listed=false"
+    },
+    {
+      "section": "webhooks",
+      "name": "unsubscribe with matching events removes it",
+      "pass": true,
+      "detail": "status 200, removed=0"
+    },
+    {
+      "section": "data",
+      "name": "summary.asset_count matches the asset list",
+      "pass": true,
+      "detail": "summary 4 vs list 4"
+    },
+    {
+      "section": "data",
+      "name": "all three seed assets are present",
+      "pass": true,
+      "detail": "4 assets"
+    },
+    {
+      "section": "data",
+      "name": "every asset metadata URI resolves",
+      "pass": false,
+      "detail": "https://q-trust-nu.vercel.app/demo/cbom-live-check.json → 404"
+    }
+  ]
+}

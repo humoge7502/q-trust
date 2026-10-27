@@ -132,7 +132,25 @@ Risk engine (`qtrust_inspector/risk_engine.py:calculate_risk_score`) classifies 
 | `POST` | `/v1/compliance/evaluate` | Single-framework check (`n framework= nist|cnsa|fips|...`) | — |
 | `POST` | `/v1/compliance/full-report` | Full 7-framework report (NIST, CNSA 2.0, FIPS 140-3, NIS2, FISMA, FedRAMP, CMMC) | — |
 
-Compliance engine is `qtrust_inspector/compliance.py:ComplianceEngine` — conformance tested via `CBOM_CONFORMANCE.md`.
+Compliance engine is `qtrust_inspector/compliance.py:ComplianceEngine` — conformance tested via `CBOM_CONFORMANCE.md`. Frameworks: NIST SP 800-131A, CNSA 2.0, FIPS 140-3, EU NIS2, FISMA, FedRAMP, CMMC, PCI DSS 4.0, BSI TR-02102, NCSC UK, ASD ISM, **DORA**, **HIPAA**.
+
+### Assurance analytics
+
+One call scores an estate three ways using the real inspector engines (no TypeScript reimplementation): six-factor crypto-agility, Monte-Carlo CRQC financial exposure, and sector assurance packs.
+
+| Method | Path | Description | Auth | Rate limit |
+|---|---|---|---|---|
+| `POST` | `/v1/assurance/report` | `op=report` returns agility + CRQC + all packs; `op=agility\|crqc\|packs` runs one engine | `X-Api-Key` | 30/min |
+
+```bash
+curl -s http://localhost:3001/v1/assurance/report \
+  -H "Content-Type: application/json" -H "X-Api-Key: $QTRUST_API_KEYS" \
+  -d '{"findings":[{"asset_type":"tls_certificate","host":"pay.example","algorithm":"RSA-2048","key_size":2048,"criticality":"high"}],"top":5}' | jq '{grade:.agility.grade, p50:.crqc.loss_p50_usd, cnsa:.packs["cnsa-2.0"].verdict}'
+```
+
+* **Agility** (`qtrust_inspector/agility.py`): A–E grade over algorithm posture (25), abstraction (20), configurability (15), PQC path (20), observability (10), lifecycle (10); returns weakest assets and the highest-leverage upgrade levers.
+* **CRQC** (`qtrust_inspector/crqc.py`): lognormal CRQC arrival (median 2032, σ 0.35 by default), per-asset vulnerability, data lifetime, present-value discounting → `expected_loss_usd`, P10/P50/P90, `p_any_exposure`, exposure by arrival year. Seeded and deterministic; limitations are returned with the numbers.
+* **Packs** (`qtrust_inspector/assurance_packs.py`): `cnsa-2.0`, `pci-dss-4.0`, `dora`, `hipaa`, `fedramp-rev5`. Manual controls are `MANUAL` (never `PASS`), an empty estate is `NOT_READY`, and each report carries a tamper-evident `pack_digest`.
 
 ### Evidence
 
@@ -151,7 +169,7 @@ Ledger is persisted as append-only JSONL at `/var/lib/qtrust` (Docker volume `qt
 | `POST` | `/v1/plans` | Create AI migration plan (proxied to planner) | `X-Api-Key` (planner) |
 | `GET` | `/v1/plans/{did}` | Get migration plan for an org (planner proxied) | `X-Api-Key` |
 
-Planner proxy requires `QTRUST_PLANNER_API_KEY` (audit HIGH-1); returns `503` when planner is down. See `GPU_FEATURES.md` for GNN/RL details and `PERFORMANCE.md` for benchmark τ 0.975.
+Planner proxy requires `QTRUST_PLANNER_API_KEY` (audit HIGH-1); returns `503` when planner is down. See `GPU_FEATURES.md` for GNN/RL details and `PERFORMANCE.md` for benchmark τ 0.975 (synthetic-scale, held-out).
 
 ### Assets
 
@@ -190,6 +208,46 @@ Planner proxy requires `QTRUST_PLANNER_API_KEY` (audit HIGH-1); returns `503` wh
 
 Vendor attestation uniqueness is bounded by `MAX_ATTESTATIONS_PER_PRODUCT` (governor-settable [16,4096], default 256).
 
+### Certification bundles
+
+A certification bundle is a signed, self-contained snapshot of an org's assurance state: assets, migrations, vendor attestations and the latest audit, committed to a sha256 Merkle root and anchored to a block. Issuance is **validity-gated** — the API refuses (HTTP 409) rather than signing a claim the evidence cannot support. Verification is **offline by default** and works in TypeScript and Python against the same bytes.
+
+| Method | Path | Description | Auth | Rate limit |
+|---|---|---|---|---|
+| `POST` | `/v1/certify` | Issue a policy-gated, signed bundle (409 = refused) | `X-Api-Key` | 10/min |
+| `POST` | `/v1/certify/verify` | Verify structure + digest + Merkle + Ed25519 + validity; optional `trust_anchor_did` pin and `check_chain` re-anchor | — | 60/min |
+| `GET` | `/v1/certify/policies` | List admission policies | — | — |
+| `GET` | `/v1/certify/issuer` | Public identity of the key this deployment signs with, for pinning | — | 60/min |
+
+Policies (`backend/src/services/certification.ts:getCertificationPolicy`):
+
+| Policy | Requires assets | Requires audit | Max audit age | Revocation root | Verified-migration floor | Max validity |
+|---|---|---|---|---|---|---|
+| `default` | yes | no | 365 d | no | 0% | 365 d |
+| `regulated` | yes | yes | 365 d | yes | 0% | 180 d |
+| `strict` | yes | yes | 180 d | yes | 90% | 90 d |
+
+```bash
+# Issue (refusal returns 409 with the failed reasons)
+curl -s http://localhost:3001/v1/certify \
+  -H "Content-Type: application/json" -H "X-Api-Key: $QTRUST_API_KEYS" \
+  -d '{"org":"0xYourOrg","policy":"regulated","validity_days":30}' > cert.json
+
+# Verify offline — backend CLI (no RPC unless --chain)
+cd backend && npm run certify:verify -- ../cert.json
+
+# Verify offline — Python SDK (same bundle, byte-compatible canonicalisation)
+python -m qtrust.bundle cert.json
+
+# Discover the issuer DID to pin, then pin it (503 if no key is configured)
+curl -s http://localhost:3001/v1/certify/issuer | jq -r .issuer
+cd backend && npm run certify:issuer   # same value, read from the local config
+```
+
+The bundle commits evidence with a per-record `digest = sha256(canonical_json(record))` and a sorted-pair Merkle root, so dropping, reordering or editing any record fails verification. The Ed25519 signature covers the canonical bundle (everything except `proof`; `digest` covers everything except `digest`/`proof`). `check_chain: true` is the only path that touches the network and re-compares the anchored block hash.
+
+An unpinned verification proves only that *some* Ed25519 key signed the content — pin the issuer you expect, with `verify_bundle(..., trust_anchor_did=...)` in the SDK, or read `GET /v1/certify/issuer` to learn what this deployment signs with. Rotation is an out-of-band event: see [`docs/runbook/issuer-key-rotation.md`](runbook/issuer-key-rotation.md).
+
 ### Relay (EIP-712 gasless)
 
 All writes can be done gaslessly — vendors/orgs sign typed data off-chain, relayer submits. Every relay pre-checks the signer's on-chain role (audit H-3).
@@ -224,7 +282,7 @@ See `GPU_FEATURES.md` and `make -f Makefile.gpu help` for training.
 
 ## OpenAPI source & Swagger
 
-* **File:** `backend/openapi.yaml` (OpenAPI 3.0.3, version 2.2.0, 52 paths, 18 tags — `health`, `scanner`, `gpu`, `assets`, `orgs`, `vendors`, `products`, `plans`, `write`, `relay`, `evaluate`, `credentials`, `revocation`, `policies`, `schemas`, `trust-anchors`, `webhooks`, `legacy`).
+* **File:** `backend/openapi.yaml` (OpenAPI 3.0.3, version 2.2.0, 56 paths, 20 tags — `health`, `scanner`, `gpu`, `assets`, `orgs`, `vendors`, `products`, `plans`, `write`, `relay`, `evaluate`, `credentials`, `certification`, `assurance`, `revocation`, `policies`, `schemas`, `trust-anchors`, `webhooks`, `legacy`).
 * **Live JSON:** `GET http://localhost:3001/docs/json` (API-key protected in production)
 * **Swagger UI:** `GET http://localhost:3001/docs` (API-key protected in production) — includes the `X-Api-Key` authorizer, request/response examples, and `TxResult`/`RelayResult` schemas.
 

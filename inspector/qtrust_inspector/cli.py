@@ -174,11 +174,11 @@ def scan(
     # Fail loudly on a mistyped path: a directory-shaped target that does not
     # exist must not silently fall through to the network scanner and produce
     # a misleading "0 findings" clean report (exit 0 in CI pipelines).
-    if Path(target).exists() and not Path(target).is_dir() and not _is_cidr(target) and "/" in target:
+    if Path(target).exists() and not Path(target).is_dir() and not _is_cidr(target) and _looks_like_path(target):
         console.print(f"[red]Error: target '{target}' is a file, not a directory, host, or CIDR range.[/red]")
         console.print("[yellow]Hint: directories are scanned with `crypto-inspector scan <dir>`, hosts by hostname.[/yellow]")
         raise typer.Exit(code=2)
-    if not Path(target).exists() and "/" in target and not _is_cidr(target):
+    if not Path(target).exists() and _looks_like_path(target) and not _is_cidr(target):
         console.print(f"[red]Error: target path '{target}' does not exist.[/red]")
         console.print("[yellow]Hint: typo in the path? A missing path must not scan as clean.[/yellow]")
         raise typer.Exit(code=2)
@@ -281,6 +281,8 @@ def compliance_check(
         "bsi": ComplianceFramework.BSI_TR_02102,
         "ncsc": ComplianceFramework.NCSC_UK,
         "asd": ComplianceFramework.ASD_ISM,
+        "dora": ComplianceFramework.DORA,
+        "hipaa": ComplianceFramework.HIPAA,
     }
     frameworks = [fw_map[f.strip()] for f in framework.split(",") if f.strip() in fw_map]
     data = json.loads(scan_file.read_text())
@@ -298,6 +300,157 @@ def compliance_check(
         console.print(f"\n[bold cyan]{fw.value}[/bold cyan]")
         console.print(f"  Score: {score:.0f}%  ({compliant}/{total} rules compliant)")
         console.print(f"  Non-compliant: {non_compliant}  Partial: {partial}")
+
+
+@app.command()
+def assurance(
+    scan_file: Path = typer.Argument(..., help="Path to a scan result JSON file"),
+    pack: Optional[str] = typer.Option(None, "--pack", "-p", help="Comma-separated pack ids (default: all)"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Write the full pack report JSON"),
+):
+    """Evaluate machine-checkable sector assurance packs (CNSA 2.0, PCI DSS 4.0, DORA, HIPAA, FedRAMP)."""
+    from .assurance_packs import PACKS, evaluate_all, evaluate_pack
+    from .models import AssetFinding
+
+    data = json.loads(scan_file.read_text())
+    findings = [AssetFinding(**f) for f in data.get("findings", [])]
+    if pack:
+        ids = [p.strip() for p in pack.split(",") if p.strip()]
+        unknown = [p for p in ids if p not in PACKS]
+        if unknown:
+            console.print(f"[red]Unknown pack(s): {', '.join(unknown)}. Available: {', '.join(sorted(PACKS))}[/red]")
+            raise typer.Exit(1)
+        reports = {pid: evaluate_pack(findings, pid) for pid in ids}
+    else:
+        reports = evaluate_all(findings)
+
+    table = Table(title="Sector assurance packs")
+    for column in ("Pack", "Verdict", "Score", "Pass", "Fail", "Partial", "Manual", "N/A"):
+        table.add_column(column)
+    for report in reports.values():
+        colour = "green" if report.verdict == "READY" else ("yellow" if report.verdict == "CONDITIONAL" else "red")
+        table.add_row(
+            report.pack_id,
+            f"[{colour}]{report.verdict}[/{colour}]",
+            f"{report.score:.0f}%",
+            str(report.passed),
+            str(report.failed),
+            str(report.partial),
+            str(report.manual),
+            str(report.not_applicable),
+        )
+    console.print(table)
+
+    for report in reports.values():
+        failures = [c for c in report.controls if c.status.value in ("FAIL", "PARTIAL")]
+        for control in failures:
+            console.print(f"  [yellow]{report.pack_id}[/yellow] {control.control_id}: {control.evidence}")
+
+    if output:
+        output.write_text(json.dumps(
+            {pid: report.model_dump(mode="json") for pid, report in reports.items()},
+            indent=2,
+        ))
+        console.print(f"[green]Assurance report written to {output}[/green]")
+
+
+@app.command()
+def agility(
+    scan_file: Path = typer.Argument(..., help="Path to a scan result JSON file"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o"),
+    top: int = typer.Option(10, "--top", help="Weakest assets to show"),
+):
+    """Score per-asset and estate crypto-agility (how cheaply a primitive can be swapped)."""
+    from .agility import score_estate
+    from .models import AssetFinding
+
+    data = json.loads(scan_file.read_text())
+    findings = [AssetFinding(**f) for f in data.get("findings", [])]
+    estate = score_estate(findings, top_n=top)
+
+    console.print(
+        f"Estate crypto-agility: [bold]{estate.score}/100[/bold] "
+        f"(grade {estate.grade.value}) across {estate.asset_count} assets"
+    )
+    table = Table(title="Weakest assets")
+    for column in ("Asset", "Algorithm", "Score", "Grade", "Primary blocker"):
+        table.add_column(column)
+    for asset in estate.weakest:
+        table.add_row(
+            asset.asset,
+            asset.algorithm or "-",
+            f"{asset.score:.0f}",
+            asset.grade.value,
+            asset.blockers[0] if asset.blockers else "-",
+        )
+    console.print(table)
+
+    if estate.highest_leverage:
+        console.print("[bold]Highest-leverage investments[/bold]")
+        for item in estate.highest_leverage:
+            console.print(f"  {item['assets']:>4} assets  {item['lever']}")
+
+    if output:
+        output.write_text(json.dumps(estate.model_dump(mode="json"), indent=2))
+        console.print(f"[green]Agility report written to {output}[/green]")
+
+
+@app.command()
+def crqc(
+    scan_file: Path = typer.Argument(..., help="Path to a scan result JSON file"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o"),
+    median_arrival_year: float = typer.Option(2032.0, "--median-arrival", help="Median CRQC arrival year"),
+    sigma: float = typer.Option(0.35, "--sigma", help="Log-space uncertainty on arrival year"),
+    trials: int = typer.Option(10_000, "--trials", help="Monte-Carlo trials"),
+    seed: int = typer.Option(42, "--seed"),
+    discount_rate: float = typer.Option(0.05, "--discount-rate"),
+    asset_value: float = typer.Option(1_000_000.0, "--asset-value", help="Baseline value per asset (scaled by criticality)"),
+    data_lifetime: float = typer.Option(10.0, "--data-lifetime", help="Default data lifetime in years"),
+):
+    """Monte-Carlo harvest-now-decrypt-later exposure in financial terms."""
+    from .crqc import assess
+    from .models import AssetFinding
+
+    data = json.loads(scan_file.read_text())
+    findings = [AssetFinding(**f) for f in data.get("findings", [])]
+    report = assess(
+        findings,
+        median_arrival_year=median_arrival_year,
+        sigma=sigma,
+        trials=trials,
+        seed=seed,
+        discount_rate=discount_rate,
+        default_asset_value_usd=asset_value,
+        default_data_lifetime_years=data_lifetime,
+    )
+
+    console.print(
+        f"[bold]CRQC exposure[/bold] across {report.asset_count} assets "
+        f"(median arrival {median_arrival_year:.0f}, {trials:,} trials)"
+    )
+    console.print(f"  Expected loss (PV): ${report.expected_loss_usd:,.0f}")
+    console.print(
+        f"  P10 ${report.loss_p10_usd:,.0f}  |  P50 ${report.loss_p50_usd:,.0f}  |  "
+        f"P90 ${report.loss_p90_usd:,.0f}"
+    )
+    console.print(f"  Probability of any exposure before expiry: {report.p_any_exposure:.1%}")
+
+    table = Table(title="Top exposed assets")
+    for column in ("Asset", "Algorithm", "Value (USD)", "P(exposed)", "Expected loss (USD)"):
+        table.add_column(column)
+    for asset in report.top_assets:
+        table.add_row(
+            asset.asset,
+            asset.algorithm or "-",
+            f"{asset.value_usd:,.0f}",
+            f"{asset.p_exposed:.1%}",
+            f"{asset.expected_loss_usd:,.0f}",
+        )
+    console.print(table)
+
+    if output:
+        output.write_text(json.dumps(report.model_dump(mode="json"), indent=2))
+        console.print(f"[green]CRQC report written to {output}[/green]")
 
 
 @app.command()
@@ -638,6 +791,25 @@ def _is_cidr(target: str) -> bool:
     except ValueError:
         return False
     return "/" in target
+
+
+def _looks_like_path(target: str) -> bool:
+    """Cross-platform "path-shaped" detection.
+
+    True for POSIX paths (``/``), Windows paths (``\\``), or a Windows drive
+    letter (``C:\\...`` / ``C:/...``). Used to decide whether a target is
+    intended as a filesystem path — so a mistyped or missing path fails loudly
+    (exit 2) — versus a bare hostname handed to the network scanner.
+
+    Detecting only ``/`` silently mis-routed Windows paths: a missing
+    ``C:\\...`` target has no forward slash, so it fell through to
+    ``scan_host`` and crashed inside TLS setup with an opaque IDNA error
+    instead of reporting "path does not exist".
+    """
+    if "/" in target or "\\" in target:
+        return True
+    # Windows drive letter, e.g. "C:" or "C:\foo" (no separator required).
+    return len(target) >= 2 and target[1] == ":" and target[0].isalpha()
 
 
 def _merge_results(results: list[ScanResult]) -> ScanResult:

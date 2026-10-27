@@ -1,0 +1,59 @@
+{
+  "lines": [
+    {
+      "id": "vo-01",
+      "scene": "deadline",
+      "duration": 9.0,
+      "words": []
+    },
+    {
+      "id": "vo-02",
+      "scene": "loop",
+      "duration": 9.576,
+      "words": []
+    },
+    {
+      "id": "vo-03",
+      "scene": "scan",
+      "duration": 10.536,
+      "words": []
+    },
+    {
+      "id": "vo-04",
+      "scene": "risk",
+      "duration": 11.928,
+      "words": []
+    },
+    {
+      "id": "vo-05",
+      "scene": "roadmap",
+      "duration": 7.944,
+      "words": []
+    },
+    {
+      "id": "vo-06",
+      "scene": "evidence",
+      "duration": 11.736,
+      "words": []
+    },
+    {
+      "id": "vo-07",
+      "scene": "verify",
+      "duration": 10.008,
+      "words": []
+    },
+    {
+      "id": "vo-08",
+      "scene": "vendor",
+      "duration": 10.872,
+      "words": []
+    },
+    {
+      "id": "vo-09",
+      "scene": "finale",
+      "duration": 2.856,
+      "words": []
+    }
+  ],
+  "total": 84.456
+}

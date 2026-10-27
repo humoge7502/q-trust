@@ -1,0 +1,65 @@
+{
+  "eval_split": "code_corpus_v3, repo-disjoint seed 42 (10 eval repos)",
+  "ensemble": "full detector.evaluate() (static+AST+dataflow+ML)",
+  "headline": {
+    "v1": {
+      "precision": 0.9406,
+      "recall": 0.8688,
+      "f1": 0.9033,
+      "accuracy": 0.9041,
+      "false_negatives": 215,
+      "fn_rate": 0.1312,
+      "coverage": 1.0,
+      "n": 3181
+    },
+    "v3": {
+      "precision": 0.8103,
+      "recall": 0.8548,
+      "f1": 0.8319,
+      "accuracy": 0.8221,
+      "false_negatives": 238,
+      "fn_rate": 0.1452,
+      "coverage": 1.0,
+      "n": 3181
+    }
+  },
+  "per_language": {
+    "c": {
+      "n": 42,
+      "v1_f1": 0.2326,
+      "v3_f1": 0.32
+    },
+    "go": {
+      "n": 531,
+      "v1_f1": 0.8278,
+      "v3_f1": 0.7608
+    },
+    "java": {
+      "n": 787,
+      "v1_f1": 0.9891,
+      "v3_f1": 0.9891
+    },
+    "javascript": {
+      "n": 35,
+      "v1_f1": 0.9855,
+      "v3_f1": 0.9855
+    },
+    "python": {
+      "n": 101,
+      "v1_f1": 0.9424,
+      "v3_f1": 0.9368
+    },
+    "rust": {
+      "n": 167,
+      "v1_f1": 0.7479,
+      "v3_f1": 0.7004
+    },
+    "solidity": {
+      "n": 297,
+      "v1_f1": 0.8193,
+      "v3_f1": 0.4244
+    }
+  },
+  "note": "v1 = the canonical 4-epoch/256-len GPU fine-tune (F1 0.9395 on the v1 eval split). v3 = 2-epoch/128-len CPU fine-tune on corpus v3. Same eval files, same recipe.",
+  "generated_at": "2026-10-23T23:56:05Z"
+}

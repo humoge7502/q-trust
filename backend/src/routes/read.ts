@@ -14,6 +14,7 @@ import {
 } from "../services/verify.js";
 import { isValidAddress, isValidBytes32, isZeroAddress, CONTRACTS, publicClient, PLANNER_URL, PLANNER_API_KEY, parsePagination } from "../config.js";
 import { requireApiKey } from "../middleware/auth.js"; // REG-18: prevent unauthenticated compute amplification
+import { fetchWithRetry } from "../services/upstream.js";
 import {
   RevocationAnchorAbi,
   PolicyCommitmentAbi,
@@ -123,14 +124,21 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "cbom.assets (non-empty array) is required" });
     }
     try {
-      const res = await fetch(`${PLANNER_URL}/plan`, {
+      // The planner is reached through a quick tunnel that drops connections at
+      // the edge intermittently; retrying a tunnel-level failure keeps a blip
+      // from surfacing as "planner unavailable" in the dashboard.
+      const res = await fetchWithRetry(`${PLANNER_URL}/plan`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
           ...(PLANNER_API_KEY ? { "x-api-key": PLANNER_API_KEY } : {}),
         },
         body: JSON.stringify({ cbom: body.cbom, deadline: body.deadline ?? null }),
-        signal: AbortSignal.timeout(60_000),
+      }, {
+        attempts: 3,
+        timeoutMs: 45_000,
+        onRetry: ({ attempt, status }) =>
+          request.log.warn({ attempt, status }, "Planner proxy retrying after tunnel failure"),
       });
       if (!res.ok) {
         request.log.warn({ status: res.status }, "Planner service rejected plan request");

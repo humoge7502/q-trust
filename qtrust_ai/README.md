@@ -4,9 +4,57 @@
 
 This package implements the 32-point transformation (user spec) to make Q-Trust **way ahead** of SandboxAQ / IBM / Keyfactor etc., who sell dashboards, not predictive systems.
 
+## ⚠️ Status & honesty statement (read first)
+
+This package is the **research / intelligence prototype library** for Q-Trust. It
+is **NOT the served production path**. The production system is:
+
+```
+scanner → GNN/RL planner (planner/) → API + UI (backend/, web/) → on-chain attestation (contracts/, Base Sepolia)
+```
+
+`qtrust_ai` supplies auxiliary intelligence (discovery, risk, cost/failure
+modelling, scenario generation, explainability, benchmark + metrics). Most
+modules here are **trainable stubs / prototypes**: they expose real
+`train()`/`predict()`/`evaluate()` and deterministic fallbacks, but they are
+calibrated on synthetic / anchor data unless a `--real` dataset path is used.
+They are intentionally portable (CPU-only, no mandatory torch/sklearn).
+
+Two modules were explicitly honesty-refactored (2026-10-23) and must not be
+described as "trained models" in external claims:
+
+- **`graph/temporal_gnn.py`** is a **transparent-heuristic scenario generator**,
+  *not* a trained forecaster. Its published trajectory (73→61→50→42 over
+  30/90/180d) comes from an auditable risk-decay heuristic calibrated to the
+  anchor. The optional torch TGCN path is experimental only and is **never**
+  blended into the forecast (`torch_model_used_in_forecast` is always `False`).
+- **`migration/multi_objective_rl.py`** is a **genuine REINFORCE policy-gradient**
+  agent (verified: trained mean reward 0.959 vs untrained 0.882). It is a small
+  research agent, not a production scheduler — the production roadmap is produced
+  by `planner/`'s constrained optimizer, which the RL agent only *advises*.
+
+**Metric disambiguation (important, revised 2026-10-26):** the legacy "F1 0.970"
+figure is a single-model training-time score whose split was not leakage-audited;
+do not cite it as the current detector claim. The shipped clean claim is v4
+**F1 0.9205** on the de-duplicated repo-disjoint digest eval (1,779 files) and
+**0.9235** on the native split, both at the selected 0.50 ML gate (E-14/E-15/E-16).
+It is **not** the system-wide accuracy. The system's canonical benchmark metrics
+are different and must not be conflated:
+
+| Metric | Value | Scope |
+|--------|-------|-------|
+| Code-detector clean F1 (v4, repo-disjoint, de-duplicated) | **0.9205** (raw 0.9144; native 0.9235) | one model |
+| Legacy v1 benchmark F1 (`benchmark_comparison.json`) | 0.9395 (leaky split; historical record) | system benchmark |
+| Planner ranking Kendall τ_b | 0.975 (synthetic) / 0.7168–0.7263 (real LOO) | planner |
+
+Always cite the correct scope. The metric-consistency CI gate
+(`scripts/verify_metric_consistency.py`) pins both the legacy v1 artifact value
+and the clean v4 headline (0.9205 at gate 0.50) and forbids stale/over-claimed
+numbers.
+
 ## Why not just train the GNN more?
 
-Current GNN: `Graph → GNN → priority score` with τ 0.975 vs heuristic. It memorizes the rule that generated its labels (synthetic 40/30/20/10 mix missing). NIST lists discovery + risk + interoperability as core workstreams — not ranking alone.
+Current GNN: `Graph → GNN → priority score` with synthetic-held-out τ 0.975 (real-estate LOO: tie at the tie ceiling, E-06; outcome-based: optimum, E-09). It memorizes the rule that generated its labels (synthetic 40/30/20/10 mix missing). NIST lists discovery + risk + interoperability as core workstreams — not ranking alone.
 
 ## The intelligence stack (32 points)
 
@@ -67,16 +115,21 @@ Every `--real` run now also benchmarks each trained model against the
 obvious naive baseline (frequency prior, heuristic ordering, constant
 predictor, …) via `qtrust_ai/benchmark/compare.py`, writing
 `qtrust_ai/artifacts/benchmark_comparison.json` — 7 comparisons, 6/7 models
-beat their best baseline, mean relative gain **8.98×** — so "F1 0.97" is
-always a *defensible* claim, not a number in a vacuum.
+beat their best baseline, mean relative gain **8.98×**. The historical
+code-detector figure **F1 0.970** came from an early real-corpus run and has
+**not** been leakage-audited; it is retained as a training record, not as the
+current claim. The clean claim is the v4 model's **F1 0.9205** on the
+de-duplicated repo-disjoint digest eval (see the metric-disambiguation table
+above and EXPERIMENTS.md E-14/E-15/E-16).
 
-The real corpus is **4,431 files across 11 languages** (Python, Go, Rust, C,
-C++, Java, C#, Swift, PHP, JS/TS, Solidity) from pyca/cryptography,
-cloudflare/circl (Go PQC), rustls, libsodium, SJCL, Bouncy Castle Java+C#,
-CryptoSwift, phpseclib, OpenQuantumSafe/liboqs (C PQC), OpenZeppelin + balanced
-non-crypto repos (click, jinja, serde, gson, express, tokio, requests,
-golang/example). Held-out org-level no-leakage evaluation (repos unseen in
-training): **P 0.964 / R 0.976 / F1 0.970**.
+The early real corpus (behind the legacy 0.970 figure) was **4,431 files across
+11 languages** (Python, Go, Rust, C, C++, Java, C#, Swift, PHP, JS/TS, Solidity)
+from pyca/cryptography, cloudflare/circl (Go PQC), rustls, libsodium, SJCL,
+Bouncy Castle Java+C#, CryptoSwift, phpseclib, OpenQuantumSafe/liboqs (C PQC),
+OpenZeppelin + balanced non-crypto repos. That run reported **P 0.964 / R 0.976 /
+F1 0.970** at the time; later leakage auditing showed the v1 evaluation cannot be
+treated as clean, so it is not cited as the current detector score. Corpus **v4**
+(17,171 files / 58 sources, E-14) is the active corpus.
 
 **GPU training** — the code detector also supports a real transformer
 fine-tune on CUDA (`--hf-epochs 3`; default `huggingface/CodeBERTa-small-v1`):

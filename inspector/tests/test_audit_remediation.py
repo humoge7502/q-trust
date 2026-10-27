@@ -270,11 +270,17 @@ def test_b13_failed_runs_raise_instead_of_zero_fill():
 
 
 def test_b13_successful_runs_are_normalized():
+    import sys
+
     import numpy as np
 
     from qtrust_inspector.side_channel import collect_timing_traces
 
-    traces = collect_timing_traces(["/bin/true"], n_traces=5, timeout=5)
+    # Portable trivial command: the interpreter running an empty program. It
+    # accepts (and ignores) the extra random-input argument and exits 0 on every
+    # OS. Was "/bin/true", which does not exist on Windows, so all 5 runs failed
+    # there and the suite was red on Windows despite passing on Linux CI.
+    traces = collect_timing_traces([sys.executable, "-c", "pass"], n_traces=5, timeout=20)
     assert traces.shape == (5,)
     assert np.isfinite(traces).all()
 

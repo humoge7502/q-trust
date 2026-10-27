@@ -1,0 +1,261 @@
+{
+  "protocol": "leave-one-out outcome evaluation (host-disjoint estates)",
+  "objective": "quantum-risk-days (QRD) under qrd-sim execution model",
+  "sim_spec_version": "qrd-sim/1.0",
+  "honesty_note": "Simulation-grounded labels from real CBOM structure + documented assumptions (SIM_SPEC_VERSION); NOT observed org outcomes. Every ranking executed via the same dependency-feasible list-scheduling projection; ratio = QRD / exact-DP optimum.",
+  "n_estates": 3,
+  "config": {
+    "epochs": 40,
+    "n_synthetic": 200,
+    "n_probe": 40,
+    "real_repeat": 6,
+    "batch_size": 32,
+    "lr": 0.001,
+    "seed": 42,
+    "model": "MigrationGNNv3(input=10, hidden=128, embed=64, heads=4, norm=layer, dropout=0.1)",
+    "loss": "per-graph ListMLE on outcome-optimal ranks"
+  },
+  "aggregate_qrd_ratio": {
+    "gnn": {
+      "mean": 1.0,
+      "median": 1.0,
+      "stdev": 0.0,
+      "max": 1.0,
+      "bootstrap": {
+        "mean": 1.0,
+        "ci95_lo": 1.0,
+        "ci95_hi": 1.0
+      }
+    },
+    "heuristic": {
+      "mean": 1.038556,
+      "median": 1.041152,
+      "stdev": 0.013353,
+      "max": 1.05042,
+      "bootstrap": {
+        "mean": 1.038556,
+        "ci95_lo": 1.024096,
+        "ci95_hi": 1.05042
+      }
+    },
+    "smith": {
+      "mean": 1.0,
+      "median": 1.0,
+      "stdev": 0.0,
+      "max": 1.0,
+      "bootstrap": {
+        "mean": 1.0,
+        "ci95_lo": 1.0,
+        "ci95_hi": 1.0
+      }
+    },
+    "random": {
+      "mean": 1.024889,
+      "median": 1.033613,
+      "stdev": 0.018157,
+      "max": 1.037037,
+      "bootstrap": {
+        "mean": 1.024889,
+        "ci95_lo": 1.004016,
+        "ci95_hi": 1.037037
+      }
+    }
+  },
+  "aggregate_tau_b_vs_optimal": {
+    "gnn": {
+      "mean": 0.047619,
+      "median": -0.047619,
+      "stdev": 0.530263,
+      "max": 0.619048,
+      "bootstrap": {
+        "mean": 0.047619,
+        "ci95_lo": -0.428571,
+        "ci95_hi": 0.619048
+      }
+    },
+    "heuristic": {
+      "mean": -1.0,
+      "median": -1.0,
+      "stdev": 0.0,
+      "max": -1.0,
+      "bootstrap": {
+        "mean": -1.0,
+        "ci95_lo": -1.0,
+        "ci95_hi": -1.0
+      }
+    },
+    "smith": {
+      "mean": -0.111111,
+      "median": -0.047619,
+      "stdev": 0.290957,
+      "max": 0.142857,
+      "bootstrap": {
+        "mean": -0.111111,
+        "ci95_lo": -0.428571,
+        "ci95_hi": 0.142857
+      }
+    },
+    "random": {
+      "mean": -0.111111,
+      "median": -0.047619,
+      "stdev": 0.198254,
+      "max": 0.047619,
+      "bootstrap": {
+        "mean": -0.111111,
+        "ci95_lo": -0.333333,
+        "ci95_hi": 0.047619
+      }
+    }
+  },
+  "precedence_probe_qrd_ratio": {
+    "gnn": {
+      "mean": 1.014652,
+      "median": 1.018329,
+      "stdev": 0.006882,
+      "max": 1.018914,
+      "bootstrap": {
+        "mean": 1.014652,
+        "ci95_lo": 1.006713,
+        "ci95_hi": 1.018914
+      }
+    },
+    "heuristic": {
+      "mean": 1.061564,
+      "median": 1.062561,
+      "stdev": 0.017454,
+      "max": 1.078499,
+      "bootstrap": {
+        "mean": 1.061564,
+        "ci95_lo": 1.043633,
+        "ci95_hi": 1.078499
+      }
+    },
+    "smith": {
+      "mean": 1.011239,
+      "median": 1.011894,
+      "stdev": 0.010926,
+      "max": 1.021823,
+      "bootstrap": {
+        "mean": 1.011239,
+        "ci95_lo": 1.0,
+        "ci95_hi": 1.021823
+      }
+    },
+    "random": {
+      "mean": 1.096326,
+      "median": 1.079435,
+      "stdev": 0.085661,
+      "max": 1.189175,
+      "bootstrap": {
+        "mean": 1.096326,
+        "ci95_lo": 1.020369,
+        "ci95_hi": 1.189175
+      }
+    }
+  },
+  "paired_vs_heuristic": {
+    "gnn": {
+      "delta_mean": 0.038556,
+      "wilcoxon_less": {
+        "statistic": null,
+        "p_value": null,
+        "n": 3
+      },
+      "wins/ties/losses": "3/0/0"
+    },
+    "smith": {
+      "delta_mean": 0.038556,
+      "wilcoxon_less": {
+        "statistic": null,
+        "p_value": null,
+        "n": 3
+      },
+      "wins/ties/losses": "3/0/0"
+    },
+    "random": {
+      "delta_mean": 0.013667,
+      "wilcoxon_less": {
+        "statistic": null,
+        "p_value": null,
+        "n": 3
+      },
+      "wins/ties/losses": "3/0/0"
+    }
+  },
+  "fold_metrics": {
+    "real_finance_0": {
+      "n_assets": 7,
+      "qrd_optimal": 1666.0,
+      "gnn": {
+        "qrd": 1666.0,
+        "ratio": 1.0,
+        "tau_b": 0.619048
+      },
+      "heuristic": {
+        "qrd": 1750.0,
+        "ratio": 1.05042,
+        "tau_b": -1.0
+      },
+      "smith": {
+        "qrd": 1666.0,
+        "ratio": 1.0,
+        "tau_b": 0.142857
+      },
+      "random": {
+        "qrd": 1722.0,
+        "ratio": 1.033613,
+        "tau_b": -0.047619
+      }
+    },
+    "real_finance_1": {
+      "n_assets": 7,
+      "qrd_optimal": 1743.0,
+      "gnn": {
+        "qrd": 1743.0,
+        "ratio": 1.0,
+        "tau_b": -0.428571
+      },
+      "heuristic": {
+        "qrd": 1785.0,
+        "ratio": 1.024096,
+        "tau_b": -1.0
+      },
+      "smith": {
+        "qrd": 1743.0,
+        "ratio": 1.0,
+        "tau_b": -0.428571
+      },
+      "random": {
+        "qrd": 1750.0,
+        "ratio": 1.004016,
+        "tau_b": 0.047619
+      }
+    },
+    "real_finance_2": {
+      "n_assets": 7,
+      "qrd_optimal": 1701.0,
+      "gnn": {
+        "qrd": 1701.0,
+        "ratio": 1.0,
+        "tau_b": -0.047619
+      },
+      "heuristic": {
+        "qrd": 1771.0,
+        "ratio": 1.041152,
+        "tau_b": -1.0
+      },
+      "smith": {
+        "qrd": 1701.0,
+        "ratio": 1.0,
+        "tau_b": -0.047619
+      },
+      "random": {
+        "qrd": 1764.0,
+        "ratio": 1.037037,
+        "tau_b": -0.333333
+      }
+    }
+  },
+  "device": "cpu",
+  "generated_at": "2026-10-23T16:53:04Z"
+}

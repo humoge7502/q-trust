@@ -37,7 +37,7 @@ import json
 import math
 import random
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import torch  # type: ignore
@@ -240,6 +240,16 @@ def _deterministic_jitter(key: str, seed: int, scale: float = 1.0) -> float:
     return v * scale
 
 
+def _softmax(vals: List[float]) -> List[float]:
+    """Numerically-stable softmax over a list of logits."""
+    if not vals:
+        return []
+    m = max(vals)
+    ex = [math.exp(v - m) for v in vals]
+    s = sum(ex) or 1.0
+    return [e / s for e in ex]
+
+
 def _compute_available(assets: List[Dict[str, Any]], migrated: List[bool]) -> List[int]:
     id_to_idx = {a["id"]: i for i, a in enumerate(assets)}
     avail: List[int] = []
@@ -268,10 +278,11 @@ class MultiObjectiveRLAgent:
         **steering without retraining**: the same policy is conditioned on the
         weight vector at inference time (scalarised MORL / envelope).
 
-    Training is CPU-friendly: a REINFORCE / PPO-like stub with a weight-
-    conditioned policy (weights appended to state features). When ``torch`` is
-    present a small MLP policy is trained; otherwise a deterministic priority
-    heuristic blended with weight-aware tie-breaking is used.
+    Training is CPU-friendly: a genuine REINFORCE policy-gradient with a
+    weight-conditioned policy (weights appended to state features). When
+    ``torch`` is present a small MLP policy is additionally fine-tuned
+    (supervised, steerable-target); otherwise the deterministic priority
+    heuristic blended with weight-aware tie-breaking is used for inference.
 
     Attributes:
         config: :class:`MoRLConfig`.
@@ -375,6 +386,29 @@ class MultiObjectiveRLAgent:
                 pass
         return logits
 
+    def _policy_logits_with_hidden(
+        self, state: "MigrationStateMO", weights: "RewardWeights"
+    ) -> Tuple[List[float], List[List[float]]]:
+        """Pure-Python policy forward returning logits and per-asset hidden
+        vectors. Required by the REINFORCE trainer to compute the analytic
+        policy-gradient.
+
+        Returns:
+            (logits, hiddens) where ``logits[i]`` and ``hiddens[i]`` are the
+            pre-softmax score and the ``tanh`` hidden vector for asset ``i``.
+        """
+        inp = self._per_asset_input(state, weights)
+        logits: List[float] = []
+        hiddens: List[List[float]] = []
+        for row in inp:
+            h = [
+                math.tanh(sum(self._policy_w[hi][j] * row[j] for j in range(14)))
+                for hi in range(self.config.hidden_dim)
+            ]
+            hiddens.append(h)
+            logits.append(sum(self._policy_head[hi] * h[hi] for hi in range(self.config.hidden_dim)))
+        return logits, hiddens
+
     # -- training ----------------------------------------------------------
 
     def train(
@@ -383,15 +417,22 @@ class MultiObjectiveRLAgent:
         episodes: int = 50,
         dataset: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
-        """Train the multi-objective policy (stub REINFORCE + weight conditioning).
+        """Train the multi-objective policy with a genuine REINFORCE
+        policy-gradient (replaces the earlier random-search stub) plus
+        weight conditioning.
+
+        The pure-Python policy (``tanh(Wx) → head``) is optimised by ascending
+        ``E[ G · ∇ log π(a) ]`` with a streaming mean baseline and a small
+        entropy bonus. When ``torch`` is present the MLP policy is additionally
+        fine-tuned (supervised, steerable-target).
 
         Args:
             weights: Training weight preset (defaults to balanced). The policy
                 is trained to be steerable across presets via weight conditioning.
-            episodes: Number of synthetic episodes.
-            dataset: Optional list of ``{"assets": [...], "weights": {...},
-                "trajectory": [actions]}``. If ``None`` synthetic episodes are
-                generated covering bank/startup/balanced presets.
+            episodes: Number of REINFORCE episodes.
+            dataset: Optional list of ``{"assets": [...], "weights": {...}}``.
+                If ``None`` synthetic episodes are generated covering
+                bank/startup/balanced presets.
 
         Returns:
             Dict with ``episodes``, ``mean_reward``, ``has_torch``.
@@ -403,21 +444,38 @@ class MultiObjectiveRLAgent:
         if dataset is None:
             dataset = self._generate_synthetic_episodes(n=episodes, seed=self.config.seed)
 
-        # Stub REINFORCE: random-search policy head to maximise mean scalarised reward
-        best_head = list(self._policy_head)
-        best_w = [list(row) for row in self._policy_w]
-        best_reward = self._mean_reward(dataset, best_head, best_w)
-        rnd = random.Random(self.config.seed)
-        for _ in range(episodes):
-            # Alternate presets to ensure steerability
-            cand_head = [max(-1.0, min(1.0, v + rnd.uniform(-0.05, 0.05))) for v in best_head]
-            cand_w = [[max(-0.6, min(0.6, v + rnd.uniform(-0.04, 0.04))) for v in row] for row in best_w]
-            r = self._mean_reward(dataset, cand_head, cand_w)
-            if r > best_reward:
-                best_reward = r
-                best_head, best_w = cand_head, cand_w
-
-        self._policy_head, self._policy_w = best_head, best_w
+        # Genuine REINFORCE policy-gradient (replaces the earlier random-search
+        # stub). For each episode we roll out a *stochastic* trajectory, then
+        # ascent on  E[ G · ∇ log π(a) ]  with a moving-average baseline and a
+        # small entropy bonus so the policy explores rather than collapses.
+        # The analytic gradient of the pure-Python softmax policy is:
+        #   ∇_{head_h}      log π(a) = (1_a − π(a)) · h_h
+        #   ∇_{W_{h,j}}      log π(a) = (1_a − π(a)) · head_h · (1 − h_h²) · x_{a,j}
+        lr = self.config.lr
+        entropy_coef = self.config.entropy_coef
+        baseline = 0.0
+        baseline_count = 0.0
+        states = [self._episode_to_state(ex, weights) for ex in dataset]
+        valid_states = [s for s in states if s.available]
+        if not valid_states:
+            valid_states = states
+        for episode in range(episodes):
+            s0 = valid_states[episode % len(valid_states)]
+            reward, records = self._rollout_stochastic(s0, weights)
+            baseline_count += 1.0
+            baseline += (reward - baseline) / baseline_count  # streaming mean
+            advantage = reward - baseline
+            # REINFORCE update with entropy-regularised advantage.
+            for action_idx, x_row, hidden, prob in records:
+                adv_e = advantage + entropy_coef * (math.log(prob + 1e-12) if prob > 0 else 0.0)
+                for hi in range(self.config.hidden_dim):
+                    # ∇ head_h = (1_a − π_a) · h_h  (here 1_a − π_a = 1 − prob)
+                    self._policy_head[hi] += lr * adv_e * (1.0 - prob) * hidden[hi]
+                    xh = self._policy_head[hi] * (1.0 - hidden[hi] ** 2) * adv_e * (1.0 - prob)
+                    wrow = self._policy_w[hi]
+                    for j in range(14):
+                        wrow[j] += lr * xh * x_row[j]
+        best_reward = self._mean_reward(dataset, self._policy_head, self._policy_w)
 
         # Torch fine-tune if available
         if self._torch_policy is not None and HAS_TORCH:
@@ -471,6 +529,67 @@ class MultiObjectiveRLAgent:
             return total / len(dataset) if dataset else 0.0
         finally:
             self._policy_head, self._policy_w = old_head, old_w
+
+    def _episode_to_state(self, ex: Dict[str, Any], weights: "RewardWeights") -> "MigrationStateMO":
+        """Convert a dataset episode into an initial :class:`MigrationStateMO`."""
+        assets = ex.get("assets", [])
+        migrated = [False] * len(assets)
+        available = _compute_available(assets, migrated)
+        return MigrationStateMO(
+            assets=assets, migrated=migrated, available=available, step=0, horizon=len(assets)
+        )
+
+    def _rollout_stochastic(
+        self, state: "MigrationStateMO", weights: "RewardWeights"
+    ) -> Tuple[float, List[Tuple[int, List[float], List[float], float]]]:
+        """Sample one stochastic trajectory under the current policy.
+
+        Returns:
+            (total_reward, records) where each record is
+            ``(action_index, input_row, hidden_vector, chosen_probability)`` for
+            the REINFORCE gradient update.
+        """
+        assets = state.assets
+        migrated = list(state.migrated)
+        available = list(state.available)
+        total_reward = 0.0
+        records: List[Tuple[int, List[float], List[float], float]] = []
+        steps = 0
+        while available and steps < len(assets):
+            sub = MigrationStateMO(
+                assets=assets, migrated=list(migrated), available=list(available),
+                step=steps, horizon=len(assets),
+            )
+            logits, hiddens = self._policy_logits_with_hidden(sub, weights)
+            avail_logits = [logits[a] for a in available]
+            probs = _softmax(avail_logits)
+            # Sample an action proportional to the policy.
+            r = random.random()
+            cum = 0.0
+            choice = available[-1]
+            for a, p in zip(available, probs):
+                cum += p
+                if r <= cum:
+                    choice = a
+                    break
+            chosen_prob = probs[available.index(choice)]
+            chosen_hidden = hiddens[choice]
+            chosen_x = self._per_asset_input(sub, weights)[choice]
+            a = assets[choice]
+            metrics = ObjectiveMetrics.from_raw(
+                risk_reduction=float(a.get("risk", 30)),
+                compliance_gain=float(a.get("compliance_gain", 0.3)),
+                cost_usd=float(a.get("cost", 15000)),
+                downtime_minutes=float(a.get("downtime", 5)),
+                failure_prob=float(a.get("failure_prob", 0.1)),
+                latency_delta_percent=float(a.get("latency_delta", 5)),
+            )
+            total_reward += scalarised_reward(metrics, weights)
+            migrated[choice] = True
+            available = _compute_available(assets, migrated)
+            records.append((choice, chosen_x, chosen_hidden, chosen_prob))
+            steps += 1
+        return total_reward, records
 
     def _train_torch(self, dataset: List[Dict[str, Any]], weights: RewardWeights, epochs: int = 2) -> None:
         assert HAS_TORCH and torch is not None and self._torch_policy is not None

@@ -17,8 +17,18 @@ Vercel                         Render (oregon)
                                            │
                                            ▼
                                   Base Sepolia (84532)
-                                  8 UUPS proxy registries
+                                  8 UUPS proxy registries (app-wired)
 ```
+
+> **Contract count note.** The repository contains **11 source contracts**
+> (see `docs/ARCHITECTURE.md`). This runbook wires **8** of them into the
+> backend/frontend `.env` (the data registries + anchors). The remaining three
+> — `QTrustGovernance`, `ComplianceAttestation`, `EvidenceRegistry` — are also
+> deployed on-chain under the same 7-day timelock, but their addresses are not
+> yet surfaced to the application environment (governance is reached via the
+> timelock; compliance/evidence are recorded on-chain and read via RPC, not via
+> dedicated frontend env vars). Hence "8 UUPS proxy registries" refers to the
+> app-wired set, not the total on-chain contract count.
 
 ## 0. Prerequisites
 

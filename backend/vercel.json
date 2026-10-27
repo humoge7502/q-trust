@@ -4,11 +4,16 @@
   "functions": {
     "api/index.mjs": {
       "maxDuration": 60,
-      "includeFiles": "package.json"
+      "includeFiles": "{dist/**,package.json}"
     }
   },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index?__p=:path*" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index?__p=:path*"
+    }
   ],
-  "regions": ["iad1"]
+  "regions": [
+    "iad1"
+  ]
 }

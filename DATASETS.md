@@ -117,3 +117,101 @@ ML-DSA-44 sign/verify; 10K samples each) copied to both canonical DVC paths
 - `python -m qtrust.evaluation.run_all --splits qtrust_data/splits ...` → `is_demo: false`.
 - `QTrustRiskBench.load_real()` → 10,000 pairs loaded.
 - `torch.load(planner/data/estates_v1/estate_0000.pt)` → 34-node graph, 6-dim features.
+
+## code_corpus_v2.json (2026-10-23)
+
+Superset of `code_corpus.json` (untouched original): 14,664 files / 42 sources
+(+691 files from tink-crypto/tink-java [250], tink-crypto/tink-cc [200],
+pyca/pyopenssl [15], redis/redis [226 — negative control]). Transparent
+keyword labelling; provenance in the `stats.expansion` block; builder:
+`scripts/expand_code_corpus.py`. CryptoAPI-Bench / ApacheCryptoAPI-Bench are
+deliberately excluded (evaluation-only, protects E-08). The detector has NOT
+been retrained on v2 — v1 metrics remain canonical until that retrain.
+
+## code_corpus_v3.json (2026-10-24)
+
+Superset of v2 (untouched): **16,100 files / 50 sources** (+1,436 from 8 new
+GitHub sources — Mbed-TLS/mbedtls, golang/crypto, ziglang/zig [new language],
+RustCrypto/hashes [new language], spring-projects/spring-security,
+nextauthjs/next-auth, django/django [negative control], git/git). Transparent
+keyword labelling; provenance in `stats.expansion`; builder:
+`scripts/expand_code_corpus_v3.py`. Repo-disjoint split (seed 42): 12,919
+train / 3,181 eval across 40/10 repos; three new sources sit in eval, making
+the held-out set strictly harder than v1's (new languages: Rust, Zig).
+CryptoAPI-Bench / ApacheCryptoAPI-Bench remain evaluation-only (E-08).
+Detector fine-tuned on v3: see EXPERIMENTS.md E-13. v1 F1 0.9395 is
+**superseded** — its eval was 87.6 % path-leaked (E-14); the clean model of
+record is corpus v4 at **F1 0.9205 de-duplicated / 0.9235 native** (E-15/E-16).
+
+### Protocol correction (2026-10-24)
+
+The v3 report above used the **legacy** split in
+`scripts/train_qtrust_all._code_splits`, which shuffled the *source list* and
+therefore reshuffled every repository when the corpus grew. That made the v3
+report and any later corpus non-comparable, and allowed the shipped v3
+checkpoint to have seen 9 of the 12 repositories in an independently computed
+holdout. The legacy number is retained for lineage but must not be compared
+with v4.
+
+Training now uses `qtrust_ai/discovery/data_split.py`: a keyed SHA-256 bucket
+per source. A source's side of the split never changes when other sources are
+added. The default buckets are 20 % evaluation, 10 % calibration, 70 % fit,
+with no source overlap. The calibration split is used only for temperature
+scaling and threshold selection.
+
+## code_corpus_v4.json (2026-10-24)
+
+Superset of v3 (untouched original): **17,171 files / 58 sources** (+1,071
+files from 8 additional PQC-dense / modern-crypto repositories):
+
+| Source | Files | Crypto | Why it was added |
+|---|---:|---:|---|
+| `PQClean/PQClean` | 220 | 126 | reference ML-KEM / ML-DSA / SPHINCS+ / Falcon / HQC implementations |
+| `nss-dev/nss` | 200 | 91 | Mozilla NSS `freebl` / `softoken` / `ssl` — mature C crypto |
+| `gnutls/gnutls` | 200 | 171 | GnuTLS C TLS implementation |
+| `bitcoin-core/secp256k1` | 128 | 69 | C ECC anchor (ECDSA/ECDH) |
+| `dalek-cryptography/curve25519-dalek` | 77 | 36 | Rust Ed25519 / X25519 |
+| `panva/jose` | 47 | 20 | Node JWE/JWS/JWK |
+| `RustCrypto/AEADs` | 39 | 18 | Rust AES-GCM / ChaCha20-Poly1305 |
+| `ethers-io/ethers.js` | 160 | 17 | Ethereum / Solidity-ecosystem JS crypto |
+
+Transparent keyword labelling; provenance in the `stats.expansion` block of
+the corpus; builder: `scripts/expand_code_corpus_v4.py`. The builder reports
+token-free/master tarball provenance and the exact per-source file cap (200
+for most sources, whole small repositories).
+
+The near-duplicate audit
+(`scripts/paper_near_dup.py --corpus-version 4 --stable`) found **zero**
+evaluation/fit pairs at Jaccard ≥ 0.80 or ≥ 0.95; the maximum was 0.5598 and
+the p99 was 0.0037. The v4 corpus therefore does not rely on copied code
+leaking across the split.
+
+### Duplicate paths (measured 2026-10-26)
+
+The corpus also carries **819 duplicated `(source, path)` keys / 2,701 extra
+records** (17,171 raw → 14,470 unique), including 146 keys whose copies
+disagree on the crypto label. The pinned held-out set inherits 197 duplicated
+keys / 459 extras (22 label conflicts, 194 with different code). A fresh
+re-score of the unchanged checkpoint on one copy per path gives **F1 0.9039**
+(P 0.9492 / R 0.8626, n=1,779) versus **0.8966** on the inflated set at the
+legacy 0.85 ML gate. At the selected 0.50 gate (E-16) the same clean view is
+**F1 0.9205** (P 0.9264 / R 0.9146) and the raw view is 0.9144. The shipped
+numbers for every view are in EXPERIMENTS.md E-15/E-16 and
+`qtrust_ai/artifacts/eval_dedup_v4.json` / `ensemble_scores_v4_pinned.json`.
+
+For evaluation views use `keep_longest` via `scripts/dedupe_code_corpus.py`
+(builds a `*_dedup.json` corpus with a `stats.hygiene` block). For **training**
+use `scripts/train_discovery_v4.py --dedupe-train unique_content`: labels are
+per record, so distinct benchmark cases may share a path. E-17 measured the
+difference — `keep_longest` deleted 629/681 SolidiFI cases and 441 liboqs
+records and cut held-out F1 by 0.067; `unique_content` removes only 349 exact
+copies with zero label conflicts but also failed to improve the model (pinned
+F1 0.8885). E-17c then re-ran the canonical recipe on GPU **without** dedupe
+(pinned 0.9169 / native 0.9251, on par with the shipped 0.9144 / 0.9235),
+exonerating the environment: neither training-dedupe policy beat the shipped
+model, so the canonical corpus and checkpoint stay. The pinned eval stays
+byte-identical in both cases. Do not quote the raw-set F1 as the clean metric.
+
+CryptoAPI-Bench / ApacheCryptoAPI-Bench remain evaluation-only (E-08). See
+`qtrust_ai/artifacts/model_comparison_stable.md` for the v3-stable vs v4-stable
+result and the promotion decision.

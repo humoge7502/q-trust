@@ -518,7 +518,7 @@ def _load_model() -> None:
     candidates_status = {k: os.path.exists(v) for k, v in _MODEL_CANDIDATES.items()}
     if resolved_path is None:
         _warn_heuristic_mode(f"model file not found — checked {list(_MODEL_CANDIDATES.values())}")
-        _model_info = {"mode": "heuristic", "reason": "no checkpoint found", "candidates": candidates_status, "tried": list(_MODEL_CANDIDATES.values())}
+        _model_info = {"mode": "heuristic", "reason": "no checkpoint found", "candidates": candidates_status}
         return
 
     # TM-PL-02: verify the resolved GNN checkpoint before torch.load — a
@@ -551,7 +551,9 @@ def _load_model() -> None:
             "mode": "gnn",
             "arch": arch,
             "variant": variant,
-            "path": resolved_path,
+            # Basename only: the API is anonymous, and absolute server paths
+            # have no consumer here (provenance value is the checkpoint name).
+            "path": Path(resolved_path).name,
             "config": cfg,
             "eval_metrics": eval_metrics,
             "candidates": candidates_status,
@@ -560,8 +562,10 @@ def _load_model() -> None:
         }
         logger.info(json.dumps({"event": "planner_model_loaded", "path": resolved_path, "arch": arch, "variant": variant}))
     except Exception as exc:
+        # Full detail goes to the log only — the response carries just the
+        # exception class, since str(exc) can embed filesystem paths.
         _warn_heuristic_mode(f"model load failed at {resolved_path}: {type(exc).__name__}: {exc}")
-        _model_info = {"mode": "heuristic", "reason": f"model load failed: {exc}", "candidates": candidates_status, "tried_path": resolved_path}
+        _model_info = {"mode": "heuristic", "reason": f"model load failed ({type(exc).__name__})", "candidates": candidates_status}
 
 
 def _heuristic_priority(asset: dict[str, Any]) -> float:
@@ -979,4 +983,105 @@ def _build_schedule(migration_order: list[dict[str, Any]], deadline: date) -> di
         "overflow_days": round(overflow_days, 2),
         "suggested_daily_rate": round(daily_rate, 2) if daily_rate else None,
         "windows": windows,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Outcome-optimized planning (E-09/E-12 productization, 2026-10-24).
+#
+# Unlike /plan (GNN-ranked priorities under the doctrine objective), this
+# endpoint plans under the quantum-risk-days objective with the transparent
+# execution simulator (qtrust_planner.outcome_sim, SIM_SPEC_VERSION pinned):
+# exact DP optimum for small estates, deterministic beam above, plus Smith's
+# rule and the doctrine formula as honest comparison baselines — all
+# model-free, reproducible, and framed as simulation-grounded (NOT observed
+# org outcomes). Inherits the same rate-limit and API-key middleware as every
+# other POST route.
+# ---------------------------------------------------------------------------
+
+class ObjectiveRequest(BaseModel):
+    cbom: dict[str, Any] = Field(..., description="CBOM JSON (assets list required)")
+    beam_width: int = Field(64, ge=8, le=256,
+                            description="beam width for estates beyond the exact-DP size cap")
+
+
+@app.post("/v1/plan/objective")
+def plan_objective(req: ObjectiveRequest) -> dict[str, Any]:
+    from qtrust_planner.outcome_sim import (
+        SIM_SPEC_VERSION, estate_from_cbom, explain_order, feasible_projection,
+        heuristic_priority_scores, optimal_order, smith_rule_order)
+
+    asset_records = _parse_assets(req.cbom)
+    try:
+        estate = estate_from_cbom({**req.cbom, "assets": asset_records},
+                                  name=str(req.cbom.get("target", "api-estate")))
+    except ValueError as exc:
+        logger.warning({"event": "objective_request_rejected", "detail": str(exc)})
+        raise HTTPException(status_code=422, detail="invalid CBOM for objective planning") from exc
+
+    n = estate.n
+    opt_qrd = estate.total_quantum_risk_days(optimal_order(estate))
+
+    def _lane(name: str, description: str, order: list[int],
+              explain: bool = False) -> dict[str, Any]:
+        qrd = estate.total_quantum_risk_days(order)
+        facts = explain_order(estate, order) if explain else None
+        elapsed = 0.0
+        steps = []
+        for rank, idx in enumerate(order):
+            asset = estate.assets[idx]
+            elapsed += asset.duration_days
+            step = {
+                "rank": rank + 1,
+                "asset_id": asset_records[idx].get("asset_id", f"asset-{idx:04d}"),
+                "algorithm": asset.algorithm,
+                "host": asset.host,
+                "completion_day": round(elapsed, 2),
+                "exposure_weight": round(asset.exposure_weight, 4),
+            }
+            if facts is not None:
+                step["why"] = facts[rank]
+            steps.append(step)
+        return {
+            "strategy": name,
+            "description": description,
+            "total_qrd": round(qrd, 2),
+            "qrd_ratio_vs_optimal": round(qrd / opt_qrd, 6) if opt_qrd > 0 else 1.0,
+            "makespan_days": round(elapsed, 2),
+            "schedule": steps,
+        }
+
+    return {
+        "objective": "quantum-risk-days (QRD) = Σ exposure_weight_i × completion_day_i",
+        "sim_spec_version": SIM_SPEC_VERSION,
+        "honesty_note": (
+            "Simulation-grounded ordering from real CBOM structure and the "
+            "documented qrd-sim/1.0 assumptions — not observed organizational "
+            "outcomes. The optimal lane is exact for estates of up to 14 "
+            "assets (subset DP) and beam-approximated beyond that."),
+        "why_fields": {
+            "qrd_share": "asset's own w×C objective term as a share of total QRD",
+            "smith_ratio": "exposure_weight / duration_days (Smith's rule key; "
+                           "high = short, heavy job)",
+            "unlocks": "direct dependents blocked until this asset migrates",
+            "neighbor_swap_delta_qrd": "total QRD delta if the asset swapped "
+                                       "places with the next-ranked asset; null "
+                                       "when the swap is dependency-infeasible; "
+                                       "≥0 at every locally-optimal position",
+        },
+        "n_assets": n,
+        "qrd_optimal": round(opt_qrd, 2),
+        "plans": [
+            _lane("outcome_optimal",
+                  "exact optimum (subset DP; beam-approximated above 14 assets)",
+                  optimal_order(estate, beam_width=req.beam_width),
+                  explain=True),
+            _lane("smith_rule",
+                  "shortest-weighted-job-first — provably optimal without "
+                  "dependency constraints",
+                  smith_rule_order(estate)),
+            _lane("doctrine_formula",
+                  "the shipped priority formula — shown for comparison",
+                  feasible_projection(heuristic_priority_scores(estate), estate)),
+        ],
     }

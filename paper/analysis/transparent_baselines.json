@@ -1,0 +1,400 @@
+{
+  "protocol": "42-fold LOO, identical folds/target/metric as the GNN campaign",
+  "pairwise_logistic": "6 features, no intercept, 7 parameters; trained on all distinguishable pairs of the 41 training estates",
+  "ridge": "6 features, trained on pooled priority values of the 41 training estates",
+  "aggregate": {
+    "logit": {
+      "mean_tau": 0.7210237059980085,
+      "sd_tau": 0.11592223339934529,
+      "mean_attainment": 1.0000000000000002,
+      "folds_at_ceiling": 42
+    },
+    "ridge": {
+      "mean_tau": 0.7167814640628906,
+      "sd_tau": 0.12575684082350194,
+      "mean_attainment": 0.9920634920634922,
+      "folds_at_ceiling": 41
+    },
+    "ceiling_mean": 0.7210237059980084
+  },
+  "folds": [
+    {
+      "name": "real_finance_0.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_finance_1.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.5345224838248489,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_finance_2.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_finance_3.json",
+      "n": 3,
+      "ceiling": 0.816496580927726,
+      "logit_tau": 0.816496580927726,
+      "ridge_tau": 0.816496580927726,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_gov_edu_0.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.5345224838248489,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_gov_edu_1.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_gov_edu_2.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.35634832254989923,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 0.6666666666666667
+    },
+    {
+      "name": "real_gov_edu_3.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_gov_edu_4.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_gov_edu_5.json",
+      "n": 7,
+      "ceiling": 0.7237468644557459,
+      "logit_tau": 0.7237468644557459,
+      "ridge_tau": 0.7237468644557459,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_gov_edu_6.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_gov_edu_7.json",
+      "n": 2,
+      "ceiling": 1.0,
+      "logit_tau": 1.0,
+      "ridge_tau": 1.0,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_infra_0.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_infra_1.json",
+      "n": 7,
+      "ceiling": 0.816496580927726,
+      "logit_tau": 0.8164965809277261,
+      "ridge_tau": 0.8164965809277261,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_infra_2.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_media_0.json",
+      "n": 7,
+      "ceiling": 0.7237468644557459,
+      "logit_tau": 0.7237468644557459,
+      "ridge_tau": 0.7237468644557459,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_media_1.json",
+      "n": 4,
+      "ceiling": 1.0,
+      "logit_tau": 1.0,
+      "ridge_tau": 1.0,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_mixed_0.json",
+      "n": 7,
+      "ceiling": 0.816496580927726,
+      "logit_tau": 0.8164965809277261,
+      "ridge_tau": 0.8164965809277261,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_1.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_mixed_10.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_mixed_11.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_mixed_12.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_13.json",
+      "n": 7,
+      "ceiling": 0.8451542547285166,
+      "logit_tau": 0.8451542547285166,
+      "ridge_tau": 0.8451542547285166,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_mixed_14.json",
+      "n": 4,
+      "ceiling": 0.7071067811865476,
+      "logit_tau": 0.7071067811865477,
+      "ridge_tau": 0.7071067811865477,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_2.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_3.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.5345224838248489,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_4.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.5345224838248489,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_5.json",
+      "n": 7,
+      "ceiling": 0.7237468644557459,
+      "logit_tau": 0.7237468644557459,
+      "ridge_tau": 0.7237468644557459,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_mixed_6.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_7.json",
+      "n": 7,
+      "ceiling": 0.816496580927726,
+      "logit_tau": 0.8164965809277261,
+      "ridge_tau": 0.8164965809277261,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_8.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.5345224838248489,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_mixed_9.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.5345224838248489,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_security_0.json",
+      "n": 7,
+      "ceiling": 0.816496580927726,
+      "logit_tau": 0.8164965809277261,
+      "ridge_tau": 0.8164965809277261,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_security_1.json",
+      "n": 7,
+      "ceiling": 0.816496580927726,
+      "logit_tau": 0.8164965809277261,
+      "ridge_tau": 0.8164965809277261,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_security_2.json",
+      "n": 5,
+      "ceiling": 0.7745966692414834,
+      "logit_tau": 0.7745966692414834,
+      "ridge_tau": 0.7745966692414834,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_tech_0.json",
+      "n": 7,
+      "ceiling": 0.8451542547285166,
+      "logit_tau": 0.8451542547285166,
+      "ridge_tau": 0.8451542547285166,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_tech_1.json",
+      "n": 7,
+      "ceiling": 0.816496580927726,
+      "logit_tau": 0.8164965809277261,
+      "ridge_tau": 0.8164965809277261,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_tech_2.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_tech_3.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_tech_4.json",
+      "n": 7,
+      "ceiling": 0.6900655593423543,
+      "logit_tau": 0.6900655593423543,
+      "ridge_tau": 0.6900655593423543,
+      "logit_att": 1.0,
+      "ridge_att": 1.0
+    },
+    {
+      "name": "real_tech_5.json",
+      "n": 7,
+      "ceiling": 0.7559289460184544,
+      "logit_tau": 0.7559289460184545,
+      "ridge_tau": 0.7559289460184545,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    },
+    {
+      "name": "real_tech_6.json",
+      "n": 7,
+      "ceiling": 0.5345224838248488,
+      "logit_tau": 0.5345224838248489,
+      "ridge_tau": 0.5345224838248489,
+      "logit_att": 1.0000000000000002,
+      "ridge_att": 1.0000000000000002
+    }
+  ]
+}

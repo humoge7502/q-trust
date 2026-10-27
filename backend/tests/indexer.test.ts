@@ -16,6 +16,11 @@ vi.mock("pg", () => {
     });
     query = query;
     end = vi.fn().mockResolvedValue(undefined);
+    // The real pg.Pool is an EventEmitter; indexer.ts registers an
+    // `pool?.on("error", ...)` idle-client handler at module load. The mock
+    // must expose `.on`/`.removeListener` or module init throws.
+    on = vi.fn();
+    removeListener = vi.fn();
   }
   return { default: { Pool } };
 });

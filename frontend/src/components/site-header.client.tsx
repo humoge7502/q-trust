@@ -19,11 +19,11 @@ import { API_DOCS_URL } from "@/lib/api";
 import { ArrowRightIcon, ArrowTopRightOnSquareIcon } from "@/app/icons";
 
 function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" {...props}><path d="M4 6h16M4 12h16M4 18h16" /></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true" focusable="false" {...props}><path d="M4 6h16M4 12h16M4 18h16" /></svg>;
 }
 
 function CloseIcon(props: React.SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" {...props}><path d="M6 6l12 12M6 18L18 6" /></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true" focusable="false" {...props}><path d="M6 6l12 12M6 18L18 6" /></svg>;
 }
 
 /**
@@ -37,6 +37,12 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", match: "/dashboard" },
   { label: "Vendors", href: "/vendors", match: "/vendors" },
   { label: "Verify", href: "/v", match: "/v" },
+  { label: "Evidence", href: "/evidence", match: "/evidence" },
+  // Evaluation integrity is a first-class destination, not a footnote: the
+  // reproduction audit is the most defensible artifact in this project.
+  { label: "Research", href: "/research", match: "/research" },
+  { label: "Demo", href: "/demo", match: "/demo" },
+  { label: "Pricing", href: "/pricing", match: "/pricing" },
 ];
 
 function isActive(pathname: string, match: string | null): boolean {
@@ -59,7 +65,12 @@ export function SiteHeader() {
           <span className="hidden border-l border-white/20 pl-3 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400 sm:inline">PQC assurance</span>
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+        {/* Nine destinations plus the docs link need the full desktop width.
+            Showing the inline nav from `md` clipped the last items between
+            768–1279px, and `overflow-x: clip` on the body hid the damage
+            instead of reporting it — so those viewports now get the sheet,
+            which can hold every item without truncation. */}
+        <nav aria-label="Primary" className="hidden items-center gap-1 xl:flex">
           {navItems.map((item) => {
             const active = isActive(pathname, item.match);
             return (
@@ -88,7 +99,7 @@ export function SiteHeader() {
 
           <Dialog.Root open={open} onOpenChange={setOpen}>
             <Dialog.Trigger asChild>
-              <button type="button" aria-label="Open menu" aria-expanded={open} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 md:hidden"><MenuIcon className="h-4 w-4" aria-hidden="true" /></button>
+              <button type="button" aria-label="Open menu" aria-expanded={open} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 xl:hidden"><MenuIcon className="h-4 w-4" aria-hidden="true" /></button>
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm" />

@@ -104,6 +104,8 @@ nav:
       - Performance: PERFORMANCE.md
       - GPU Features: GPU_FEATURES.md
       - CBOM Conformance: CBOM_CONFORMANCE.md
+      - Certification & Assurance: CERTIFICATION_AND_ASSURANCE.md
+      - Testing Strategy: TESTING.md
   - Deployment:
       - Base Sepolia: deployment/BASE_SEPOLIA.md
       - Multi-Chain: deployment/MULTI_CHAIN.md
@@ -121,3 +123,4 @@ nav:
   - Runbooks:
       - Backup & Restore: runbook/backup-restore.md
       - Incident Response: runbook/incident-response.md
+      - Issuer Key Rotation: runbook/issuer-key-rotation.md

@@ -16,6 +16,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Providers } from "@/components/providers";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header.client";
+import { CommandPalette } from "@/components/command-palette";
 import { SkipLink } from "@/components/skip-link";
 import { fontVariables } from "@/lib/fonts";
 import { SITE_URL } from "@/lib/site";
@@ -80,6 +81,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <Providers>
             <SkipLink />
+            <CommandPalette />
             <SiteHeader />
             <div id="main-content" className="flex flex-1 flex-col">
               {children}
