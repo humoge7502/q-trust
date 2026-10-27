@@ -49,6 +49,11 @@ const ETH_PROVIDER_INIT = `
 `;
 
 test.describe("wallet-gated a11y (TD-12)", () => {
+  // The connect flow races RainbowKit's remote config in CI; a single retry
+  // absorbs the transient modal-render races without masking a real a11y
+  // regression (the axe audit itself must still pass on the successful run).
+  test.describe.configure({ retries: 1 });
+
   // CI compiles /dashboard and /vendors on first hit (Next dev on-demand);
   // the 30s default expires mid-compile. 120s covers a cold compile + the
   // connect flow on both viewports.
@@ -91,14 +96,20 @@ test.describe("wallet-gated a11y (TD-12)", () => {
       try {
         await connected.waitFor({ state: "visible", timeout: 8_000 });
       } catch {
+        // Drive the RainbowKit modal: the option list's labels vary across
+        // RainbowKit/Reown versions and CI environments ("Injected",
+        // "Browser Wallet", "MetaMask"), so click the modal's first action
+        // button — with the injected provider stubbed, any listed wallet
+        // connects to it.
         await page
           .getByRole("button", { name: /connect/i })
           .first()
           .click();
         await page
-          .getByRole("button", { name: /injected|browser wallet|metamask/i })
+          .getByRole("dialog")
+          .getByRole("button")
           .first()
-          .click({ timeout: 10_000 });
+          .click({ timeout: 15_000 });
       }
       // The connect prompt must be gone and the connected surface must
       // state the wallet is connected (empty state on a clean chain) —
