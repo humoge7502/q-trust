@@ -74,40 +74,46 @@ test.describe("wallet-gated a11y (TD-12)", () => {
       await page.goto(route);
       await expectQTrustApp(page);
 
-      // The injected connector (shimDisconnect) usually auto-connects against
-      // the stubbed provider; if the connected state has not appeared, drive
-      // the RainbowKit modal explicitly. Both routes sit behind the dashboard
-      // layout's WalletGate ("Connect your wallet" h1) — the page-level
-      // "Org dashboard" CenteredNote is unreachable below it, so the gate
-      // heading is the only unauthenticated ready target.
+      // The injected connector (shimDisconnect) auto-connects against the
+      // stubbed provider, but CI machines start wagmi/appkit much more
+      // slowly than a dev workstation, so the connected state is given the
+      // LONG window first (90s) before any gate interaction. Both routes sit
+      // behind the dashboard layout's WalletGate ("Connect your wallet" h1)
+      // — the page-level "Org dashboard" CenteredNote is unreachable below
+      // it — so if the connected state still has not rendered after 90s, the
+      // gate must be up and the RainbowKit modal is driven explicitly. All
+      // third-party egress is aborted above, so every step here is local.
       const connected = page.getByText(/wallet is connected/i).first();
       const gateHeading = page.getByRole("heading", { name: "Connect your wallet" });
-      const gateVisible = await gateHeading
-        .waitFor({ state: "visible", timeout: 45_000 })
+      const autoConnected = await connected
+        .waitFor({ state: "visible", timeout: 90_000 })
         .then(() => true)
         .catch(() => false);
-      if (!gateVisible) {
-        // Connected already — the gate never renders for a connected wallet.
-        await connected.waitFor({ state: "visible", timeout: 15_000 });
-      } else {
-        try {
-          await connected.waitFor({ state: "visible", timeout: 10_000 });
-        } catch {
-          await page
-            .getByRole("button", { name: /connect/i })
-            .first()
-            .click({ timeout: 30_000 });
-          // Click a wallet option by name: the modal's first button can be
-          // "Close"/pagination chrome, and the dialog container's role
-          // varies across RainbowKit/Reown versions. The option labels
-          // ("Browser Wallet", "MetaMask", …) are the stable surface.
-          await page
-            .getByRole("dialog")
-            .getByRole("button", { name: /injected|browser wallet|metamask|coinbase/i })
-            .or(page.getByRole("button", { name: /injected|browser wallet|metamask|coinbase/i }))
-            .first()
-            .click({ timeout: 30_000 });
+      if (!autoConnected) {
+        const gateVisible = await gateHeading
+          .waitFor({ state: "visible", timeout: 15_000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!gateVisible) {
+          // Neither the connected state nor the gate rendered: the page is
+          // genuinely stuck — fail with the snapshot rather than guessing.
+          await expect(connected).toBeVisible({ timeout: 5_000 });
         }
+        await gateHeading
+          .getByRole("button", { name: /connect/i })
+          .or(page.getByRole("button", { name: /connect/i }).first())
+          .first()
+          .click({ timeout: 30_000 });
+        // Click a wallet option by name: the modal's first button can be
+        // "Close"/pagination chrome, and the dialog container's role varies
+        // across RainbowKit/Reown versions. The option labels ("Browser
+        // Wallet", "MetaMask", …) are the stable surface.
+        await page
+          .getByRole("dialog")
+          .getByRole("button", { name: /injected|browser wallet|metamask|coinbase/i })
+          .or(page.getByRole("button", { name: /injected|browser wallet|metamask|coinbase/i }))
+          .first()
+          .click({ timeout: 30_000 });
       }
       // The gate must be gone and the connected surface must state the
       // wallet is connected (empty state on a clean chain) — asserting the
@@ -115,12 +121,6 @@ test.describe("wallet-gated a11y (TD-12)", () => {
       // gate.
       await expect(page.getByText(/connect a wallet/i).first()).toBeHidden({ timeout: 30_000 });
       await expect(connected).toBeVisible({ timeout: 30_000 });
-      // The connect prompt must be gone and the connected surface must
-      // state the wallet is connected (empty state on a clean chain) —
-      // asserting the connected state keeps this test from passing vacuously
-      // against the gate.
-      await expect(page.getByText(/connect a wallet/i).first()).toBeHidden({ timeout: 20_000 });
-      await expect(connected).toBeVisible({ timeout: 20_000 });
 
       await waitForSettledAnimations(page);
       const violations = await auditPage(page);
