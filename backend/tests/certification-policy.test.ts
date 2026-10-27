@@ -212,11 +212,11 @@ describe("validity window limits", () => {
 
   it.each(LIMITS)("refuses 0, negative, NaN, infinite and max+1 for %s", async (policy, max) => {
     for (const days of [0, -1, Number.NaN, Number.POSITIVE_INFINITY, max + 1]) {
+      // A string argument does substring matching — no dynamic RegExp
+      // (Semgrep detect-non-literal-regexp; the message is asserted verbatim).
       await expect(
         issueCertification({ org: ORG, policy, validity_days: days, now: NOW }, makeDeps()),
-      ).rejects.toThrow(
-        new RegExp(`validity_days must be between 1 and ${max} for policy`),
-      );
+      ).rejects.toThrow(`validity_days must be between 1 and ${max} for policy`);
     }
   });
 

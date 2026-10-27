@@ -53,7 +53,7 @@ def test_sample_prioritizes_conflicts_and_queue_is_hash_only(
     res = _run("sample", "--corpus", str(corpus_file), "--n", "5",
                "--out", str(queue), "--seed", "1")
     assert res.returncode == 0
-    entries = [json.loads(l) for l in queue.read_text(encoding="utf-8").splitlines() if l.strip()]
+    entries = [json.loads(line) for line in queue.read_text(encoding="utf-8").splitlines() if line.strip()]
     assert len(entries) == 5
     # The conflicting-key pair must be in the queue and marked as such.
     conflicts = [e for e in entries if e["priority"] == "label-conflict"]
@@ -70,7 +70,7 @@ def test_dual_annotation_gates_and_kappa(corpus_file: Path, tmp_path: Path) -> N
     queue = tmp_path / "queue.jsonl"
     _run("sample", "--corpus", str(corpus_file), "--n", "2",
          "--out", str(queue), "--seed", "1")
-    entries = [json.loads(l) for l in queue.read_text(encoding="utf-8").splitlines() if l.strip()]
+    entries = [json.loads(line) for line in queue.read_text(encoding="utf-8").splitlines() if line.strip()]
     sid_ok, sid_bad = entries[0]["sample_id"], entries[1]["sample_id"]
 
     # Two agreeing reviewers -> reviewed.
@@ -85,8 +85,8 @@ def test_dual_annotation_gates_and_kappa(corpus_file: Path, tmp_path: Path) -> N
          "--reviewer", "bob", "--label", "not_crypto")
 
     out = tmp_path / "reviewed.jsonl"
-    res = _run("merge", "--queue", str(queue), "--out", str(out))
-    lines = [json.loads(l) for l in out.read_text(encoding="utf-8").splitlines() if l.strip()]
+    _run("merge", "--queue", str(queue), "--out", str(out))
+    lines = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines() if line.strip()]
     stats, labels = lines[0], lines[1:]
     assert stats["dual_annotated"] == 2
     assert stats["agreed"] == 1
@@ -102,7 +102,7 @@ def test_kappa_handles_full_agreement(corpus_file: Path, tmp_path: Path) -> None
     queue = tmp_path / "queue.jsonl"
     _run("sample", "--corpus", str(corpus_file), "--n", "1",
          "--out", str(queue), "--seed", "1")
-    entries = [json.loads(l) for l in queue.read_text(encoding="utf-8").splitlines() if l.strip()]
+    entries = [json.loads(line) for line in queue.read_text(encoding="utf-8").splitlines() if line.strip()]
     sid = entries[0]["sample_id"]
     _run("record", "--queue", str(queue), "--id", sid, "--reviewer", "a", "--label", "crypto")
     _run("record", "--queue", str(queue), "--id", sid, "--reviewer", "b", "--label", "crypto")

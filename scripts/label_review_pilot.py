@@ -99,7 +99,7 @@ def cmd_sample(args: argparse.Namespace) -> None:
 
     n = min(args.n, len(files))
     quota_total = len(conflict_idx) + len(boundary_idx)
-    langs = sorted(by_lang, key=lambda l: -len(by_lang[l]))
+    langs = sorted(by_lang, key=lambda lang: -len(by_lang[lang]))
     selected: list[int] = []
     if quota_total < n:
         selected = list(conflict_idx) + list(boundary_idx)[: n - len(conflict_idx)]
@@ -158,8 +158,9 @@ def cmd_show(args: argparse.Namespace) -> None:
 
 
 def _read_queue(path: Path) -> list[dict]:
-    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines()
-            if l.strip()]
+    return [json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()]
 
 
 def _write_queue(path: Path, entries: list[dict]) -> None:
