@@ -62,7 +62,7 @@ describe("S-1 proxy route allowlist", () => {
   beforeEach(() => {
     fetchMock.mockReset();
     fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
-    process.env.QTRUST_API_KEY = "test-admin-key";
+    process.env.QTRUST_API_KEY = "qtrust-fixture-server-value";
   });
 
   describe("public reads are proxied", () => {
@@ -192,28 +192,28 @@ describe("S-1 proxy route allowlist", () => {
 
     it("forwards the caller's key and never the server admin key", async () => {
       const res = await call("POST", ["v1", "relay", "attestation"], {
-        "x-qtrust-api-key": "operator-own-key",
+        "x-qtrust-api-key": "qtrust-fixture-caller-value",
       });
       expect(res.status).not.toBe(403);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const sent = upstreamHeaders();
-      expect(sent.get("x-api-key")).toBe("operator-own-key");
-      expect(sent.get("x-api-key")).not.toBe("test-admin-key");
+      expect(sent.get("x-api-key")).toBe("qtrust-fixture-caller-value");
+      expect(sent.get("x-api-key")).not.toBe("qtrust-fixture-server-value");
     });
 
     it("does not leak the caller's header upstream under its own name", async () => {
-      await call("POST", ["v1", "relay", "attestation"], { "x-qtrust-api-key": "operator-own-key" });
+      await call("POST", ["v1", "relay", "attestation"], { "x-qtrust-api-key": "qtrust-fixture-caller-value" });
       expect(upstreamHeaders().get("x-qtrust-api-key")).toBeNull();
     });
 
     it("ignores a caller key on public routes and keeps using the server key", async () => {
-      await call("GET", ["v1", "assets", "asset-1"], { "x-qtrust-api-key": "operator-own-key" });
-      expect(upstreamHeaders().get("x-api-key")).toBe("test-admin-key");
+      await call("GET", ["v1", "assets", "asset-1"], { "x-qtrust-api-key": "qtrust-fixture-caller-value" });
+      expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-server-value");
     });
 
     it("attaches the server key to public compute routes (scanner stays usable)", async () => {
-      await call("POST", ["v1", "scan", "full"], { "x-qtrust-api-key": "operator-own-key" });
-      expect(upstreamHeaders().get("x-api-key")).toBe("test-admin-key");
+      await call("POST", ["v1", "scan", "full"], { "x-qtrust-api-key": "qtrust-fixture-caller-value" });
+      expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-server-value");
       expect(upstreamHeaders().get("x-qtrust-api-key")).toBeNull();
     });
 
