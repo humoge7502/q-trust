@@ -181,3 +181,17 @@ CodeBERTa fine-tune (v1 **historical** F1 0.9395 — later shown to have 87.6 % 
 - **Against canonical (gate 0.50):** pinned 0.9169 vs 0.9144 (**+0.0025**), native 0.9251 vs 0.9235 (**+0.0016**), clean keep_longest 0.9209 vs 0.9205 (**+0.0004**) — within run-to-run noise, not a demonstrated improvement.
 - **Interpretation:** the GPU stack does **not** degrade the detector. E-14b's regression was 5-epoch overfitting and E-14c's was the v5 data shift; neither was a device effect. E-17b's drop is likewise **not** an environment artifact.
 - **Decision:** do not replace the shipped checkpoint on a +0.0004 clean/noisy difference; the canonical CPU v4 (clean F1 0.9205) remains the model of record. The control checkpoint is kept for reproducibility.
+## E-18 — Larger base model: microsoft/codebert-base does not beat CodeBERTa at this recipe (executed 2026-10-27)
+
+- **Hypothesis:** E-14c's lesson said real gains need "better labels **or a larger base model**". CodeBERTa-small (84M) → codebert-base (125M, same RoBERTa family and code pretraining) is the cheapest test of the second lever.
+- **Setup:** `scripts/train_discovery_v4.py --base-model microsoft/codebert-base --model-revision 3b0952feddeffad0063f274080e3c23d75e7eb39` (S-5 SHA pin; flags added this session), corpus/split/epochs/max_len identical to canonical v4 — with **one recipe deviation: batch 8, not 16**, forced by the 4 GB RTX 2050 (canonical batch 16 OOMs at 125M params/256 tokens on this card). 3 epochs; epoch 3 was resumed from checkpoint after a `CUBLAS_STATUS_EXECUTION_FAILED` crash under concurrent machine load (epochs 1–2 unaffected, per-epoch checkpointing). Checkpoint `crypto_codebert_v4-codebertbase`, report `training_report_v4-codebertbase.json`, calibration T=1.6493.
+- **Result — negative on both reporting splits:**
+
+| Split | Canonical v4 (CodeBERTa, gate 0.50) | codebert-base (batch 8) | Δ F1 |
+|---|---:|---:|---:|
+| Pinned, raw (2,238) | P 0.9201 / R 0.9088 / **F1 0.9144** | P 0.8857 / R 0.9293 / **F1 0.9070** | **−0.0074** |
+| Native, raw (2,566) | P 0.9232 / R 0.9238 / **F1 0.9235** | P 0.8912 / R 0.9389 / **F1 0.9144** | **−0.0091** |
+
+- **Shape of the failure:** recall *rose* (+2.1 points pinned) but precision fell (−3.4), i.e. the larger model is more eager and less discriminating here. Train accuracy 0.9465 (epoch 3) vs canonical 0.9514.
+- **Honest caveats:** (a) the batch-8 deviation is uncontrolled — the result shows *this recipe* loses, not that codebert-base is intrinsically worse (single run, no seed replicates); (b) the E-16-style clean de-duplicated view was not re-scored for this checkpoint since the raw comparison already loses by −0.007/−0.009 — a clean view cannot rescue a raw deficit of this size.
+- **Decision:** the canonical CPU CodeBERTa v4 checkpoint (clean F1 0.9205 de-duplicated, gate 0.50) remains the model of record. Combined with E-14b/E-14c/E-17, the evidence now covers three levers — more epochs, more data, bigger base — and all three lose to the canonical recipe; **label quality is the only remaining lever with evidence behind it** (see E-15's 22 residual conflicting-label keys and the reviewed-label pilot in ANALYSIS_AND_ROADMAP_2026-10-27.md §3.3).

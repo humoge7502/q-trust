@@ -1,0 +1,202 @@
+{
+  "checkpoint": "qtrust_ai\\artifacts\\crypto_codebert_v4-codebertbase",
+  "corpus": {
+    "path": "code_corpus_v4.json",
+    "total_files": 17171,
+    "sources": 58,
+    "crypto": 8814,
+    "new_sources": [
+      "PQClean/PQClean",
+      "RustCrypto/AEADs",
+      "bitcoin-core/secp256k1",
+      "dalek-cryptography/curve25519-dalek",
+      "ethers-io/ethers.js",
+      "gnutls/gnutls",
+      "nss-dev/nss",
+      "panva/jose"
+    ]
+  },
+  "pinned_split": {
+    "seed": 42,
+    "note": "eval identical to v1/v3 head-to-head (_code_splits(v3,42)); new v4 repos are training-only",
+    "train_files": 14933,
+    "train_crypto": 7597,
+    "train_repos": 50,
+    "eval_files": 2238,
+    "eval_crypto": 1217,
+    "eval_repos": 8,
+    "repo_disjoint": true
+  },
+  "fine_tune": {
+    "status": "trained",
+    "model": "huggingface/CodeBERTa-small-v1",
+    "device": "cuda",
+    "epochs": 1,
+    "epochs_completed": 3,
+    "examples": 14933,
+    "batch_size": 8,
+    "train_accuracy": 0.9465,
+    "final_loss": 0.1314,
+    "gpus_visible": 1,
+    "saved_to": "C:\\Users\\Devesh tiwari\\q-trust-projects\\q-trust\\qtrust_ai\\artifacts\\crypto_codebert_v4-codebertbase",
+    "max_len": 256
+  },
+  "train_dedupe": null,
+  "eval_pinned": {
+    "precision": 0.8857,
+    "recall": 0.9293,
+    "f1": 0.907,
+    "accuracy": 0.8963,
+    "false_negatives": 86,
+    "fn_rate": 0.0707,
+    "coverage": 1.0,
+    "n": 2238,
+    "per_language": {
+      "python": {
+        "tp": 113,
+        "fp": 39,
+        "fn": 43,
+        "tn": 70
+      },
+      "shell": {
+        "tp": 45,
+        "fp": 1,
+        "fn": 1,
+        "tn": 8
+      },
+      "rust": {
+        "tp": 116,
+        "fp": 7,
+        "fn": 3,
+        "tn": 58
+      },
+      "c": {
+        "tp": 822,
+        "fp": 96,
+        "fn": 24,
+        "tn": 324
+      },
+      "csharp": {
+        "tp": 21,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0
+      },
+      "cpp": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 7,
+        "tn": 19
+      },
+      "swift": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "tn": 0
+      },
+      "javascript": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 5,
+        "tn": 360
+      },
+      "typescript": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 2,
+        "tn": 36
+      },
+      "solidity": {
+        "tp": 9,
+        "fp": 1,
+        "fn": 0,
+        "tn": 0
+      }
+    }
+  },
+  "eval_native_split": {
+    "note": "v4's own repo-disjoint 80/20 split (includes new repos)",
+    "eval_files": 2566,
+    "eval_repos": 10,
+    "precision": 0.8912,
+    "recall": 0.9389,
+    "f1": 0.9144,
+    "accuracy": 0.9002,
+    "false_negatives": 89,
+    "fn_rate": 0.0611,
+    "coverage": 1.0,
+    "n": 2566,
+    "per_language": {
+      "python": {
+        "tp": 116,
+        "fp": 40,
+        "fn": 43,
+        "tn": 72
+      },
+      "shell": {
+        "tp": 45,
+        "fp": 1,
+        "fn": 1,
+        "tn": 8
+      },
+      "rust": {
+        "tp": 116,
+        "fp": 7,
+        "fn": 3,
+        "tn": 58
+      },
+      "c": {
+        "tp": 1056,
+        "fp": 116,
+        "fn": 27,
+        "tn": 389
+      },
+      "csharp": {
+        "tp": 21,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0
+      },
+      "cpp": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 7,
+        "tn": 19
+      },
+      "swift": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "tn": 0
+      },
+      "javascript": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 5,
+        "tn": 360
+      },
+      "typescript": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 2,
+        "tn": 36
+      },
+      "solidity": {
+        "tp": 9,
+        "fp": 1,
+        "fn": 0,
+        "tn": 0
+      }
+    }
+  },
+  "calibration": {
+    "shipped_temperature": 1.649296,
+    "cross_fitted_ece_before": 0.387271,
+    "cross_fitted_ece_after": 0.350624,
+    "brier_before": 0.08188,
+    "brier_after": 0.081093,
+    "predictions": "qtrust_ai\\artifacts\\crypto_codebert_v4-codebertbase\\predictions_v4.jsonl"
+  },
+  "device": "cuda",
+  "generated_at": "2026-10-27T00:22:36Z"
+}

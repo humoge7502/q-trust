@@ -86,6 +86,19 @@ def main() -> None:
         help="de-duplicate (source, path) records in the training split only; "
              "the pinned eval stays byte-identical for comparability",
     )
+    ap.add_argument(
+        "--base-model",
+        default=None,
+        help="override the HuggingFace base model (default: the detector's "
+             "pinned CodeBERTa). Any non-default choice MUST be recorded in "
+             "EXPERIMENTS.md with its recipe deviations",
+    )
+    ap.add_argument(
+        "--model-revision",
+        default=None,
+        help="pin the base model to a 40-char commit SHA (S-5); unknown "
+             "models default to 'main' without this",
+    )
     args = ap.parse_args()
 
     suffix = args.out_suffix if args.out_suffix is not None else (
@@ -163,9 +176,15 @@ def main() -> None:
               f"(batch={args.batch_size}, max_len={args.max_len}, "
               f"resume_from={resume_from}, start_epoch={done_epochs})")
         t0 = time.time()
+        ft_kwargs: dict = {}
+        if args.base_model:
+            ft_kwargs["model_name"] = args.base_model
+        if args.model_revision:
+            ft_kwargs["model_revision"] = args.model_revision
         ft = det.fine_tune(train_corpus, epochs=remaining, save_dir=str(ckpt_path),
                            batch_size=args.batch_size, max_len=args.max_len,
-                           init_from=resume_from, start_epoch=done_epochs)
+                           init_from=resume_from, start_epoch=done_epochs,
+                           **ft_kwargs)
         print(f"fine-tune done in {(time.time()-t0)/60:.1f} min: "
               f"{json.dumps(ft, default=str)[:400]}")
 
