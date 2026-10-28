@@ -235,3 +235,86 @@ def test_cli_still_scans_real_directory(tmp_path):
     (pkg / "app.py").write_text("import rsa\nrsa.newkeys(2048)\n")
     result = runner.invoke(app, ["scan", str(pkg), "--no-risk", "--no-source", "--no-manifests", "--no-binaries", "--no-ast"])
     assert result.exit_code == 0, result.output
+
+
+# ---------------------------------------------------------------------------
+# CI gate on the universal scan command.
+#
+# `rsa.newkeys(2048)` is detected by the AST scanner as a *high* RSA-2048
+# finding, which makes threshold behaviour deterministic.
+# ---------------------------------------------------------------------------
+def _weak_crypto_project(tmp_path):
+    pkg = tmp_path / "proj"
+    pkg.mkdir()
+    (pkg / "app.py").write_text("import rsa\nrsa.newkeys(2048)\n")
+    return pkg
+
+
+def test_cli_scan_ci_gate_fails_on_high_finding(tmp_path):
+    from typer.testing import CliRunner
+
+    from qtrust_inspector.cli import app
+
+    runner = CliRunner()
+    pkg = _weak_crypto_project(tmp_path)
+    result = runner.invoke(
+        app,
+        ["scan", str(pkg), "--no-risk", "--no-source", "--no-manifests", "--no-binaries", "--ci-gate", "high"],
+    )
+    assert result.exit_code == 1, result.output
+    assert "CI gate failed" in " ".join(result.output.split())
+
+
+def test_cli_scan_ci_gate_passes_below_threshold(tmp_path):
+    from typer.testing import CliRunner
+
+    from qtrust_inspector.cli import app
+
+    runner = CliRunner()
+    pkg = _weak_crypto_project(tmp_path)
+    result = runner.invoke(
+        app,
+        ["scan", str(pkg), "--no-risk", "--no-source", "--no-manifests", "--no-binaries", "--ci-gate", "critical"],
+    )
+    assert result.exit_code == 0, result.output
+    assert "CI gate passed" in " ".join(result.output.split())
+
+
+def test_cli_scan_ci_gate_rejects_unknown_threshold(tmp_path):
+    from typer.testing import CliRunner
+
+    from qtrust_inspector.cli import app
+
+    runner = CliRunner()
+    pkg = _weak_crypto_project(tmp_path)
+    result = runner.invoke(
+        app,
+        ["scan", str(pkg), "--no-risk", "--no-source", "--no-manifests", "--no-binaries", "--ci-gate", "severe"],
+    )
+    assert result.exit_code == 2, result.output
+    assert "must be one of" in " ".join(result.output.split())
+
+
+def test_cli_scan_writes_sarif_before_ci_gate_fails(tmp_path):
+    from typer.testing import CliRunner
+
+    from qtrust_inspector.cli import app
+
+    runner = CliRunner()
+    pkg = _weak_crypto_project(tmp_path)
+    sarif_path = tmp_path / "out.sarif"
+    result = runner.invoke(
+        app,
+        [
+            "scan", str(pkg),
+            "--no-risk", "--no-source", "--no-manifests", "--no-binaries",
+            "--sarif", str(sarif_path),
+            "--ci-gate", "high",
+        ],
+    )
+    assert result.exit_code == 1, result.output
+    # The SARIF artifact must exist even when the gate trips so the workflow
+    # can still upload it to code scanning.
+    assert sarif_path.exists()
+    data = json.loads(sarif_path.read_text())
+    assert data["runs"][0]["results"], "expected at least one SARIF result"

@@ -1,0 +1,115 @@
+name: 'Q-Trust Crypto Scan'
+description: >-
+  Scan a repository for quantum-vulnerable cryptography, upload the SARIF report
+  to GitHub code scanning, and fail the job when findings meet the configured
+  criticality threshold.
+author: 'humoge7502'
+branding:
+  icon: 'shield'
+  color: 'purple'
+
+inputs:
+  path:
+    description: 'Directory to scan, relative to the workspace.'
+    required: false
+    default: '.'
+  threshold:
+    description: >-
+      Fail when any finding meets or exceeds this criticality:
+      critical, high or medium. Set to none to report without failing.
+    required: false
+    default: 'high'
+  upload:
+    description: >-
+      Upload the SARIF report to GitHub code scanning. Requires
+      `security-events: write` in the calling workflow. Set to false when code
+      scanning is unavailable (forks without permissions, GHES without GHAS).
+    required: false
+    default: 'true'
+  sarif-file:
+    description: 'Where to write the SARIF report, relative to the workspace.'
+    required: false
+    default: 'qtrust-results.sarif'
+  python-version:
+    description: 'Python interpreter used to install the inspector.'
+    required: false
+    default: '3.12'
+
+outputs:
+  sarif-file:
+    description: 'Path to the generated SARIF report.'
+    value: ${{ steps.scan.outputs.sarif-file }}
+  exit-code:
+    description: 'Scan exit code: 0 = passed, 1 = gate tripped, 2 = invalid input.'
+    value: ${{ steps.scan.outputs.exit-code }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Q-Trust Inspector
+      shell: bash
+      run: |
+        # Install from the action's own checkout (the ref the caller pinned),
+        # never from a floating PyPI version that may not contain --ci-gate.
+        package_dir="$GITHUB_ACTION_PATH/../../../inspector"
+        if [ ! -d "$package_dir" ]; then
+          echo "::error::Q-Trust inspector package not found at $package_dir"
+          exit 1
+        fi
+        python -m pip install --disable-pip-version-check "$package_dir"
+
+    - name: Run Q-Trust scan
+      id: scan
+      shell: bash
+      # The gate must not abort the action before SARIF is uploaded, so the
+      # scan step records its exit code and a later step fails the job.
+      continue-on-error: true
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_SARIF_FILE: ${{ inputs.sarif-file }}
+        INPUT_THRESHOLD: ${{ inputs.threshold }}
+      run: |
+        gate_args=()
+        if [ -n "$INPUT_THRESHOLD" ] && [ "$INPUT_THRESHOLD" != "none" ]; then
+          gate_args=(--ci-gate "$INPUT_THRESHOLD")
+        fi
+        set +e
+        crypto-inspector scan "$INPUT_PATH" --sarif "$INPUT_SARIF_FILE" "${gate_args[@]}"
+        code=$?
+        set -e
+        {
+          echo "exit-code=$code"
+          echo "sarif-file=$INPUT_SARIF_FILE"
+          if [ -f "$INPUT_SARIF_FILE" ]; then
+            echo "sarif-exists=true"
+          else
+            echo "sarif-exists=false"
+          fi
+        } >> "$GITHUB_OUTPUT"
+        exit "$code"
+
+    - name: Upload SARIF to code scanning
+      if: ${{ always() && inputs.upload == 'true' && steps.scan.outputs.sarif-exists == 'true' }}
+      uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+        category: qtrust
+
+    - name: Fail when the gate tripped
+      if: ${{ always() && steps.scan.outcome == 'failure' }}
+      shell: bash
+      env:
+        SCAN_EXIT_CODE: ${{ steps.scan.outputs.exit-code }}
+        THRESHOLD: ${{ inputs.threshold }}
+      run: |
+        if [ "$SCAN_EXIT_CODE" = "1" ]; then
+          echo "::error::Q-Trust CI gate failed: findings at or above '${THRESHOLD}'. Review the code-scanning results or the SARIF artifact."
+        else
+          echo "::error::Q-Trust scan failed with exit code ${SCAN_EXIT_CODE} (2 means an invalid threshold, missing path or bad target)."
+        fi
+        exit 1

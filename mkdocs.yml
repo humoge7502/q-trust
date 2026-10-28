@@ -95,6 +95,7 @@ nav:
   - Home: index.md
   - Guides:
       - Scan your first CBOM: guides/scan-first-cbom.md
+      - Gate pull requests in CI: guides/github-action.md
       - Deploy to Base Sepolia: guides/deploy-base-sepolia.md
       - Integrate the SDK: guides/integrate-sdk.md
       - Operate the stack: guides/operate-stack.md
