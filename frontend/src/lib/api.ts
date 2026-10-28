@@ -34,6 +34,23 @@ export class OperatorKeyRequiredError extends Error {
   }
 }
 
+/**
+ * Non-2xx backend response. Extends Error so existing `instanceof Error`
+ * handlers keep working, while UI can branch on `status` (e.g. 503 planner
+ * busy vs 422 bad CBOM) instead of pattern-matching the message.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly detail: string;
+
+  constructor(status: number, detail: string) {
+    super(`API ${status}: ${detail || "request failed"}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 /** Headers carrying the caller's operator key, when one is stored. */
 export function operatorHeaders(): Record<string, string> {
   const key = getOperatorKey();
@@ -78,7 +95,7 @@ async function handleResponse<T>(response: Response, path: string): Promise<T> {
   }
 
   const detail = await readErrorMessage(response);
-  throw new Error(`API ${response.status}: ${detail || "request failed"}`);
+  throw new ApiError(response.status, detail);
 }
 
 

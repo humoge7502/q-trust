@@ -16,6 +16,12 @@ import { isValidAddress, isValidBytes32, isZeroAddress, CONTRACTS, publicClient,
 import { requireApiKey } from "../middleware/auth.js"; // REG-18: prevent unauthenticated compute amplification
 import { fetchWithRetry } from "../services/upstream.js";
 import {
+  embeddedPlannerEnabled,
+  planEmbedded,
+  plannerErrorResponse,
+  plannerHealth,
+} from "../services/planner-embedded.js";
+import {
   RevocationAnchorAbi,
   PolicyCommitmentAbi,
   SchemaRegistryAbi,
@@ -123,24 +129,29 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
     if (!body.cbom || !Array.isArray((body.cbom as any).assets) || !(body.cbom as any).assets.length) {
       return reply.status(400).send({ error: "cbom.assets (non-empty array) is required" });
     }
-    try {
-      // The planner is reached through a quick tunnel that drops connections at
-      // the edge intermittently; retrying a tunnel-level failure keeps a blip
-      // from surfacing as "planner unavailable" in the dashboard.
-      const res = await fetchWithRetry(`${PLANNER_URL}/plan`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          ...(PLANNER_API_KEY ? { "x-api-key": PLANNER_API_KEY } : {}),
-        },
-        body: JSON.stringify({ cbom: body.cbom, deadline: body.deadline ?? null }),
-      }, {
-        attempts: 3,
-        timeoutMs: 45_000,
-        onRetry: ({ attempt, status }) =>
-          request.log.warn({ attempt, status }, "Planner proxy retrying after tunnel failure"),
-      });
-      if (!res.ok) {
+    const payload = { cbom: body.cbom, deadline: body.deadline ?? null };
+
+    // Hosted/serverless deployments run the ONNX planner in-process. The
+    // operator tunnel and Python planner are self-hosted conveniences.
+    if (!embeddedPlannerEnabled()) {
+      try {
+        // The planner is reached through a quick tunnel that drops connections at
+        // the edge intermittently; retrying a tunnel-level failure keeps a blip
+        // from surfacing as "planner unavailable" in the dashboard.
+        const res = await fetchWithRetry(`${PLANNER_URL}/plan`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            ...(PLANNER_API_KEY ? { "x-api-key": PLANNER_API_KEY } : {}),
+          },
+          body: JSON.stringify(payload),
+        }, {
+          attempts: 3,
+          timeoutMs: 45_000,
+          onRetry: ({ attempt, status }) =>
+            request.log.warn({ attempt, status }, "Planner proxy retrying after tunnel failure"),
+        });
+        if (res.ok) return res.json();
         request.log.warn({ status: res.status }, "Planner service rejected plan request");
         // R6 fix: a planner 429 carries Retry-After that the UI can honor.
         // Mapping it to a bare 422 hid backpressure as a validation error.
@@ -149,12 +160,30 @@ export async function registerReadRoutes(app: FastifyInstance): Promise<void> {
           if (retryAfter) reply.header("retry-after", retryAfter);
           return reply.status(429).send({ error: "Planner service rate-limited — retry after the indicated delay" });
         }
-        return reply.status(res.status >= 500 ? 503 : 422).send({ error: "Planner service rejected the request" });
+        if (res.status < 500) {
+          return reply.status(422).send({ error: "Planner service rejected the request" });
+        }
+        request.log.warn("Remote planner unhealthy — falling back to embedded ONNX planner");
+      } catch (err) {
+        request.log.warn({ err }, "Remote planner unreachable — falling back to embedded ONNX planner");
       }
-      return res.json();
-    } catch {
-      return reply.status(503).send({ error: "Planner service unavailable — start it with: docker compose up planner" });
     }
+
+    try {
+      return await planEmbedded(payload);
+    } catch (err) {
+      request.log.error({ err }, "Embedded planner failed");
+      const mapped = plannerErrorResponse(err);
+      return reply.status(mapped.status).send(mapped.body);
+    }
+  });
+
+  // Public, cheap model liveness. Loads (and SHA-256 verifies) the ONNX session
+  // on first call so a broken model ships as an alert, not a failed plan.
+  app.get("/v1/planner/health", async (_request, reply) => {
+    const health = await plannerHealth();
+    if (health.status !== "ok") reply.status(503);
+    return { mode: embeddedPlannerEnabled() ? "embedded" : "remote", ...health };
   });
 
   // R1 fix: the planner is stateless — it exposes POST /plan, POST

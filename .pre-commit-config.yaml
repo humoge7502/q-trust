@@ -11,6 +11,11 @@ repos:
       - id: check-json
       - id: check-added-large-files
         args: ['--maxkb=500']
+        # Pinned ONNX planner artifacts, served by two self-contained
+        # deployables (Vercel Node backend, optional Python service). Each copy
+        # is verified against its manifest SHA-256 at load time, and release
+        # assets are not fetchable during a Vercel build.
+        exclude: '^(backend/assets/planner/|planner-service/lib/).*\.onnx$'
       - id: detect-private-key
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

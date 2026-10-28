@@ -1,0 +1,23 @@
+{
+  "model_file": "model_real_v3.onnx",
+  "sha256": "be36364ba1cff51603e24ed95111c7e1dc2d5805ad55032bd91d52ae83074d48",
+  "bytes": 1100975,
+  "source_checkpoint": "model_real_v3.pt",
+  "cfg": {
+    "input_features": 6,
+    "hidden_dim": 256,
+    "embedding_dim": 128,
+    "heads": 8,
+    "dropout": 0.15,
+    "variant": "hybrid",
+    "norm": "layer"
+  },
+  "eval_metrics": {},
+  "epochs": 1,
+  "seed": 42,
+  "rl": {
+    "model_file": "rl_agent.onnx",
+    "sha256": "ccdca46b075f599decb64bc360f68da047de8774766fa55e598907d25f6d9030",
+    "bytes": 140613
+  }
+}

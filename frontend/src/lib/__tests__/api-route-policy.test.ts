@@ -104,6 +104,11 @@ describe("API route policy", () => {
     expect(classifyEndpoint("/v1/relay/attestation", "POST")).toBe("operator");
     // The planner, scanner and GPU panels are open compute (demo posture).
     expect(classifyEndpoint("/v1/plans", "POST")).toBe("public-compute");
+    // Planner liveness is a public read so the canary and the UI can observe
+    // which planner is serving. Planning itself stays POST-only.
+    expect(classifyEndpoint("/v1/planner/health", "GET")).toBe("public-read");
+    expect(classifyEndpoint("/v1/planner/health", "POST")).toBeNull();
+    expect(matchRouteRule("/v1/planner/health-extra")).toBeNull();
   });
 
   it("does not grant access on a shared string prefix", () => {

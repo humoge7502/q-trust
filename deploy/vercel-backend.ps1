@@ -19,7 +19,7 @@
   Base URL of the locally running API (defaults to the tunnel in .env).
 
 .PARAMETER PlannerTunnel
-  Base URL of the locally running planner (defaults to QTRUST_PLANNER_TUNNEL_URL).
+  Base URL of the locally running planner (defaults to QTRUST_PLANNER_URL).
 
 .PARAMETER PublicUrl
   Public API base URL. Defaults to https://<ProjectName>.vercel.app/api.
@@ -141,8 +141,7 @@ if (-not $resolvedApiTunnel) { throw 'No local API tunnel found for QTRUST_SCANN
 
 $resolvedPlanner = $PlannerTunnel
 if (-not $resolvedPlanner) { $resolvedPlanner = $envMap['QTRUST_PLANNER_URL'] }
-if (-not $resolvedPlanner -or $resolvedPlanner -match '^http://(planner|localhost)') { $resolvedPlanner = $envMap['QTRUST_PLANNER_TUNNEL_URL'] }
-if (-not $resolvedPlanner) { $resolvedPlanner = $envMap['NEXT_PUBLIC_QTRUST_PLANNER_URL'] }
+if (-not $resolvedPlanner -or $resolvedPlanner -match '^http://(planner|localhost)') { $resolvedPlanner = $envMap['NEXT_PUBLIC_QTRUST_PLANNER_URL'] }
 if (-not $resolvedPlanner) { throw 'No planner URL found (pass -PlannerTunnel).' }
 
 $resolvedPublic = $PublicUrl
@@ -151,7 +150,7 @@ $resolvedPublic = $resolvedPublic.TrimEnd('/')
 
 # --- build the env map -----------------------------------------------------
 $skipKeys = @(
-  'QTRUST_EXTERNAL_PG_URL', 'QTRUST_COMPOSE_PG_URL', 'QTRUST_PLANNER_TUNNEL_URL',
+  'QTRUST_EXTERNAL_PG_URL', 'QTRUST_COMPOSE_PG_URL',
   'QTRUST_GITHUB_REPO_URL', 'QTRUST_REDIS_URL', 'QTRUST_ALERT_WEBHOOK',
   'QTRUST_SCAN_CONTAINER_ROOT', 'QTRUST_SCAN_HOST_ROOT', 'QTRUST_LOCAL_PG_URL'
 )

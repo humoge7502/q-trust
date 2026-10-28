@@ -337,7 +337,30 @@ describe("POST /v1/gpu/rl/plan", () => {
     await app.close();
   });
 
-  it("503 when planner is down", async () => {
+  it("falls back to the embedded RL planner when the remote planner is down", async () => {
+    plannerFetch.mockRejectedValue(new Error("ECONNREFUSED"));
+    const app = await build();
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/gpu/rl/plan",
+      payload: {
+        cbom: {
+          assets: [
+            { asset_id: "rsa-legacy", algorithm: "RSA-2048", key_size: 2048, criticality: "high" },
+            { asset_id: "pqc-ready", algorithm: "ML-KEM-768", key_size: 768, criticality: "medium", pqc_ready: true },
+          ],
+        },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.planner_mode).toBe("embedded-onnx");
+    expect(body.migration_order).toHaveLength(2);
+    expect(body.migration_order[0].asset_id).toBe("rsa-legacy");
+    await app.close();
+  });
+
+  it("422 for an empty CBOM even when the remote planner is down", async () => {
     plannerFetch.mockRejectedValue(new Error("ECONNREFUSED"));
     const app = await build();
     const res = await app.inject({
@@ -345,7 +368,8 @@ describe("POST /v1/gpu/rl/plan", () => {
       url: "/v1/gpu/rl/plan",
       payload: { cbom: { assets: [] } },
     });
-    expect(res.statusCode).toBe(503);
+    expect(res.statusCode).toBe(422);
+    expect(res.json().detail).toContain("assets");
     await app.close();
   });
 });

@@ -1,0 +1,3336 @@
+{
+ "frozen_today": "2026-10-28",
+ "generated_by": "backend/scripts/gen-planner-parity.py",
+ "plans": {
+  "real_finance_0": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_finance_1": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_finance_2": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_finance_3": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 3
+  },
+  "real_gov_edu_0": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_gov_edu_1": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_gov_edu_2": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 21.321739,
+     "risk_score": 0.752359
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 21.321739,
+     "risk_score": 0.752359
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 21.321739,
+     "risk_score": 0.752359
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 21.321739,
+     "risk_score": 0.752359
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 21.321739,
+     "risk_score": 0.752359
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 20.433392,
+     "risk_score": 0.765303
+    },
+    {
+     "algorithm": "unknown",
+     "asset_id": "asset-0000",
+     "key_size": 0,
+     "migrate_days": 0.5,
+     "priority_score": 15.297895,
+     "risk_score": 0.818839
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_gov_edu_3": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_gov_edu_4": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_gov_edu_5": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0004",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 13.788517,
+     "risk_score": 0.755603
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_gov_edu_6": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_gov_edu_7": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    }
+   ],
+   "total_assets": 2
+  },
+  "real_infra_0": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_infra_1": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0003",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 11.325326,
+     "risk_score": 0.801313
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_infra_2": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_media_0": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P384",
+     "asset_id": "asset-0001",
+     "key_size": 384,
+     "migrate_days": 1.5,
+     "priority_score": 17.423695,
+     "risk_score": 0.722872
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_media_1": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    }
+   ],
+   "total_assets": 4
+  },
+  "real_mixed_0": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0006",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 11.325326,
+     "risk_score": 0.801313
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_1": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_10": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_11": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_12": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_13": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0004",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 13.788517,
+     "risk_score": 0.755603
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_14": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 4
+  },
+  "real_mixed_2": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_3": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0005",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 13.788517,
+     "risk_score": 0.755603
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_4": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_5": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "RSA-3072",
+     "asset_id": "asset-0005",
+     "key_size": 3072,
+     "migrate_days": 2.0,
+     "priority_score": 16.094767,
+     "risk_score": 0.738251
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_6": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_7": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0006",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 13.788517,
+     "risk_score": 0.755603
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_8": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_mixed_9": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_security_0": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 22.32494,
+     "risk_score": 0.708209
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 22.32494,
+     "risk_score": 0.708209
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 22.32494,
+     "risk_score": 0.708209
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 22.32494,
+     "risk_score": 0.708209
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 19.611633,
+     "risk_score": 0.712045
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 19.611633,
+     "risk_score": 0.712045
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0000",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 18.783092,
+     "risk_score": 0.734203
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_security_1": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0001",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 13.788517,
+     "risk_score": 0.755603
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_security_2": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 5
+  },
+  "real_tech_0": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0001",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 13.788517,
+     "risk_score": 0.755603
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_tech_1": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0004",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 13.788517,
+     "risk_score": 0.755603
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_tech_2": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_tech_3": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_tech_4": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0001",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_tech_5": {
+   "order": [
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0002",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.256763,
+     "risk_score": 0.748346
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.048565,
+     "risk_score": 0.75393
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 16.055542,
+     "risk_score": 0.764189
+    }
+   ],
+   "total_assets": 7
+  },
+  "real_tech_6": {
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0006",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.699852,
+     "risk_score": 0.719199
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 18.358036,
+     "risk_score": 0.72623
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 17.733067,
+     "risk_score": 0.712038
+    }
+   ],
+   "total_assets": 7
+  }
+ },
+ "reference": "planner-service/lib/planner_core.py",
+ "rl": {
+  "real_finance_0": {
+   "method": "rl_policy_onnx",
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    }
+   ]
+  },
+  "real_gov_edu_0": {
+   "method": "rl_policy_onnx",
+   "order": [
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0000",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0003",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0004",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0005",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0006",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    }
+   ]
+  },
+  "real_mixed_0": {
+   "method": "rl_policy_onnx",
+   "order": [
+    {
+     "algorithm": "RSA-4096",
+     "asset_id": "asset-0006",
+     "key_size": 4096,
+     "migrate_days": 2.5,
+     "priority_score": 0.198036,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0001",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "RSA-2048",
+     "asset_id": "asset-0002",
+     "key_size": 2048,
+     "migrate_days": 1.5,
+     "priority_score": 0.151251,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0000",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0003",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0004",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    },
+    {
+     "algorithm": "ECDSA-P256",
+     "asset_id": "asset-0005",
+     "key_size": 256,
+     "migrate_days": 1.5,
+     "priority_score": 0.142705,
+     "risk_score": 0.6
+    }
+   ]
+  }
+ },
+ "schedules": {
+  "real_finance_0": {
+   "2026-12-31": {
+    "days_available": 64,
+    "deadline": "2026-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.16,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2026-12-25",
+      "migrate_days": 1.5,
+      "start": "2026-12-24"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2026-12-26",
+      "migrate_days": 1.5,
+      "start": "2026-12-25"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2026-12-27",
+      "migrate_days": 1.5,
+      "start": "2026-12-26"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2026-12-28",
+      "migrate_days": 1.5,
+      "start": "2026-12-27"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2026-12-29",
+      "migrate_days": 1.5,
+      "start": "2026-12-28"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2026-12-30",
+      "migrate_days": 1.5,
+      "start": "2026-12-29"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2026-12-31",
+      "migrate_days": 1.5,
+      "start": "2026-12-30"
+     }
+    ]
+   },
+   "2027-03-31": {
+    "days_available": 154,
+    "deadline": "2027-03-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.07,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-03-25",
+      "migrate_days": 1.5,
+      "start": "2027-03-24"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-03-26",
+      "migrate_days": 1.5,
+      "start": "2027-03-25"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-03-27",
+      "migrate_days": 1.5,
+      "start": "2027-03-26"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-03-28",
+      "migrate_days": 1.5,
+      "start": "2027-03-27"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-03-29",
+      "migrate_days": 1.5,
+      "start": "2027-03-28"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-03-30",
+      "migrate_days": 1.5,
+      "start": "2027-03-29"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-03-31",
+      "migrate_days": 1.5,
+      "start": "2027-03-30"
+     }
+    ]
+   },
+   "2027-12-31": {
+    "days_available": 429,
+    "deadline": "2027-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.02,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-12-25",
+      "migrate_days": 1.5,
+      "start": "2027-12-24"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-12-26",
+      "migrate_days": 1.5,
+      "start": "2027-12-25"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-12-27",
+      "migrate_days": 1.5,
+      "start": "2027-12-26"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-12-28",
+      "migrate_days": 1.5,
+      "start": "2027-12-27"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-12-29",
+      "migrate_days": 1.5,
+      "start": "2027-12-28"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-12-30",
+      "migrate_days": 1.5,
+      "start": "2027-12-29"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-12-31",
+      "migrate_days": 1.5,
+      "start": "2027-12-30"
+     }
+    ]
+   }
+  },
+  "real_gov_edu_3": {
+   "2026-12-31": {
+    "days_available": 64,
+    "deadline": "2026-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.16,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2026-12-25",
+      "migrate_days": 1.5,
+      "start": "2026-12-24"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2026-12-26",
+      "migrate_days": 1.5,
+      "start": "2026-12-25"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2026-12-27",
+      "migrate_days": 1.5,
+      "start": "2026-12-26"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2026-12-28",
+      "migrate_days": 1.5,
+      "start": "2026-12-27"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2026-12-29",
+      "migrate_days": 1.5,
+      "start": "2026-12-28"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2026-12-30",
+      "migrate_days": 1.5,
+      "start": "2026-12-29"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2026-12-31",
+      "migrate_days": 1.5,
+      "start": "2026-12-30"
+     }
+    ]
+   },
+   "2027-03-31": {
+    "days_available": 154,
+    "deadline": "2027-03-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.07,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-03-25",
+      "migrate_days": 1.5,
+      "start": "2027-03-24"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-03-26",
+      "migrate_days": 1.5,
+      "start": "2027-03-25"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-03-27",
+      "migrate_days": 1.5,
+      "start": "2027-03-26"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-03-28",
+      "migrate_days": 1.5,
+      "start": "2027-03-27"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-03-29",
+      "migrate_days": 1.5,
+      "start": "2027-03-28"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-03-30",
+      "migrate_days": 1.5,
+      "start": "2027-03-29"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-03-31",
+      "migrate_days": 1.5,
+      "start": "2027-03-30"
+     }
+    ]
+   },
+   "2027-12-31": {
+    "days_available": 429,
+    "deadline": "2027-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.02,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-12-25",
+      "migrate_days": 1.5,
+      "start": "2027-12-24"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-12-26",
+      "migrate_days": 1.5,
+      "start": "2027-12-25"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-12-27",
+      "migrate_days": 1.5,
+      "start": "2027-12-26"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-12-28",
+      "migrate_days": 1.5,
+      "start": "2027-12-27"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-12-29",
+      "migrate_days": 1.5,
+      "start": "2027-12-28"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-12-30",
+      "migrate_days": 1.5,
+      "start": "2027-12-29"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-12-31",
+      "migrate_days": 1.5,
+      "start": "2027-12-30"
+     }
+    ]
+   }
+  },
+  "real_mixed_0": {
+   "2026-12-31": {
+    "days_available": 64,
+    "deadline": "2026-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.18,
+    "total_effort_days": 11.5,
+    "windows": [
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2026-12-24",
+      "migrate_days": 1.5,
+      "start": "2026-12-23"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2026-12-25",
+      "migrate_days": 1.5,
+      "start": "2026-12-24"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2026-12-26",
+      "migrate_days": 1.5,
+      "start": "2026-12-25"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2026-12-27",
+      "migrate_days": 1.5,
+      "start": "2026-12-26"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2026-12-28",
+      "migrate_days": 1.5,
+      "start": "2026-12-27"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2026-12-29",
+      "migrate_days": 1.5,
+      "start": "2026-12-28"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2026-12-31",
+      "migrate_days": 2.5,
+      "start": "2026-12-29"
+     }
+    ]
+   },
+   "2027-03-31": {
+    "days_available": 154,
+    "deadline": "2027-03-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.07,
+    "total_effort_days": 11.5,
+    "windows": [
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-03-24",
+      "migrate_days": 1.5,
+      "start": "2027-03-23"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-03-25",
+      "migrate_days": 1.5,
+      "start": "2027-03-24"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-03-26",
+      "migrate_days": 1.5,
+      "start": "2027-03-25"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-03-27",
+      "migrate_days": 1.5,
+      "start": "2027-03-26"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-03-28",
+      "migrate_days": 1.5,
+      "start": "2027-03-27"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-03-29",
+      "migrate_days": 1.5,
+      "start": "2027-03-28"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-03-31",
+      "migrate_days": 2.5,
+      "start": "2027-03-29"
+     }
+    ]
+   },
+   "2027-12-31": {
+    "days_available": 429,
+    "deadline": "2027-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.03,
+    "total_effort_days": 11.5,
+    "windows": [
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-12-24",
+      "migrate_days": 1.5,
+      "start": "2027-12-23"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-12-25",
+      "migrate_days": 1.5,
+      "start": "2027-12-24"
+     },
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-12-26",
+      "migrate_days": 1.5,
+      "start": "2027-12-25"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-12-27",
+      "migrate_days": 1.5,
+      "start": "2027-12-26"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-12-28",
+      "migrate_days": 1.5,
+      "start": "2027-12-27"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-12-29",
+      "migrate_days": 1.5,
+      "start": "2027-12-28"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-12-31",
+      "migrate_days": 2.5,
+      "start": "2027-12-29"
+     }
+    ]
+   }
+  },
+  "real_tech_4": {
+   "2026-12-31": {
+    "days_available": 64,
+    "deadline": "2026-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.16,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2026-12-25",
+      "migrate_days": 1.5,
+      "start": "2026-12-24"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2026-12-26",
+      "migrate_days": 1.5,
+      "start": "2026-12-25"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2026-12-27",
+      "migrate_days": 1.5,
+      "start": "2026-12-26"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2026-12-28",
+      "migrate_days": 1.5,
+      "start": "2026-12-27"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2026-12-29",
+      "migrate_days": 1.5,
+      "start": "2026-12-28"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2026-12-30",
+      "migrate_days": 1.5,
+      "start": "2026-12-29"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2026-12-31",
+      "migrate_days": 1.5,
+      "start": "2026-12-30"
+     }
+    ]
+   },
+   "2027-03-31": {
+    "days_available": 154,
+    "deadline": "2027-03-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.07,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-03-25",
+      "migrate_days": 1.5,
+      "start": "2027-03-24"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-03-26",
+      "migrate_days": 1.5,
+      "start": "2027-03-25"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-03-27",
+      "migrate_days": 1.5,
+      "start": "2027-03-26"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-03-28",
+      "migrate_days": 1.5,
+      "start": "2027-03-27"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-03-29",
+      "migrate_days": 1.5,
+      "start": "2027-03-28"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-03-30",
+      "migrate_days": 1.5,
+      "start": "2027-03-29"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-03-31",
+      "migrate_days": 1.5,
+      "start": "2027-03-30"
+     }
+    ]
+   },
+   "2027-12-31": {
+    "days_available": 429,
+    "deadline": "2027-12-31",
+    "feasible": true,
+    "overflow_days": 0.0,
+    "suggested_daily_rate": 0.02,
+    "total_effort_days": 10.5,
+    "windows": [
+     {
+      "asset_id": "asset-0005",
+      "clamped_to_today": false,
+      "end": "2027-12-25",
+      "migrate_days": 1.5,
+      "start": "2027-12-24"
+     },
+     {
+      "asset_id": "asset-0000",
+      "clamped_to_today": false,
+      "end": "2027-12-26",
+      "migrate_days": 1.5,
+      "start": "2027-12-25"
+     },
+     {
+      "asset_id": "asset-0001",
+      "clamped_to_today": false,
+      "end": "2027-12-27",
+      "migrate_days": 1.5,
+      "start": "2027-12-26"
+     },
+     {
+      "asset_id": "asset-0002",
+      "clamped_to_today": false,
+      "end": "2027-12-28",
+      "migrate_days": 1.5,
+      "start": "2027-12-27"
+     },
+     {
+      "asset_id": "asset-0003",
+      "clamped_to_today": false,
+      "end": "2027-12-29",
+      "migrate_days": 1.5,
+      "start": "2027-12-28"
+     },
+     {
+      "asset_id": "asset-0004",
+      "clamped_to_today": false,
+      "end": "2027-12-30",
+      "migrate_days": 1.5,
+      "start": "2027-12-29"
+     },
+     {
+      "asset_id": "asset-0006",
+      "clamped_to_today": false,
+      "end": "2027-12-31",
+      "migrate_days": 1.5,
+      "start": "2027-12-30"
+     }
+    ]
+   }
+  }
+ }
+}

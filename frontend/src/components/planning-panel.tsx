@@ -8,7 +8,7 @@
  * get the GNN-ranked migration order + a deadline feasibility schedule.
  */
 import { useMemo, useState } from "react";
-import { fetchMigrationPlan, OperatorKeyRequiredError } from "@/lib/api";
+import { ApiError, fetchMigrationPlan, OperatorKeyRequiredError } from "@/lib/api";
 import { OperatorAccessInline } from "@/components/operator-access";
 import { PanelTitle } from "@/components/ui/panel";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -29,6 +29,7 @@ const SAMPLE_CBOM = JSON.stringify(
 );
 
 interface PlanResult {
+  planner_mode?: string;
   migration_order: Array<{
     rank: number;
     asset_id: string;
@@ -48,12 +49,30 @@ interface PlanResult {
   total_assets: number;
 }
 
+/**
+ * 4xx means the CBOM itself was refused, so the server's `detail` is worth
+ * showing verbatim. Everything else (5xx, network) is retry-safe and gets
+ * friendly copy instead of an exception string.
+ */
+function describeFailure(err: unknown): { kind: "invalid" | "unavailable"; detail: string } {
+  if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+    return { kind: "invalid", detail: err.detail || "The planner rejected this request." };
+  }
+  return {
+    kind: "unavailable",
+    detail:
+      "The planner is temporarily unavailable. Nothing was changed — retrying is safe.",
+  };
+}
+
 export function PlanningPanel() {
   const [cbomText, setCbomText] = useState("");
   const [deadline, setDeadline] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [plan, setPlan] = useState<PlanResult | null>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<{ kind: "invalid" | "unavailable"; detail: string } | null>(
+    null,
+  );
   const [operatorEndpoint, setOperatorEndpoint] = useState<string | null>(null);
 
   const cbom = useMemo(() => {
@@ -67,11 +86,11 @@ export function PlanningPanel() {
 
   async function run() {
     if (!cbom) {
-      setError("CBOM JSON is invalid or empty.");
       setState("error");
+      setError({ kind: "invalid", detail: "That CBOM is not valid JSON. Fix the syntax and try again." });
       return;
     }
-    setError("");
+    setError(null);
     setOperatorEndpoint(null);
     setState("loading");
     try {
@@ -85,13 +104,16 @@ export function PlanningPanel() {
         setState("idle");
         return;
       }
+      setError(describeFailure(err));
       setState("error");
-      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div
+      className="mt-4 rounded-xl border border-border bg-card p-5 shadow-sm"
+      data-testid="planning-panel"
+    >
       <PanelTitle>AI migration planner</PanelTitle>
       <p className="mt-1.5 text-micro leading-6 text-muted-foreground">
         Paste a CBOM JSON (from <code className="rounded bg-neutral-surface px-1">crypto-inspector scan</code>)
@@ -134,11 +156,17 @@ export function PlanningPanel() {
       </div>
 
       {state === "error" && error ? (
-        <div className="mt-3">
+        <div className="mt-3" data-testid="plan-error" data-error-kind={error.kind}>
           <ErrorState
-            title="The planner could not produce a plan"
-            description={error}
-            onRetry={() => void run()}
+            title={
+              error.kind === "unavailable"
+                ? "The planner is temporarily unavailable"
+                : "This CBOM was not accepted"
+            }
+            description={error.detail}
+            // Retrying an unchanged invalid request just fails again; retry is
+            // only offered when the failure is transient.
+            onRetry={error.kind === "unavailable" ? () => void run() : undefined}
           />
         </div>
       ) : null}
@@ -163,10 +191,16 @@ export function PlanningPanel() {
 function PlanView({ plan }: { plan: PlanResult }) {
   const sched = plan.schedule;
   return (
-    <div className="mt-4">
+    <div
+      className="mt-4"
+      data-testid="plan-result"
+      data-planner-mode={plan.planner_mode ?? "unknown"}
+      data-plan-rows={plan.migration_order.length}
+    >
       {sched ? (
         <div
-          data-tone={sched.feasible ? "success" : "danger"}
+          data-testid="plan-summary"
+          data-feasible={sched.feasible}
           className={`mb-3 rounded-lg border px-4 py-3 text-micro font-medium ${
             sched.feasible
               ? "border-success-border bg-success-surface text-success"
@@ -200,7 +234,12 @@ function PlanView({ plan }: { plan: PlanResult }) {
             {plan.migration_order.map((a) => {
               const window = sched?.windows.find((w) => w.asset_id === a.asset_id);
               return (
-                <tr key={a.asset_id} className="border-b border-border">
+                <tr
+                  key={a.asset_id}
+                  className="border-b border-border"
+                  data-testid="plan-row"
+                  data-asset-id={a.asset_id}
+                >
                   {/* `text-muted-foreground`, not `text-slate-400`: slate-400 on
                       white measures 2.64:1 and fails WCAG AA outright. */}
                   <td className="py-2 pr-2 font-mono text-muted-foreground">#{a.rank}</td>
@@ -230,7 +269,13 @@ function PlanView({ plan }: { plan: PlanResult }) {
         {plan.migration_order.map((a) => {
           const window = sched?.windows.find((w) => w.asset_id === a.asset_id);
           return (
-            <div key={a.asset_id} className="rounded-lg border border-border bg-muted p-3" role="listitem">
+            <div
+              key={a.asset_id}
+              className="rounded-lg border border-border bg-muted p-3"
+              role="listitem"
+              data-testid="plan-card"
+              data-asset-id={a.asset_id}
+            >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-micro font-medium text-muted-foreground">#{a.rank} · {a.asset_id}</span>
                 <span className="text-micro text-neutral">{a.migrate_days}d</span>

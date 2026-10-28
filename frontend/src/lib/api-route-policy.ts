@@ -121,6 +121,11 @@ export const ROUTE_POLICY: readonly RouteRule[] = [
   { prefix: "/v1/scan/", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/evidence/create", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/roadmap/generate", methods: POST, routeClass: "public-compute" },
+  // GET is deliberately allowed here: a read-only liveness probe that reports
+  // which planner implementation is serving plans. `public-read` keeps it
+  // observable from a browser and from the production canary, and it exposes
+  // no plan data. POST stays on the compute class for planning itself.
+  { prefix: "/v1/planner/health", methods: GET, routeClass: "public-read" },
   { prefix: "/v1/plans", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/gpu/", methods: GET_POST, routeClass: "public-compute" },
 
