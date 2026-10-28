@@ -527,13 +527,16 @@ async function checkApi() {
     record("POST /api/v1/roadmap/generate covers every finding", false, error.message);
   }
 
-  // Stats: proxy attaches the server-side key on a public-read rule.
+  // Stats: proxy attaches the server-side key on a public-read rule. Totals
+  // must come from the shared Postgres history, not a per-instance array that
+  // a cold start would reset.
   try {
     const res = await requestJson(`${API}/v1/stats`);
+    const persistent = res.body?.historyPersistent === true;
     record(
       "GET /api/v1/stats",
-      res.status === 200 && typeof res.body?.totalScans === "number",
-      `status ${res.status}, totalScans=${res.body?.totalScans ?? "?"}`,
+      res.status === 200 && typeof res.body?.totalScans === "number" && persistent,
+      `status ${res.status}, totalScans=${res.body?.totalScans ?? "?"}, historyPersistent=${res.body?.historyPersistent ?? "?"}`,
     );
   } catch (error) {
     record("GET /api/v1/stats", false, error.message);

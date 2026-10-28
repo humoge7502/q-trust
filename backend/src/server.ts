@@ -12,6 +12,7 @@ import * as dotenv from "dotenv";
 import { Redis } from "ioredis";
 import { startIndexer, stopIndexer, pool as pgPool } from "./services/indexer.js";
 import { fetchWithRetry } from "./services/upstream.js";
+import { appendScanHistory, hashScanTarget } from "./services/scan-history-store.js";
 import { registerScannerRoutes } from "./routes/scanner.js";
 import { registerRelayRoutes } from "./routes/relay.js";
 import { registerGPURoutes } from "./services/gpu-service.js";
@@ -215,6 +216,25 @@ export async function buildServer(): Promise<FastifyInstance> {
             code: "scanner_unavailable",
             upstream_status: upstream.status,
           });
+        }
+        // Proxied scans never reach the in-process route body, so record them
+        // here; otherwise /v1/stats would only count the scans that run on
+        // this instance and the production totals would undercount.
+        if (request.method === "POST" && path.startsWith("/v1/scan/") && upstream.status === 200) {
+          try {
+            const parsed = JSON.parse(body.toString("utf8")) as { findings?: unknown };
+            const findings = Array.isArray(parsed?.findings) ? parsed.findings.length : 0;
+            const target = (request.body as { target?: unknown; directory?: unknown } | undefined)?.target
+              ?? (request.body as { directory?: unknown } | undefined)?.directory;
+            await appendScanHistory({
+              targetHash: hashScanTarget(typeof target === "string" ? target : path),
+              type: path.slice("/v1/scan/".length),
+              timestamp: new Date().toISOString(),
+              count: findings,
+            });
+          } catch (err) {
+            server.log.warn({ err, path }, "proxied scan history append failed");
+          }
         }
         reply
           .code(upstream.status)

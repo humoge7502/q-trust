@@ -1,11 +1,10 @@
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { Type } from "@sinclair/typebox";
-import type { FastifyInstance } from "fastify";
+import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import { requireApiKey } from "../middleware/auth.js";
 import { RepoScanError, scanGithubRepo } from "../services/repo-scan.js";
 import {
@@ -14,6 +13,12 @@ import {
   verifyChain,
   type LedgerEntry,
 } from "../services/evidence-store.js";
+import {
+  appendScanHistory,
+  hashScanTarget,
+  scanHistoryStore,
+  type ScanHistoryEntry,
+} from "../services/scan-history-store.js";
 import {
   ScanRequestSchema,
   ScanFullRequestSchema,
@@ -338,33 +343,21 @@ function evaluateCNSACompliance(finding: any): { compliant: boolean; reason: str
   return { compliant:false, reason: `${alg} is not on the CNSA approved list` };
 }
 
-/** Keep request history bounded; the evidence ledger is the durable record. */
-const MAX_SCAN_HISTORY_LENGTH = 10_000;
-
-function recordScanHistory(
-  history: Array<{ targetHash: string; type: string; timestamp: string; count: number }>,
-  entry: { targetHash: string; type: string; timestamp: string; count: number },
-): void {
-  history.push(entry);
-  if (history.length > MAX_SCAN_HISTORY_LENGTH) {
-    history.shift();
+/** A failed history write must never fail the scan that produced it. */
+async function recordScan(log: FastifyBaseLogger, entry: ScanHistoryEntry): Promise<void> {
+  try {
+    await appendScanHistory(entry);
+  } catch (err) {
+    log.warn({ err }, "scan history append failed");
   }
-}
-
-/** Audit M-7: only a keyed hash of each scan target is retained for stats —
- *  never the raw absolute path. */
-function hashTarget(resolvedPath: string): string {
-  return createHash("sha256").update(resolvedPath).digest("hex").slice(0, 16);
 }
 
 /** Return a stable label without disclosing the host filesystem layout. */
 function publicScanTarget(resolvedPath: string): string {
-  return `scan-${hashTarget(resolvedPath)}`;
+  return `scan-${hashScanTarget(resolvedPath)}`;
 }
 
 export async function registerScannerRoutes(app: FastifyInstance): Promise<void> {
-  const scanHistory: any[] = [];
-
   app.get("/v1/health", async () => {
     return { status: "ok", version: "1.0.0", services: { scanner: true, risk: true, compliance: true } };
   });
@@ -398,8 +391,9 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
-    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedDir), type: "source", timestamp: new Date().toISOString(), count: findings.length });
-    return { directory: publicScanTarget(resolvedDir), findings, scanType: "source", timestamp: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    await recordScan(request.log, { targetHash: hashScanTarget(resolvedDir), type: "source", timestamp, count: findings.length });
+    return { directory: publicScanTarget(resolvedDir), findings, scanType: "source", timestamp };
   });
 
   app.post("/v1/scan/manifests", {
@@ -431,8 +425,9 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
-    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedDir), type: "manifests", timestamp: new Date().toISOString(), count: findings.length });
-    return { directory: publicScanTarget(resolvedDir), findings, scanType: "manifests", timestamp: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    await recordScan(request.log, { targetHash: hashScanTarget(resolvedDir), type: "manifests", timestamp, count: findings.length });
+    return { directory: publicScanTarget(resolvedDir), findings, scanType: "manifests", timestamp };
   });
 
   app.post("/v1/scan/full", {
@@ -474,8 +469,9 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const allFindings = Array.isArray(result.findings) ? result.findings : [];
-    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedTarget), type: "full", timestamp: new Date().toISOString(), count: allFindings.length });
-    return { target: publicScanTarget(resolvedTarget), findings: allFindings, scanType: "full", timestamp: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    await recordScan(request.log, { targetHash: hashScanTarget(resolvedTarget), type: "full", timestamp, count: allFindings.length });
+    return { target: publicScanTarget(resolvedTarget), findings: allFindings, scanType: "full", timestamp };
   });
 
   app.post("/v1/scan/repo", {
@@ -502,8 +498,8 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     try {
       const result = await scanGithubRepo({ repo, ref, scanType, log: request.log });
       const timestamp = new Date().toISOString();
-      recordScanHistory(scanHistory, {
-        targetHash: hashTarget(`repo:${result.repo}`),
+      await recordScan(request.log, {
+        targetHash: hashScanTarget(`repo:${result.repo}`),
         type: scanType,
         timestamp,
         count: result.findings.length,
@@ -773,15 +769,26 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
   });
 
   app.get("/v1/stats", {
-    // Audit M-7: scanHistory previously exposed absolute resolved filesystem
-    // paths of every scanned directory to unauthenticated callers.
+    // Audit M-7: only keyed target hashes are stored, never the absolute
+    // resolved filesystem paths of scanned directories.
     preHandler: requireApiKey,
-  }, async () => {
-    const totalScans = scanHistory.length;
-    const totalFindings = scanHistory.reduce((sum, s) => sum + s.count, 0);
+  }, async (request, reply) => {
+    let totals: { totalScans: number; totalFindings: number };
+    let scanHistory: ScanHistoryEntry[];
+    try {
+      [totals, scanHistory] = await Promise.all([
+        scanHistoryStore.stats(),
+        scanHistoryStore.list(500),
+      ]);
+    } catch (err) {
+      request.log.error({ err }, "scan history read failed");
+      reply.code(503);
+      return { error: "scan history storage is unavailable", code: "scan_history_unavailable" };
+    }
     return {
-      totalScans,
-      totalFindings,
+      totalScans: totals.totalScans,
+      totalFindings: totals.totalFindings,
+      historyPersistent: scanHistoryStore.mode === "postgres",
       riskLevels: { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, NONE: 0 },
       complianceScores: { NIST: 100, CNSA: 100 },
       scanHistory,

@@ -102,7 +102,7 @@ Rate limits are documented in [`PERFORMANCE.md`](PERFORMANCE.md) — 147.8 req/s
 | `GET` | `/docs` | Swagger UI | — | `@fastify/swagger-ui` |
 | `GET` | `/docs/json` | Raw OpenAPI JSON | — | Proxied from `backend/openapi.yaml` |
 | `GET` | `/metrics` | Prometheus metrics | `X-Api-Key` in production | `prom-client` histogram + gauges |
-| `GET` | `/v1/stats` | Scan/asset counters (API-key gated) | `X-Api-Key` | `routes/scanner.ts` |
+| `GET` | `/v1/stats` | Scan counters, history and `historyPersistent` (Postgres-backed when `QTRUST_PG_URL` is set); API-key gated | `X-Api-Key` | `routes/scanner.ts` |
 
 ### Scan
 
