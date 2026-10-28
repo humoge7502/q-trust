@@ -155,11 +155,12 @@ export async function buildServer(): Promise<FastifyInstance> {
     });
   }
 
-  // Hosted deployments keep the Python inspector, the persistent evidence
-  // chain and the ML model server on the operator machine. When
-  // QTRUST_SCANNER_PROXY_URL is set, the scanner, evidence and GPU routes are
-  // transparently forwarded there (the caller's API key is preserved so the
-  // upstream enforces the same policy).
+  // Hosted deployments keep the Python inspector and the ML model server on
+  // the operator machine. When QTRUST_SCANNER_PROXY_URL is set, the scanner
+  // and GPU routes are transparently forwarded there (the caller's API key is
+  // preserved so the upstream enforces the same policy). The evidence ledger
+  // is NOT proxied: it lives in Postgres and runs in-process on every
+  // instance, so a ledger created anywhere verifies everywhere.
   //
   // Guard: only proxy from a hosted runtime. The local Docker API shares the
   // same .env (which carries the public tunnel URL for the Vercel deploy), so
@@ -180,7 +181,6 @@ export async function buildServer(): Promise<FastifyInstance> {
       }
       if (
         !path.startsWith("/v1/scan/") &&
-        !path.startsWith("/v1/evidence/") &&
         !path.startsWith("/v1/gpu/")
       ) {
         return;

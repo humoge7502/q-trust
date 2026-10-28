@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, promises as fsp, readFileSync } from "node:fs";
+import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -8,6 +8,12 @@ import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
 import { requireApiKey } from "../middleware/auth.js";
 import { RepoScanError, scanGithubRepo } from "../services/repo-scan.js";
+import {
+  computeIntegrityHash,
+  evidenceStore,
+  verifyChain,
+  type LedgerEntry,
+} from "../services/evidence-store.js";
 import {
   ScanRequestSchema,
   ScanFullRequestSchema,
@@ -332,40 +338,6 @@ function evaluateCNSACompliance(finding: any): { compliant: boolean; reason: str
   return { compliant:false, reason: `${alg} is not on the CNSA approved list` };
 }
 
-interface LedgerEntry {
-  version: string;
-  data: unknown;
-  integrityHash: string;
-  previousHash: string;
-  chainIndex: number;
-}
-
-const GENESIS_HASH = "0".repeat(64);
-
-/** Audit M-6: hard cap on in-memory chain length. Beyond this the oldest
- *  entries must be persisted externally; verify keeps working on recent
- *  history instead of growing without bound. */
-const MAX_EVIDENCE_CHAIN_LENGTH = 10_000;
-
-function pushEvidenceEntry(entry: LedgerEntry): void {
-  evidenceChain.push(entry);
-  if (evidenceChain.length > MAX_EVIDENCE_CHAIN_LENGTH) {
-    console.warn(
-      `Evidence chain exceeded ${MAX_EVIDENCE_CHAIN_LENGTH} entries — oldest entry evicted from memory (file log retains full history)`,
-    );
-    evidenceChain.shift();
-  }
-}
-
-// Evidence chain persistence: JSONL append-only log so the SHA-256 chain
-// survives restarts. Primary store is the file below; if persistence fails
-// (read-only fs, bad path) the chain degrades gracefully to in-memory only.
-const EVIDENCE_DB_PATH =
-  process.env.QTRUST_EVIDENCE_DB_PATH ||
-  path.join(process.env.QTRUST_DATA_DIR || "/var/lib/qtrust", "evidence_chain.jsonl");
-
-const evidenceChain: LedgerEntry[] = [];
-
 /** Keep request history bounded; the evidence ledger is the durable record. */
 const MAX_SCAN_HISTORY_LENGTH = 10_000;
 
@@ -377,134 +349,6 @@ function recordScanHistory(
   if (history.length > MAX_SCAN_HISTORY_LENGTH) {
     history.shift();
   }
-}
-
-/** Load persisted chain entries from the JSONL evidence log at module init. */
-function loadEvidenceChain(): void {
-  if (!existsSync(EVIDENCE_DB_PATH)) {
-    return;
-  }
-  let raw: string;
-  try {
-    raw = readFileSync(EVIDENCE_DB_PATH, "utf8");
-  } catch (err) {
-    console.warn(
-      "Evidence chain unreadable at",
-      EVIDENCE_DB_PATH,
-      "— starting empty:",
-      err instanceof Error ? err.message : err,
-    );
-    return;
-  }
-  const lines = raw.split("\n");
-  while (lines.length > 0 && lines[lines.length - 1].trim() === "") {
-    lines.pop();
-  }
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    try {
-      const entry = JSON.parse(line) as LedgerEntry;
-      if (
-        typeof entry.chainIndex !== "number" ||
-        typeof entry.previousHash !== "string" ||
-        typeof entry.integrityHash !== "string"
-      ) {
-        throw new Error("entry missing chain metadata");
-      }
-      pushEvidenceEntry(entry);
-    } catch {
-      // A torn final write (crash mid-append) leaves a partial trailing line —
-      // skip it quietly-ish; corruption elsewhere is worth a louder warning.
-      if (i === lines.length - 1) {
-        console.warn(
-          `Evidence chain: skipping incomplete trailing line in ${EVIDENCE_DB_PATH}`,
-        );
-      } else {
-        console.warn(
-          `Evidence chain: skipping corrupt line ${i + 1} in ${EVIDENCE_DB_PATH}`,
-        );
-      }
-    }
-  }
-}
-
-loadEvidenceChain();
-
-/** Append one JSONL line per entry. Creates the directory on first write; never rewrites existing data. */
-function persistEvidenceEntry(entry: LedgerEntry): void {
-  try {
-    mkdirSync(path.dirname(EVIDENCE_DB_PATH), { recursive: true });
-    appendFileSync(EVIDENCE_DB_PATH, `${JSON.stringify(entry)}\n`, "utf8");
-  } catch (err) {
-    console.warn(
-      "Evidence chain persistence failed at",
-      EVIDENCE_DB_PATH,
-      "— continuing in memory only:",
-      err instanceof Error ? err.message : err,
-    );
-  }
-}
-
-function computeIntegrityHash(entry: Omit<LedgerEntry, "integrityHash">): string {
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        data: entry.data,
-        previousHash: entry.previousHash,
-        chainIndex: entry.chainIndex,
-      }),
-    )
-    .digest("hex");
-}
-
-function generateEvidenceLedger(data: {
-  scanResultHash: string;
-  scanTarget: string;
-  findingsCount: number;
-  riskSummary: object;
-  timestamp: string;
-}): LedgerEntry {
-  const last = evidenceChain.length ? evidenceChain[evidenceChain.length - 1] : null;
-  const entry: Omit<LedgerEntry, "integrityHash"> = {
-    version: "1.0",
-    data,
-    previousHash: last ? last.integrityHash : GENESIS_HASH,
-    chainIndex: last ? last.chainIndex + 1 : 0,
-  };
-  const full: LedgerEntry = { ...entry, integrityHash: computeIntegrityHash(entry) };
-  pushEvidenceEntry(full);
-  persistEvidenceEntry(full);
-  return full;
-}
-
-/** Re-compute every hash and validate the whole chain. Returns a reason on any mismatch/tamper. */
-function verifyEvidenceChain(entries: LedgerEntry[]): { valid: boolean; reason?: string; failedIndex?: number } {
-  if (entries.length === 0) return { valid: true };
-
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    if (typeof entry.chainIndex !== "number" || typeof entry.previousHash !== "string") {
-      return { valid: false, reason: "malformed_entry", failedIndex: entry.chainIndex ?? i };
-    }
-    // The in-memory view may intentionally start after an evicted prefix. The
-    // retained first entry must still point to a valid predecessor; its own
-    // predecessor is not available for local verification.
-    const expectedPrevious = i === 0
-      ? (entry.chainIndex === 0 ? GENESIS_HASH : entry.previousHash)
-      : entries[i - 1].integrityHash;
-    if (entry.previousHash !== expectedPrevious) {
-      return { valid: false, reason: "previous_hash_mismatch", failedIndex: entry.chainIndex };
-    }
-    if (i > 0 && entry.chainIndex !== entries[i - 1].chainIndex + 1) {
-      return { valid: false, reason: "chain_index_mismatch", failedIndex: entry.chainIndex };
-    }
-    const recomputed = computeIntegrityHash(entry);
-    if (recomputed !== entry.integrityHash) {
-      return { valid: false, reason: "integrity_hash_mismatch", failedIndex: entry.chainIndex };
-    }
-  }
-  return { valid: true };
 }
 
 /** Audit M-7: only a keyed hash of each scan target is retained for stats —
@@ -768,31 +612,42 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
   });
 
   app.post("/v1/evidence/create", {
-    // Audit M-6: this route appends to the on-disk JSONL chain and grows an
-    // in-memory array — it must not be anonymous/unbounded.
+    // Appends to the shared SHA-256 chain, so it must not be anonymous or
+    // unbounded. Storage is Postgres when configured, JSONL for local dev.
     preHandler: requireApiKey,
     config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
-    schema: { body: EvidenceCreateSchema, response: { 200: EvidenceCreateResponseSchema } },
-  }, async (request) => {
+    schema: {
+      body: EvidenceCreateSchema,
+      response: { 200: EvidenceCreateResponseSchema, 503: ErrorResponseSchema },
+    },
+  }, async (request, reply) => {
     const { scanResultHash, scanTarget, findingsCount, riskSummary } = request.body as {
       scanResultHash: string;
       scanTarget: string;
       findingsCount: number;
       riskSummary: object;
     };
-    const ledger = generateEvidenceLedger({
-      scanResultHash,
-      scanTarget,
-      findingsCount,
-      riskSummary,
-      timestamp: new Date().toISOString(),
-    });
-    return { ledger };
+    try {
+      const ledger = await evidenceStore.append({
+        scanResultHash,
+        scanTarget,
+        findingsCount,
+        riskSummary,
+        timestamp: new Date().toISOString(),
+      });
+      return { ledger };
+    } catch (err) {
+      request.log.error({ err }, "evidence ledger append failed");
+      return reply.code(503).send({
+        error: "evidence ledger storage is unavailable",
+        code: "evidence_store_unavailable",
+      });
+    }
   });
 
   app.post("/v1/evidence/verify", {
     schema: { body: EvidenceVerifySchema },
-  }, async (request) => {
+  }, async (request, reply) => {
     const { ledger } = request.body as { ledger: any };
     if (typeof ledger.previousHash !== "string" || typeof ledger.chainIndex !== "number") {
       return {
@@ -815,8 +670,24 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       };
     }
 
-    // 2. Validate the whole in-memory chain (tamper detection across history).
-    const chainCheck = verifyEvidenceChain(evidenceChain);
+    let entries: LedgerEntry[];
+    let known: LedgerEntry | null;
+    try {
+      // 2. Validate the whole chain (tamper detection across history). With
+      //    Postgres this is the shared chain, so a ledger issued by any
+      //    instance verifies here — the old per-process array could not.
+      entries = await evidenceStore.list();
+      // 3. Confirm this entry still matches the chain record at its index.
+      known = await evidenceStore.find(ledger.chainIndex);
+    } catch (err) {
+      request.log.error({ err }, "evidence ledger read failed");
+      return reply.code(503).send({
+        error: "evidence ledger storage is unavailable",
+        code: "evidence_store_unavailable",
+      });
+    }
+
+    const chainCheck = verifyChain(entries);
     if (!chainCheck.valid) {
       return {
         valid: false,
@@ -825,9 +696,6 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       };
     }
 
-    // 3. If this entry was issued by this node, confirm it still matches the
-    //    chain entry at its index (detects tampering of historical entries).
-    const known = evidenceChain.find((entry) => entry.chainIndex === ledger.chainIndex);
     if (known && known.integrityHash !== ledger.integrityHash) {
       return {
         valid: false,
@@ -839,11 +707,11 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return {
         valid: false,
         reason: "unknown_chain_index",
-        detail: `No retained ledger entry exists at chainIndex ${ledger.chainIndex} on this node`,
+        detail: `No ledger entry exists at chainIndex ${ledger.chainIndex}`,
       };
     }
 
-    return { valid: true, expectedHash: recomputed, providedHash: ledger.integrityHash, chainLength: evidenceChain.length };
+    return { valid: true, expectedHash: recomputed, providedHash: ledger.integrityHash, chainLength: entries.length };
   });
 
   app.post("/v1/roadmap/generate", {

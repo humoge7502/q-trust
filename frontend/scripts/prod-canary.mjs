@@ -625,8 +625,8 @@ async function checkInfra() {
     record("POST /api/v1/scan/repo scans a public GitHub repo", false, error.message, { required: true });
   }
 
-  // Evidence roundtrip: create and verify must land on the same backend
-  // instance, which a serverless deployment does not guarantee.
+  // Evidence roundtrip: create and verify go through the shared Postgres
+  // chain, so they no longer depend on hitting the same serverless instance.
   try {
     const create = await requestJson(`${API}/v1/evidence/create`, {
       method: "POST",
@@ -640,7 +640,7 @@ async function checkInfra() {
     });
     const ledger = create.body?.ledger;
     if (create.status !== 200 || !ledger) {
-      record("evidence create -> verify roundtrip", false, `create status ${create.status}`, { required: false });
+      record("evidence create -> verify roundtrip", false, `create status ${create.status}`, { required: true });
     } else {
       const verify = await requestJson(`${API}/v1/evidence/verify`, {
         method: "POST",
@@ -651,11 +651,11 @@ async function checkInfra() {
         "evidence create -> verify roundtrip",
         verify.status === 200 && verify.body?.valid === true,
         verify.status === 200 ? `valid=${verify.body?.valid}, reason=${verify.body?.reason ?? "none"}` : `status ${verify.status}`,
-        { required: false },
+        { required: true },
       );
     }
   } catch (error) {
-    record("evidence create -> verify roundtrip", false, error.message, { required: false });
+    record("evidence create -> verify roundtrip", false, error.message, { required: true });
   }
 
   // Hugging Face Space (model demo). The direct app host is resolved from the
