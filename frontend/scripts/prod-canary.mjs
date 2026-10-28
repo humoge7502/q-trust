@@ -603,6 +603,28 @@ async function checkInfra() {
     record("POST /api/v1/scan/full scans the demo estate", false, error.message, { required: false });
   }
 
+  // Public-repository ingestion. Unlike /v1/scan/full this does not need the
+  // operator tunnel: GitHub archives are fetched and scanned by the hosted
+  // scanner service, which is deployed and rate limited, so this is required.
+  try {
+    const res = await requestJson(`${API}/v1/scan/repo`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ repo: "octocat/Spoon-Knife", scanType: "full" }),
+      timeoutMs: 120_000,
+    });
+    const files = res.body?.filesScanned;
+    const findings = Array.isArray(res.body?.findings) ? res.body.findings.length : -1;
+    record(
+      "POST /api/v1/scan/repo scans a public GitHub repo",
+      res.status === 200 && typeof files === "number" && files > 0,
+      res.status === 200 ? `${files} files, ${findings} findings` : `status ${res.status}, body=${truncate(res.text)}`,
+      { required: true },
+    );
+  } catch (error) {
+    record("POST /api/v1/scan/repo scans a public GitHub repo", false, error.message, { required: true });
+  }
+
   // Evidence roundtrip: create and verify must land on the same backend
   // instance, which a serverless deployment does not guarantee.
   try {

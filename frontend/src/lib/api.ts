@@ -516,6 +516,28 @@ export async function fetchMigrationPlan(payload: {
   }>("/v1/plans", payload);
 }
 
+/**
+ * Scan a public GitHub repository (server-side archive ingestion).
+ *
+ * The backend only talks to codeload.github.com and caps the archive at 5 MB;
+ * this call is `public-compute`, so the proxy attaches the server key.
+ */
+export function scanRepository<TFinding = Record<string, unknown>>(payload: {
+  repo: string;
+  ref?: string;
+  scanType?: "source" | "manifests" | "full";
+}): Promise<{
+  repo: string;
+  ref?: string;
+  scanType: string;
+  timestamp: string;
+  filesScanned?: number;
+  detector?: Record<string, string>;
+  findings: TFinding[];
+}> {
+  return apiPostJson("/v1/scan/repo", payload);
+}
+
 /** Subscribe to webhook notifications. */
 export function subscribeWebhook(
   address: string,

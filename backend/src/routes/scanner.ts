@@ -7,9 +7,12 @@ import { promisify } from "node:util";
 import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
 import { requireApiKey } from "../middleware/auth.js";
+import { RepoScanError, scanGithubRepo } from "../services/repo-scan.js";
 import {
   ScanRequestSchema,
   ScanFullRequestSchema,
+  ScanRepoRequestSchema,
+  ScanRepoResponseSchema,
   ScanResponseSchema,
   ErrorResponseSchema,
   RiskScoreSchema,
@@ -629,6 +632,57 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
     const allFindings = Array.isArray(result.findings) ? result.findings : [];
     recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedTarget), type: "full", timestamp: new Date().toISOString(), count: allFindings.length });
     return { target: publicScanTarget(resolvedTarget), findings: allFindings, scanType: "full", timestamp: new Date().toISOString() };
+  });
+
+  app.post("/v1/scan/repo", {
+    preHandler: requireApiKey,
+    config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    schema: {
+      body: ScanRepoRequestSchema,
+      response: {
+        200: ScanRepoResponseSchema,
+        400: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        413: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+        502: ErrorResponseSchema,
+        503: ErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { repo, ref, scanType = "full" } = request.body as {
+      repo: string;
+      ref?: string;
+      scanType?: "source" | "manifests" | "full";
+    };
+    try {
+      const result = await scanGithubRepo({ repo, ref, scanType, log: request.log });
+      const timestamp = new Date().toISOString();
+      recordScanHistory(scanHistory, {
+        targetHash: hashTarget(`repo:${result.repo}`),
+        type: scanType,
+        timestamp,
+        count: result.findings.length,
+      });
+      return {
+        repo: result.repo,
+        ...(result.ref ? { ref: result.ref } : {}),
+        findings: result.findings,
+        scanType,
+        ...(result.filesScanned !== undefined ? { filesScanned: result.filesScanned } : {}),
+        ...(result.detector ? { detector: result.detector } : {}),
+        timestamp,
+      };
+    } catch (err) {
+      if (err instanceof RepoScanError) {
+        request.log.warn({ err, statusCode: err.statusCode }, "Repository scan failed");
+        reply.code(err.statusCode);
+        return { error: err.message };
+      }
+      request.log.error(err, "Repository scan failed unexpectedly");
+      reply.code(503);
+      return { error: "Cryptographic scanner unavailable or failed" };
+    }
   });
 
   app.post("/v1/risk/score", {

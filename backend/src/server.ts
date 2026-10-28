@@ -173,6 +173,11 @@ export async function buildServer(): Promise<FastifyInstance> {
   if (scannerProxy) {
     server.addHook("preHandler", async (request, reply) => {
       const path = request.url.split("?")[0] ?? "";
+      // Repository ingestion is served by the hosted scanner service (or the
+      // local archive fallback), never by the operator tunnel.
+      if (path === "/v1/scan/repo") {
+        return;
+      }
       if (
         !path.startsWith("/v1/scan/") &&
         !path.startsWith("/v1/evidence/") &&

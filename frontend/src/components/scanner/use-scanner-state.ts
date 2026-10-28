@@ -10,7 +10,7 @@
  * shared across tabs exactly as before. No behaviour change.
  */
 import { useState } from "react";
-import { apiPostJson, OperatorKeyRequiredError } from "@/lib/api";
+import { apiPostJson, OperatorKeyRequiredError, scanRepository } from "@/lib/api";
 import {
   buildCbom,
   buildSarif,
@@ -44,6 +44,11 @@ export function useScannerState() {
   const [scanLoading, setScanLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanError, setScanError] = useState("");
+
+  /* ---- Public-repository scan state ---- */
+  const [repoInput, setRepoInput] = useState("");
+  const [repoLoading, setRepoLoading] = useState(false);
+  const [repoError, setRepoError] = useState("");
 
   /* ---- Risk state ---- */
   const [riskScores, setRiskScores] = useState<ScoredFinding[]>([]);
@@ -122,11 +127,42 @@ export function useScannerState() {
         ...data,
         findings,
         summary: summarizeFindings(findings),
+        origin: "path",
       });
     } catch (err) {
       reportError(err, setScanError);
     } finally {
       setScanLoading(false);
+    }
+  }
+
+  /** Scan a public GitHub repository without a local checkout. */
+  async function runRepoScan() {
+    if (!repoInput.trim()) return;
+    setRepoLoading(true);
+    setRepoError("");
+    setOperatorEndpoint(null);
+    setScanResult(null);
+    try {
+      const data = await scanRepository<ScanFinding>({
+        repo: repoInput.trim(),
+        scanType: "full",
+      });
+      const label = data.repo;
+      const findings = data.findings.map((finding) => normalizeFinding(finding, label));
+      setScanResult({
+        target: label,
+        scanType: data.scanType,
+        timestamp: data.timestamp,
+        findings,
+        summary: summarizeFindings(findings),
+        origin: "repo",
+        filesScanned: data.filesScanned,
+      });
+    } catch (err) {
+      reportError(err, setRepoError);
+    } finally {
+      setRepoLoading(false);
     }
   }
 
@@ -292,6 +328,10 @@ export function useScannerState() {
     scanLoading,
     scanResult,
     scanError,
+    repoInput,
+    setRepoInput,
+    repoLoading,
+    repoError,
     riskScores,
     riskLoading,
     riskError,
@@ -315,6 +355,7 @@ export function useScannerState() {
     setTab,
     operatorEndpoint,
     runScan,
+    runRepoScan,
     fetchRiskScores,
     fetchCompliance,
     fetchRoadmap,

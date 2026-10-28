@@ -17,6 +17,28 @@ export const ScanFullRequestSchema = Type.Object({
   includeManifests: Type.Optional(Type.Boolean()),
 });
 
+export const ScanRepoRequestSchema = Type.Object({
+  repo: Type.String({ minLength: 3, maxLength: 201 }),
+  ref: Type.Optional(Type.String({ minLength: 1, maxLength: 200 })),
+  scanType: Type.Optional(
+    Type.Union([Type.Literal("source"), Type.Literal("manifests"), Type.Literal("full")]),
+  ),
+});
+
+export const ScanRepoResponseSchema = Type.Object({
+  repo: Type.String(),
+  ref: Type.Optional(Type.String()),
+  findings: Type.Array(FindingItem),
+  scanType: Type.Union([
+    Type.Literal("source"),
+    Type.Literal("manifests"),
+    Type.Literal("full"),
+  ]),
+  filesScanned: Type.Optional(Type.Integer()),
+  detector: Type.Optional(FreeformObject),
+  timestamp: Type.String(),
+});
+
 export const ScanResponseSchema = Type.Object({
   directory: Type.Optional(Type.String()),
   target: Type.Optional(Type.String()),

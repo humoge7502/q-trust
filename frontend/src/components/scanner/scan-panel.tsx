@@ -239,8 +239,13 @@ export function ScanPanel({ state }: { state: ScannerState }) {
     scanLoading,
     scanResult,
     scanError,
+    repoInput,
+    setRepoInput,
+    repoLoading,
+    repoError,
     operatorEndpoint,
     runScan,
+    runRepoScan,
     exportLoading,
     exportCbom,
     exportSarif,
@@ -320,6 +325,48 @@ export function ScanPanel({ state }: { state: ScannerState }) {
           />
         </fieldset>
 
+        {/* Public-repository ingestion: the same detectors, run server-side on a
+            GitHub archive, so a visitor can scan a real codebase without a
+            checkout on the operator machine. */}
+        <div className="mt-5 rounded-xl border border-border bg-white p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h3 className="text-sm font-semibold tracking-[-0.02em] text-slate-950">
+              Scan a public repository
+            </h3>
+            <p className="text-micro text-muted-foreground">
+              No checkout required · GitHub archives up to 3 MB
+            </p>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label htmlFor="repo-target" className="sr-only">
+              GitHub repository
+            </label>
+            <input
+              id="repo-target"
+              value={repoInput}
+              onChange={(e) => setRepoInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void runRepoScan()}
+              placeholder="owner/repo or https://github.com/owner/repo"
+              spellCheck={false}
+              autoComplete="off"
+              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-white px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/20"
+            />
+            <Button
+              variant="outline"
+              onClick={() => void runRepoScan()}
+              disabled={repoLoading || !repoInput.trim()}
+              className="h-9 shrink-0 rounded-lg px-4 text-sm font-semibold"
+            >
+              {repoLoading && <Spinner />}
+              {repoLoading ? "Fetching…" : "Scan repo"}
+            </Button>
+          </div>
+          {repoError && <p className="mt-2 text-xs text-danger">{repoError}</p>}
+          {operatorEndpoint === "/v1/scan/repo" && (
+            <OperatorAccessInline endpoint={operatorEndpoint} onSaved={() => void runRepoScan()} />
+          )}
+        </div>
+
         {scanError && <p className="mt-3 text-xs text-danger">{scanError}</p>}
         {operatorEndpoint === "/v1/scan/full" && (
           <OperatorAccessInline endpoint={operatorEndpoint} onSaved={() => void runScan()} />
@@ -332,7 +379,9 @@ export function ScanPanel({ state }: { state: ScannerState }) {
                 Results
               </h3>
               <p className="font-mono text-label uppercase tracking-[0.16em] text-muted-foreground">
-                summary computed client-side
+                {scanResult.origin === "repo"
+                  ? `GitHub · ${scanResult.filesScanned ?? "—"} files scanned`
+                  : "summary computed client-side"}
               </p>
             </div>
 

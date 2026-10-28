@@ -144,6 +144,7 @@ describe("API route policy", () => {
       ["/v1/scan/full", "POST"],
       ["/v1/scan/source", "POST"],
       ["/v1/scan/manifests", "POST"],
+      ["/v1/scan/repo", "POST"],
       ["/v1/roadmap/generate", "POST"],
       ["/v1/evidence/create", "POST"],
       ["/v1/plans", "POST"],

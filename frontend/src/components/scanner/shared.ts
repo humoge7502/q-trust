@@ -70,6 +70,9 @@ export interface ScanResult {
   timestamp: string;
   findings: ScanFinding[];
   summary: ScanSummary;
+  /** Present for API-originated scans (repository ingestion). */
+  origin?: "path" | "repo";
+  filesScanned?: number;
 }
 
 type RiskLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "NONE";
