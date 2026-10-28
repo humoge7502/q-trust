@@ -66,7 +66,9 @@ function describeFailure(err: unknown): { kind: "invalid" | "unavailable"; detai
 }
 
 export function PlanningPanel() {
-  const [cbomText, setCbomText] = useState("");
+  // Prefilled so the first click produces a plan instead of a JSON error on an
+  // empty textarea. "Load sample CBOM" stays as the reset.
+  const [cbomText, setCbomText] = useState(SAMPLE_CBOM);
   const [deadline, setDeadline] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [plan, setPlan] = useState<PlanResult | null>(null);
@@ -99,7 +101,8 @@ export function PlanningPanel() {
       setState("done");
     } catch (err) {
       if (err instanceof OperatorKeyRequiredError) {
-        // `/v1/plans` is a privileged route: prompt for the caller's own key.
+        // Planning is open compute in the shipped policy, but a stricter
+        // deployment can still gate it — collect the caller's own key.
         setOperatorEndpoint(err.endpoint);
         setState("idle");
         return;
@@ -122,6 +125,7 @@ export function PlanningPanel() {
 
       <div className="mt-4 flex gap-3">
         <textarea
+          aria-label="CBOM JSON"
           value={cbomText}
           onChange={(e) => setCbomText(e.target.value)}
           placeholder='{"assets": [{"asset_id": "…", "algorithm": "RSA-2048", "key_size": 2048, "criticality": "Critical"}]}'
