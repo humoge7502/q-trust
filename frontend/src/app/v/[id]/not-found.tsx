@@ -29,10 +29,10 @@ export default function AssetNotFound() {
   return (
     <main className="flex-1 bg-canvas text-foreground">
       <div className="mx-auto max-w-5xl px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+        <p className="font-mono text-micro font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           No record · 404
         </p>
-        <h1 className="mt-6 max-w-3xl text-5xl font-semibold leading-[0.9] tracking-[-0.06em] text-slate-950 sm:text-7xl">
+        <h1 className="mt-6 max-w-3xl font-display text-5xl font-semibold leading-[0.9] tracking-[-0.04em] text-foreground sm:text-7xl">
           The chain has no record for this ID.
         </h1>
         <p className="mt-6 max-w-xl text-sm leading-7 text-muted-foreground">
@@ -43,21 +43,21 @@ export default function AssetNotFound() {
           validity of any other record.
         </p>
 
-        <nav aria-label="Suggested destinations" className="mt-14 border-t border-slate-300">
+        <nav aria-label="Suggested destinations" className="mt-14 border-t border-border">
           {EXITS.map((exit) => (
             <Link
               key={exit.label}
               href={exit.href}
-              className="group flex items-center justify-between gap-6 border-b border-border py-6 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+              className="group flex items-center justify-between gap-6 border-b border-border py-6 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
             >
               <span>
-                <span className="block text-lg font-semibold tracking-[-0.02em] text-slate-950 transition group-hover:text-qtrust-700">
+                <span className="block text-lg font-semibold tracking-[-0.02em] text-foreground transition group-hover:text-qtrust-700">
                   {exit.label}
                 </span>
                 <span className="mt-1 block text-xs leading-6 text-muted-foreground">{exit.copy}</span>
               </span>
               <ArrowRightIcon
-                className="h-5 w-5 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-slate-950 motion-reduce:group-hover:translate-x-0"
+                className="h-5 w-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-foreground motion-reduce:group-hover:translate-x-0"
                 aria-hidden="true"
               />
             </Link>

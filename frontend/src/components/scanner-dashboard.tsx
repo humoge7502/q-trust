@@ -76,7 +76,7 @@ export function ScannerDashboard() {
           is tidier than a ragged wrap and keeps every tab visible and tappable. */}
       <Tabs.List
         aria-label="Scanner surfaces"
-        className="mt-4 grid grid-cols-2 gap-1 rounded-2xl border border-border bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:flex sm:flex-wrap sm:items-center"
+        className="mt-4 grid grid-cols-2 gap-1 rounded-2xl border border-border bg-canvas-raised p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:flex sm:flex-wrap sm:items-center"
       >
         {TABS.map((entry) => {
           const Icon = entry.icon;
@@ -86,7 +86,7 @@ export function ScannerDashboard() {
               key={entry.id}
               value={entry.id}
               data-badge={badge || undefined}
-              className="qtab group inline-flex items-center justify-start gap-2 rounded-xl px-2.5 py-2 text-xs font-medium text-muted-foreground transition duration-150 ease-out hover:bg-neutral-surface hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-1 data-[state=active]:bg-slate-950 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-slate-950 sm:px-3 sm:text-[13px]"
+              className="qtab group inline-flex items-center justify-start gap-2 rounded-xl px-2.5 py-2 text-xs font-medium text-muted-foreground transition duration-150 ease-out hover:bg-neutral-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 focus-visible:ring-offset-1 data-[state=active]:bg-night data-[state=active]:text-night-ink data-[state=active]:shadow-sm data-[state=active]:hover:bg-night sm:px-3 sm:text-[13px]"
             >
               <Icon
                 className="h-3.5 w-3.5 shrink-0 opacity-60 transition-opacity group-data-[state=active]:opacity-100"

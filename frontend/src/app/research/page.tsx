@@ -135,10 +135,10 @@ const CONTROL_ROWS = [
 function Stat({ value, label, note }: { value: string; label: string; note?: string }) {
   return (
     <div>
-      <p className="font-mono text-4xl font-semibold leading-none tracking-[-0.05em] text-slate-950 tabular-nums sm:text-5xl">
+      <p className="font-mono text-4xl font-semibold leading-none tracking-[-0.05em] text-foreground tabular-nums sm:text-5xl">
         {value}
       </p>
-      <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+      <p className="mt-3 text-micro font-bold uppercase tracking-[0.2em] text-muted-foreground">
         {label}
       </p>
       {note ? <p className="mt-2 text-micro leading-5 text-muted-foreground">{note}</p> : null}
@@ -157,11 +157,11 @@ function SectionHead({
 }) {
   return (
     <div className="max-w-3xl">
-      <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{index}</p>
-      <h2 className="mt-4 text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-4xl">
+      <p className="font-mono text-micro uppercase tracking-[0.28em] text-muted-foreground">{index}</p>
+      <h2 className="mt-4 text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-foreground sm:text-4xl">
         {title}
       </h2>
-      <div className="mt-5 space-y-4 text-sm leading-7 text-slate-700">{children}</div>
+      <div className="mt-5 space-y-4 text-sm leading-7 text-muted-foreground">{children}</div>
     </div>
   );
 }
@@ -174,7 +174,7 @@ export default function ResearchPage() {
   return (
     <main className="flex-1 bg-canvas text-foreground">
       {/* Header */}
-      <header className="relative overflow-hidden bg-slate-950 text-white">
+      <header className="relative overflow-hidden bg-night text-night-ink">
         <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden="true" />
         <div
           className="hero-orb hero-orb-two pointer-events-none absolute -right-40 -top-24 h-[32rem] w-[32rem] rounded-full"
@@ -182,22 +182,22 @@ export default function ResearchPage() {
         />
         <div className="relative mx-auto max-w-[86rem] px-5 pb-14 pt-12 sm:px-8 sm:pb-16 sm:pt-16 lg:px-12">
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-            <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300">
-              <span className="h-px w-10 bg-cyan-300" aria-hidden="true" />
+            <p className="flex items-center gap-3 text-micro font-semibold uppercase tracking-[0.28em] text-quantum-soft">
+              <span className="h-px w-10 bg-quantum-soft" aria-hidden="true" />
               Evaluation integrity
             </p>
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-slate-400">
+            <p className="font-mono text-micro uppercase tracking-[0.16em] text-night-ink-soft">
               Re-executed 2026-10-22 · updated 2026-10-26
             </p>
           </div>
 
-          <h1 className="mt-7 max-w-4xl text-[clamp(2.1rem,5.2vw,4.4rem)] font-semibold leading-[0.9] tracking-[-0.06em] text-white [overflow-wrap:anywhere]">
+          <h1 className="mt-7 max-w-4xl text-[clamp(2.1rem,5.2vw,4.4rem)] font-semibold leading-[0.9] tracking-[-0.06em] text-night-ink [overflow-wrap:anywhere]">
             We re-ran our own paper.
             <br />
-            <span className="text-cyan-300">Three claims did not survive.</span>
+            <span className="text-quantum-soft">Three claims did not survive.</span>
           </h1>
 
-          <p className="mt-6 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base sm:leading-8">
+          <p className="mt-6 max-w-2xl text-sm leading-7 text-night-ink-soft sm:text-base sm:leading-8">
             Every headline number in this project was re-executed from the shipped
             artifacts alone — the released CodeBERTa checkpoint, the 13,973-file
             corpus, the 42 CBOM estates, and the split code. Nothing was retrained
@@ -212,14 +212,14 @@ export default function ResearchPage() {
               href={REANALYSIS}
               target="_blank"
               rel="noreferrer noopener"
-              className="group inline-flex items-center gap-2.5 rounded-full bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+              className="group inline-flex items-center gap-2.5 rounded-full bg-quantum-soft px-5 py-3 text-sm font-semibold text-night transition hover:-translate-y-0.5 hover:bg-quantum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft focus-visible:ring-offset-2 focus-visible:ring-offset-night"
             >
               Read the full re-analysis
               <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
             </a>
             <Link
               href="/scanner"
-              className="group inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+              className="group inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-night-ink transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
             >
               Run the scanner
               <ArrowRightIcon
@@ -231,25 +231,26 @@ export default function ResearchPage() {
         </div>
       </header>
 
-      {/* Addendum — the audit of the audit */}
-      <section aria-labelledby="addendum-heading" className="border-b border-amber-300/70 bg-amber-50">
+      {/* Addendum — the audit of the audit. The one-off amber literals are the
+          warning state, so they fold into the warning surface/border triplet. */}
+      <section aria-labelledby="addendum-heading" className="border-b border-warning-border bg-warning-surface">
         <div className="mx-auto max-w-[86rem] px-5 py-12 sm:px-8 sm:py-14 lg:px-12">
-          <div className="grid gap-10 border-t border-amber-300 pt-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-14">
+          <div className="grid gap-10 border-t border-warning-border pt-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-14">
             <div className="max-w-3xl">
-              <p className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.28em] text-amber-700">
-                <span className="h-px w-8 bg-amber-600" aria-hidden="true" />
+              <p className="flex items-center gap-3 text-micro font-bold uppercase tracking-[0.28em] text-warning">
+                <span className="h-px w-8 bg-warning" aria-hidden="true" />
                 Update · 2026-10-26
               </p>
               <h2
                 id="addendum-heading"
-                className="mt-4 text-2xl font-semibold leading-[0.98] tracking-[-0.05em] text-amber-950 sm:text-3xl"
+                className="mt-4 text-2xl font-semibold leading-[0.98] tracking-[-0.05em] text-foreground sm:text-3xl"
               >
                 This page audited the old split. The old split was still leaking.
               </h2>
-              <div className="mt-4 space-y-3 text-sm leading-7 text-amber-950/80">
+              <div className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
                 <p>
                   A later path-level audit (<code className="font-mono text-micro">scripts/audit_eval_leakage.py</code>)
-                  found that <strong className="font-semibold text-amber-950">87.6 %</strong> of
+                  found that <strong className="font-semibold text-foreground">87.6 %</strong> of
                   the v1 evaluation paths were present in its training set (92.2 % for v3).
                   The 0.9395 re-measurement elsewhere on this page is therefore a{" "}
                   <em>historical</em> record of a boundary shift on a leaky split — not a
@@ -257,10 +258,10 @@ export default function ResearchPage() {
                 </p>
                 <p>
                   The current model of record is corpus v4: retrained on 17,171 real files
-                  and evaluated with <strong className="font-semibold text-amber-950">0 % train/eval path overlap</strong>{" "}
-                  at the selected 0.50 ML gate — <strong className="font-semibold text-amber-950">F1 0.9205</strong>{" "}
+                  and evaluated with <strong className="font-semibold text-foreground">0 % train/eval path overlap</strong>{" "}
+                  at the selected 0.50 ML gate — <strong className="font-semibold text-foreground">F1 0.9205</strong>{" "}
                   de-duplicated (1,779 files; P 0.9264 / R 0.9146) and{" "}
-                  <strong className="font-semibold text-amber-950">0.9235</strong> native. Two
+                  <strong className="font-semibold text-foreground">0.9235</strong> native. Two
                   training-dedup policies and a GPU control were also run and regressed or tied;
                   they are recorded as negative experiments, not shipped.
                 </p>
@@ -270,7 +271,7 @@ export default function ResearchPage() {
                   href={EVAL_V4}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 rounded-full bg-amber-950 px-4 py-2.5 text-sm font-semibold text-amber-50 transition hover:-translate-y-0.5 hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700"
+                  className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:-translate-y-0.5 hover:bg-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
                 >
                   eval_dedup_v4.json
                   <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
@@ -279,14 +280,14 @@ export default function ResearchPage() {
                   href={EXPERIMENTS}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 rounded-full border border-amber-700/40 px-4 py-2.5 text-sm font-semibold text-amber-900 transition hover:-translate-y-0.5 hover:border-amber-700 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700"
+                  className="inline-flex items-center gap-2 rounded-full border border-warning/40 px-4 py-2.5 text-sm font-semibold text-warning transition hover:-translate-y-0.5 hover:border-warning hover:bg-warning-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning"
                 >
                   EXPERIMENTS.md · E-14–E-16
                   <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
                 </a>
               </div>
             </div>
-            <div className="grid grid-cols-2 content-start gap-8 border-amber-300/70 lg:border-l lg:pl-10">
+            <div className="grid grid-cols-2 content-start gap-8 border-warning-border lg:border-l lg:pl-10">
               <Stat
                 value="0.9205"
                 label="Clean v4 F1"
@@ -303,11 +304,11 @@ export default function ResearchPage() {
       </section>
 
       {/* Status table */}
-      <section aria-labelledby="status-heading" className="bg-[#f4f5f2]">
+      <section aria-labelledby="status-heading" className="bg-canvas">
         <div className="mx-auto max-w-[86rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
-          <div className="flex flex-col justify-between gap-4 border-t border-slate-300 pt-6 sm:flex-row sm:items-end">
+          <div className="flex flex-col justify-between gap-4 border-t border-border pt-6 sm:flex-row sm:items-end">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-muted-foreground">
+              <p className="text-micro font-bold uppercase tracking-[0.28em] text-muted-foreground">
                 Reproduction status
               </p>
               <h2
@@ -324,13 +325,13 @@ export default function ResearchPage() {
             </p>
           </div>
 
-          <ScrollX label="Reproduction status table" className="mt-8 rounded-xl border border-slate-300 bg-white">
+          <ScrollX label="Reproduction status table" className="mt-8 rounded-xl border border-border bg-canvas-raised">
             <table className="w-full min-w-[46rem] text-left text-sm">
               <caption className="sr-only">
                 Reproduction status of each headline claim in the paper
               </caption>
               <thead>
-                <tr className="border-b border-slate-300 bg-[#fbfbfa] text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr className="border-b border-border bg-canvas text-micro uppercase tracking-[0.14em] text-muted-foreground">
                   <th scope="col" className="px-5 py-3 font-semibold">Claim</th>
                   <th scope="col" className="px-5 py-3 font-semibold">Status</th>
                   <th scope="col" className="px-5 py-3 font-semibold">Re-measured</th>
@@ -339,13 +340,13 @@ export default function ResearchPage() {
               <tbody>
                 {CLAIMS.map((row) => (
                   <tr key={row.claim} className="border-b border-border last:border-0">
-                    <th scope="row" className="max-w-[18rem] px-5 py-4 text-left align-top font-medium text-slate-950">
+                    <th scope="row" className="max-w-[18rem] px-5 py-4 text-left align-top font-medium text-foreground">
                       {row.claim}
                     </th>
                     <td className="whitespace-nowrap px-5 py-4 align-top">
                       <StatusPill tone={STATUS_TONE[row.status]}>{row.status}</StatusPill>
                     </td>
-                    <td className="px-5 py-4 align-top text-micro leading-6 text-slate-700">
+                    <td className="px-5 py-4 align-top text-micro leading-6 text-muted-foreground">
                       {row.measured}
                     </td>
                   </tr>
@@ -357,14 +358,14 @@ export default function ResearchPage() {
       </section>
 
       {/* Discovery */}
-      <section aria-labelledby="discovery-heading" className="bg-white">
+      <section aria-labelledby="discovery-heading" className="bg-canvas-raised">
         <div className="mx-auto max-w-[86rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+          <p className="font-mono text-micro uppercase tracking-[0.28em] text-muted-foreground">
             01 / discovery
           </p>
           <h2
             id="discovery-heading"
-            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl"
+            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-foreground sm:text-5xl"
           >
             The classifier is real. The headline number is not.
           </h2>
@@ -394,7 +395,7 @@ export default function ResearchPage() {
                 repository, 30 train repos and 8 eval repos, 11,558 and 2,415 files
                 — and then diverges on the confusion matrix. True positives move by
                 three, false negatives by three, and false positives by{" "}
-                <strong className="font-semibold text-slate-950">forty-eight</strong>.
+                <strong className="font-semibold text-foreground">forty-eight</strong>.
               </p>
               <p>
                 The delta is spread unevenly across languages (C +22, Solidity +21,
@@ -416,7 +417,7 @@ export default function ResearchPage() {
                 Two of the eight held-out repositories — OpenSSL and AWS-LC — supply
                 1,589 of 2,415 evaluation files and are almost entirely cryptographic
                 code. On a 77/23 split, an all-positive classifier already scores{" "}
-                <strong className="font-semibold text-slate-950">F1 0.8683</strong>.
+                <strong className="font-semibold text-foreground">F1 0.8683</strong>.
               </p>
               <p>
                 Drop those two repositories and the same checkpoint scores F1 0.7444
@@ -426,7 +427,7 @@ export default function ResearchPage() {
               <p>
                 Calibration is poor (ECE 0.156, systematically under-confident at the
                 bottom and over-confident in the middle), but{" "}
-                <strong className="font-semibold text-slate-950">
+                <strong className="font-semibold text-foreground">
                   selective prediction works
                 </strong>
                 : at 50 % coverage the model is perfect (F1 1.000), at 80 % it is
@@ -442,7 +443,7 @@ export default function ResearchPage() {
                 Per-language F1 on the held-out split, re-measured from the shipped checkpoint
               </caption>
               <thead>
-                <tr className="border-b border-border bg-[#fbfbfa] text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr className="border-b border-border bg-canvas text-micro uppercase tracking-[0.14em] text-muted-foreground">
                   <th scope="col" className="px-5 py-3 font-semibold">Language</th>
                   <th scope="col" className="px-5 py-3 text-right font-semibold">Files</th>
                   <th scope="col" className="px-5 py-3 text-right font-semibold">F1</th>
@@ -451,14 +452,14 @@ export default function ResearchPage() {
               </thead>
               <tbody>
                 {LANGUAGE_ROWS.map((row) => (
-                  <tr key={row.language} className="border-b border-slate-100 last:border-0">
-                    <th scope="row" className="px-5 py-2.5 text-left font-medium text-slate-950">
+                  <tr key={row.language} className="border-b border-border last:border-0">
+                    <th scope="row" className="px-5 py-2.5 text-left font-medium text-foreground">
                       {row.language}
                     </th>
-                    <td className="px-5 py-2.5 text-right font-mono text-slate-700 tabular-nums">
+                    <td className="px-5 py-2.5 text-right font-mono text-muted-foreground tabular-nums">
                       {row.n}
                     </td>
-                    <td className="px-5 py-2.5 text-right font-mono font-semibold text-slate-950 tabular-nums">
+                    <td className="px-5 py-2.5 text-right font-mono font-semibold text-foreground tabular-nums">
                       {row.f1}
                     </td>
                     <td className="px-5 py-2.5 text-micro text-muted-foreground">{row.note}</td>
@@ -471,14 +472,14 @@ export default function ResearchPage() {
       </section>
 
       {/* Planner */}
-      <section aria-labelledby="planner-heading" className="bg-slate-950 text-white">
+      <section aria-labelledby="planner-heading" className="bg-night text-night-ink">
         <div className="mx-auto max-w-[86rem] px-5 py-16 sm:px-8 sm:py-24 lg:px-12">
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-cyan-300">
+          <p className="font-mono text-micro uppercase tracking-[0.28em] text-quantum-soft">
             02 / planner
           </p>
           <h2
             id="planner-heading"
-            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-white sm:text-5xl"
+            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-night-ink sm:text-5xl"
           >
             The planner numbers reproduce exactly. They are also circular.
           </h2>
@@ -490,25 +491,25 @@ export default function ResearchPage() {
               { value: "0.7168", label: "Ridge regression", note: "six features, seven parameters — identical to the GNN to four decimals" },
             ].map((item) => (
               <div key={item.label}>
-                <p className="font-mono text-4xl font-semibold leading-none tracking-[-0.05em] text-white tabular-nums sm:text-5xl">
+                <p className="font-mono text-4xl font-semibold leading-none tracking-[-0.05em] text-night-ink tabular-nums sm:text-5xl">
                   {item.value}
                 </p>
-                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                <p className="mt-3 text-micro font-bold uppercase tracking-[0.2em] text-night-ink-soft">
                   {item.label}
                 </p>
-                <p className="mt-2 text-micro leading-5 text-slate-400">{item.note}</p>
+                <p className="mt-2 text-micro leading-5 text-night-ink-soft">{item.note}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_1fr] lg:gap-16">
             <div>
-              <h3 className="text-xl font-semibold tracking-[-0.03em] text-white">
+              <h3 className="text-xl font-semibold tracking-[-0.03em] text-night-ink">
                 One method, fitted to the other
               </h3>
-              <div className="mt-4 space-y-4 text-sm leading-7 text-slate-300">
+              <div className="mt-4 space-y-4 text-sm leading-7 text-night-ink-soft">
                 <p>
-                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-slate-200">
+                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-micro text-night-ink">
                     _assign_labels
                   </code>{" "}
                   generates the training target with the doctrine formula itself.
@@ -519,7 +520,7 @@ export default function ResearchPage() {
                 <p>
                   In all 42 released estates, criticality, vendor and deadline are
                   constant and every estate has{" "}
-                  <strong className="font-semibold text-white">zero</strong> dependency
+                  <strong className="font-semibold text-night-ink">zero</strong> dependency
                   edges. Across 277 assets the doctrine priority collapses to a
                   monotone function of key size — and 175 of those assets are
                   2,048-bit certificates, which is exactly where the 49.9 % tie rate
@@ -529,14 +530,14 @@ export default function ResearchPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold tracking-[-0.03em] text-white">
+              <h3 className="text-xl font-semibold tracking-[-0.03em] text-night-ink">
                 What the estates actually are
               </h3>
-              <div className="mt-4 space-y-4 text-sm leading-7 text-slate-300">
+              <div className="mt-4 space-y-4 text-sm leading-7 text-night-ink-soft">
                 <p>
                   42 JSON CBOMs, 277 assets, 277 hosts: one TLS certificate per host,
                   all of type{" "}
-                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-slate-200">
+                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-micro text-night-ink">
                     tls_certificate
                   </code>
                   . No service graph, no library graph, no intra-host dependency.
@@ -548,7 +549,7 @@ export default function ResearchPage() {
                   key-size sort. The published 0.7168 is reachable only by retraining
                   42 times on doctrine-generated labels.
                 </p>
-                <p className="text-slate-400">
+                <p className="text-night-ink-soft">
                   τ_b also flatters the model: exact-rank agreement in the same run is
                   0.286 and mean node-rank accuracy 0.575, against 1.0 for the
                   heuristic. Half the pairs being ties is what makes 0.7168 look like
@@ -561,18 +562,18 @@ export default function ResearchPage() {
       </section>
 
       {/* Positive control */}
-      <section aria-labelledby="control-heading" className="bg-[#f4f5f2]">
+      <section aria-labelledby="control-heading" className="bg-canvas">
         <div className="mx-auto max-w-[86rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+          <p className="font-mono text-micro uppercase tracking-[0.28em] text-muted-foreground">
             03 / positive control
           </p>
           <h2
             id="control-heading"
-            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl"
+            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-foreground sm:text-5xl"
           >
             Give the model a graph worth reading. It still loses.
           </h2>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-700">
+          <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground">
             If the tie meant the doctrine were near-optimal given the observables, a
             corpus with real graph signal and a target the doctrine cannot express
             should let the GNN win. 240 training and 60 test synthetic enterprise
@@ -581,11 +582,11 @@ export default function ResearchPage() {
           </p>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:gap-14">
-            <ScrollX label="Positive-control τ_b table" className="rounded-xl border border-slate-300 bg-white">
+            <ScrollX label="Positive-control τ_b table" className="rounded-xl border border-border bg-canvas-raised">
               <table className="w-full min-w-[26rem] text-left text-sm">
                 <caption className="sr-only">Mean Kendall&rsquo;s τ_b per method on the positive control</caption>
                 <thead>
-                  <tr className="border-b border-slate-300 bg-[#fbfbfa] text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <tr className="border-b border-border bg-canvas text-micro uppercase tracking-[0.14em] text-muted-foreground">
                     <th scope="col" className="px-5 py-3 font-semibold">Method</th>
                     <th scope="col" className="px-5 py-3 text-right font-semibold">Mean τ_b</th>
                     <th scope="col" className="px-5 py-3 font-semibold">Role</th>
@@ -594,10 +595,10 @@ export default function ResearchPage() {
                 <tbody>
                   {CONTROL_ROWS.map((row) => (
                     <tr key={row.method} className="border-b border-border last:border-0">
-                      <th scope="row" className="px-5 py-3 text-left font-medium text-slate-950">
+                      <th scope="row" className="px-5 py-3 text-left font-medium text-foreground">
                         {row.method}
                       </th>
-                      <td className="px-5 py-3 text-right font-mono font-semibold text-slate-950 tabular-nums">
+                      <td className="px-5 py-3 text-right font-mono font-semibold text-foreground tabular-nums">
                         {row.tau}
                       </td>
                       <td className="px-5 py-3 text-micro text-muted-foreground">{row.role}</td>
@@ -607,11 +608,11 @@ export default function ResearchPage() {
               </table>
             </ScrollX>
 
-            <div className="space-y-4 text-sm leading-7 text-slate-700">
+            <div className="space-y-4 text-sm leading-7 text-muted-foreground">
               <p>
                 Paired over the 60 test estates, the GNN loses to a heuristic that is
                 structurally blind to the very signal the target rewards:{" "}
-                <strong className="font-semibold text-slate-950">
+                <strong className="font-semibold text-foreground">
                   4 wins, 1 tie, 55 losses
                 </strong>
                 , Wilcoxon p = 5.2 × 10⁻¹⁰.
@@ -630,14 +631,14 @@ export default function ResearchPage() {
       </section>
 
       {/* Documentation drift */}
-      <section aria-labelledby="drift-heading" className="bg-white">
+      <section aria-labelledby="drift-heading" className="bg-canvas-raised">
         <div className="mx-auto max-w-[86rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+          <p className="font-mono text-micro uppercase tracking-[0.28em] text-muted-foreground">
             04 / drift
           </p>
           <h2
             id="drift-heading"
-            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl"
+            className="mt-4 max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-foreground sm:text-5xl"
           >
             Where the prose and the artifacts disagree.
           </h2>
@@ -646,7 +647,7 @@ export default function ResearchPage() {
             <table className="w-full min-w-[42rem] text-left text-sm">
               <caption className="sr-only">Documentation claims against the artifacts that should support them</caption>
               <thead>
-                <tr className="border-b border-border bg-[#fbfbfa] text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr className="border-b border-border bg-canvas text-micro uppercase tracking-[0.14em] text-muted-foreground">
                   <th scope="col" className="px-5 py-3 font-semibold">Claim</th>
                   <th scope="col" className="px-5 py-3 font-semibold">Artifact</th>
                   <th scope="col" className="px-5 py-3 font-semibold">Actual</th>
@@ -654,14 +655,14 @@ export default function ResearchPage() {
               </thead>
               <tbody>
                 {DRIFT_ROWS.map((row) => (
-                  <tr key={row.claim} className="border-b border-slate-100 last:border-0">
-                    <th scope="row" className="px-5 py-3 text-left font-medium text-slate-950">
+                  <tr key={row.claim} className="border-b border-border last:border-0">
+                    <th scope="row" className="px-5 py-3 text-left font-medium text-foreground">
                       {row.claim}
                     </th>
                     <td className="px-5 py-3 font-mono text-micro text-muted-foreground">
                       {row.artifact}
                     </td>
-                    <td className="px-5 py-3 text-micro text-slate-700">{row.actual}</td>
+                    <td className="px-5 py-3 text-micro text-muted-foreground">{row.actual}</td>
                   </tr>
                 ))}
               </tbody>
@@ -678,20 +679,20 @@ export default function ResearchPage() {
       </section>
 
       {/* What we changed */}
-      <section aria-labelledby="changes-heading" className="bg-[#f4f5f2]">
+      <section aria-labelledby="changes-heading" className="bg-canvas">
         <div className="mx-auto max-w-[86rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
-          <div className="grid gap-12 border-t border-slate-300 pt-6 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
+          <div className="grid gap-12 border-t border-border pt-6 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
             <div className="lg:sticky lg:top-28 lg:self-start">
-              <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+              <p className="font-mono text-micro uppercase tracking-[0.28em] text-muted-foreground">
                 05 / response
               </p>
               <h2
                 id="changes-heading"
-                className="mt-4 max-w-sm text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-4xl"
+                className="mt-4 max-w-sm text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-foreground sm:text-4xl"
               >
                 What changed as a result.
               </h2>
-              <p className="mt-5 max-w-sm text-sm leading-7 text-slate-700">
+              <p className="mt-5 max-w-sm text-sm leading-7 text-muted-foreground">
                 The paper text is being rewritten around the re-measured numbers, not
                 around the reported ones. The product keeps working; the claims get
                 smaller and true.
@@ -717,16 +718,16 @@ export default function ResearchPage() {
                   body: "Reproduced, reproduced-but-vacuous, misattributed, or not reproduced — the table at the top of this page is now part of the paper's evaluation-integrity section.",
                 },
               ].map((item, index) => (
-                <li key={item.title} className="border-t border-slate-300 pt-5">
+                <li key={item.title} className="border-t border-border pt-5">
                   <div className="flex items-baseline gap-4">
-                    <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                    <span className="font-mono text-micro text-muted-foreground tabular-nums">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <div>
-                      <h3 className="text-lg font-semibold tracking-[-0.03em] text-slate-950">
+                      <h3 className="text-lg font-semibold tracking-[-0.03em] text-foreground">
                         {item.title}
                       </h3>
-                      <p className="mt-2 text-sm leading-7 text-slate-700">{item.body}</p>
+                      <p className="mt-2 text-sm leading-7 text-muted-foreground">{item.body}</p>
                     </div>
                   </div>
                 </li>
@@ -737,21 +738,21 @@ export default function ResearchPage() {
       </section>
 
       {/* Reproduce */}
-      <section aria-labelledby="reproduce-heading" className="bg-slate-950 text-white">
+      <section aria-labelledby="reproduce-heading" className="bg-night text-night-ink">
         <div className="mx-auto max-w-[86rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-cyan-300">
+          <p className="font-mono text-micro uppercase tracking-[0.28em] text-quantum-soft">
             06 / reproduce
           </p>
           <h2
             id="reproduce-heading"
-            className="mt-4 max-w-2xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-white sm:text-4xl"
+            className="mt-4 max-w-2xl text-3xl font-semibold leading-[0.95] tracking-[-0.055em] text-night-ink sm:text-4xl"
           >
             Every number above has a script behind it.
           </h2>
 
           <CodeBlock
             label="Reproduction commands"
-            className="mt-8 overflow-x-auto rounded-xl border border-white/15 bg-white/[0.03] p-5 font-mono text-micro leading-6 text-slate-300"
+            className="mt-8 overflow-x-auto rounded-xl border border-white/15 bg-night-raised p-5 font-mono text-micro leading-6 text-night-ink-soft"
           >{`# Python 3.13 with torch, transformers, scikit-learn, torch-geometric, scipy
 PY=python3
 
@@ -764,20 +765,20 @@ $PY scripts/paper_positive_control.py \\
 
           <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <p className="text-micro font-bold uppercase tracking-[0.2em] text-night-ink-soft">
                 Artifacts
               </p>
-              <p className="mt-2 font-mono text-micro leading-6 text-slate-300">
+              <p className="mt-2 font-mono text-micro leading-6 text-night-ink-soft">
                 paper/analysis/&#123;codebert_eval, near_dup_full, ceiling_audit,
                 transparent_baselines, positive_control, loo42_zerosyn, loo38_zerosyn,
                 zeroshot_baseline, codebert_config_sensitivity_strat516&#125;.json
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <p className="text-micro font-bold uppercase tracking-[0.2em] text-night-ink-soft">
                 Caveats
               </p>
-              <p className="mt-2 text-micro leading-6 text-slate-400">
+              <p className="mt-2 text-micro leading-6 text-night-ink-soft">
                 The discovery re-run uses CPU inference at 256 tokens; the truncation
                 sweep shows longer context does not recover the reported number. The
                 near-duplicate audit is a shingle heuristic, not a semantic clone
@@ -785,14 +786,14 @@ $PY scripts/paper_positive_control.py \\
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <p className="text-micro font-bold uppercase tracking-[0.2em] text-night-ink-soft">
                 Full document
               </p>
               <a
                 href={REANALYSIS}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 underline decoration-cyan-300/40 underline-offset-4 transition hover:decoration-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+                className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-quantum-soft underline decoration-quantum-soft/40 underline-offset-4 transition hover:decoration-quantum-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
               >
                 paper/REANALYSIS.md
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal, ScrollProgress } from "@/components/scroll-effects.client";
+import { SmoothScroll } from "@/components/motion/smooth-scroll.client";
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { VideoFrame } from "@/components/ui/video-frame";
 import {
@@ -65,7 +66,7 @@ const STEPS = [
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300">
+    <p className="text-micro font-semibold uppercase tracking-[0.28em] text-quantum-soft">
       {children}
     </p>
   );
@@ -73,7 +74,9 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 export default function WhyNowPage() {
   return (
-    <div className="bg-slate-950 text-white">
+    <div className="bg-night text-night-ink">
+      {/* Long-scroll narrative: same Lenis treatment as the landing page. */}
+      <SmoothScroll />
       <ScrollProgress />
       <main>
         {/* Hero */}
@@ -89,11 +92,11 @@ export default function WhyNowPage() {
             <Eyebrow>The quantum threat, honestly</Eyebrow>
             <h1
               id="why-heading"
-              className="mt-6 max-w-4xl text-[clamp(2.6rem,6vw,5.6rem)] font-semibold leading-[0.9] tracking-[-0.06em] text-white"
+              className="mt-6 max-w-4xl text-[clamp(2.6rem,6vw,5.6rem)] font-semibold leading-[0.9] tracking-[-0.06em] text-night-ink"
             >
-              Why now — and what <span className="text-cyan-300">actually breaks.</span>
+              Why now — and what <span className="text-quantum-soft">actually breaks.</span>
             </h1>
-            <p className="mt-7 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
+            <p className="mt-7 max-w-2xl text-base leading-7 text-night-ink-soft sm:text-lg sm:leading-8">
               The math is solved. The standards exist. The open problem is
               coordination: finding cryptography you forgot you shipped, deciding
               what to move first, and proving it happened. Here is the threat in
@@ -103,7 +106,7 @@ export default function WhyNowPage() {
         </section>
 
         {/* Explainer video */}
-        <section className="bg-slate-950" aria-labelledby="explain-heading">
+        <section className="bg-night" aria-labelledby="explain-heading">
           <div className="mx-auto max-w-[88rem] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
             <Reveal>
               <div className="mb-8 flex flex-col justify-between gap-4 border-t border-white/15 pt-6 sm:flex-row sm:items-end">
@@ -130,14 +133,14 @@ export default function WhyNowPage() {
 
         {/* Harvest now, decrypt later */}
         <section
-          className="border-t border-white/10 bg-[#f4f5f2] text-slate-950"
+          className="border-t border-night-edge bg-canvas text-foreground"
           aria-labelledby="harvest-heading"
         >
           <div className="mx-auto max-w-[88rem] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
             <Reveal>
               <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-muted-foreground">
+                  <p className="text-micro font-bold uppercase tracking-[0.28em] text-muted-foreground">
                     The core idea
                   </p>
                   <h2
@@ -147,7 +150,7 @@ export default function WhyNowPage() {
                     Harvest now, decrypt later.
                   </h2>
                 </div>
-                <div className="space-y-5 text-sm leading-7 text-slate-700">
+                <div className="space-y-5 text-sm leading-7 text-muted-foreground">
                   <p>
                     Your most sensitive data — health records, state secrets,
                     intellectual property, and long-lived financial agreements —
@@ -160,7 +163,7 @@ export default function WhyNowPage() {
                     real. Any data encrypted now that must stay secret for a
                     decade is already at risk, regardless of when a CRQC arrives.
                   </p>
-                  <p className="rounded-xl border border-slate-300 bg-white p-5 text-slate-800">
+                  <p className="rounded-xl border border-border bg-canvas-raised p-5 text-foreground">
                     The defense is not “wait for the deadline.” It is to find the
                     vulnerable cryptography, replace it with standardized
                     post-quantum algorithms, and keep evidence that you did.
@@ -172,10 +175,10 @@ export default function WhyNowPage() {
         </section>
 
         {/* Timeline */}
-        <section className="bg-slate-950 text-white" aria-labelledby="timeline-heading">
+        <section className="bg-night text-night-ink" aria-labelledby="timeline-heading">
           <div className="mx-auto max-w-[88rem] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
             <Reveal>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300">
+              <p className="text-micro font-semibold uppercase tracking-[0.28em] text-quantum-soft">
                 The window
               </p>
               <h2
@@ -189,8 +192,10 @@ export default function WhyNowPage() {
               <DeadlineCountdown />
             </Reveal>
             <div className="relative mt-14">
+              {/* The one-off violet/emerald timeline accents fold into the
+                  quantum accent and qtrust-300 — same ramp, named colours. */}
               <div
-                className="absolute left-[1.05rem] top-8 hidden h-[calc(100%-4rem)] w-px bg-gradient-to-b from-cyan-300 via-violet-300 to-emerald-300 opacity-50 lg:block"
+                className="absolute left-[1.05rem] top-8 hidden h-[calc(100%-4rem)] w-px bg-gradient-to-b from-quantum-soft via-quantum to-qtrust-300 opacity-50 lg:block"
                 aria-hidden="true"
               />
               <div className="space-y-3 lg:space-y-0">
@@ -198,10 +203,10 @@ export default function WhyNowPage() {
                   <Reveal key={item.year} delay={index * 80}>
                     <article className="relative grid gap-5 border-t border-white/15 py-7 lg:grid-cols-[7rem_1fr] lg:gap-10 lg:py-9">
                       <div className="flex items-start gap-4 lg:block">
-                        <span className="relative z-10 flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/50 bg-slate-950 text-[10px] font-bold text-cyan-300">
+                        <span className="relative z-10 flex h-9 w-9 items-center justify-center rounded-full border border-quantum-soft/50 bg-night text-label font-bold text-quantum-soft">
                           {index + 1}
                         </span>
-                        <span className="mt-1 font-mono text-sm font-semibold text-cyan-300 lg:block">
+                        <span className="mt-1 font-mono text-sm font-semibold text-quantum-soft lg:block">
                           {item.year}
                         </span>
                       </div>
@@ -209,7 +214,7 @@ export default function WhyNowPage() {
                         <h3 className="text-xl font-semibold tracking-[-0.03em] sm:text-2xl">
                           {item.title}
                         </h3>
-                        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
+                        <p className="mt-3 max-w-2xl text-sm leading-7 text-night-ink-soft">
                           {item.copy}
                         </p>
                       </div>
@@ -223,13 +228,13 @@ export default function WhyNowPage() {
 
         {/* What PQC protects + the coordination problem */}
         <section
-          className="border-t border-white/10 bg-[#f4f5f2] text-slate-950"
+          className="border-t border-night-edge bg-canvas text-foreground"
           aria-labelledby="steps-heading"
         >
           <div className="mx-auto max-w-[88rem] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
             <Reveal>
               <div className="mb-10 max-w-2xl">
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-muted-foreground">
+                <p className="text-micro font-bold uppercase tracking-[0.28em] text-muted-foreground">
                   What actually has to happen
                 </p>
                 <h2
@@ -243,9 +248,9 @@ export default function WhyNowPage() {
             <div className="grid gap-3 sm:grid-cols-3">
               {STEPS.map((step, index) => (
                 <Reveal key={step.title} delay={index * 100}>
-                  <article className="flex min-h-[22rem] flex-col justify-between border-t border-slate-300 pt-5">
+                  <article className="flex min-h-[22rem] flex-col justify-between border-t border-border pt-5">
                     <div>
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-slate-950">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-canvas-raised text-foreground">
                         <step.icon className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <h3 className="mt-6 text-2xl font-semibold tracking-[-0.045em]">
@@ -263,7 +268,7 @@ export default function WhyNowPage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-slate-950 text-white" aria-labelledby="why-cta-heading">
+        <section className="bg-night text-night-ink" aria-labelledby="why-cta-heading">
           <div className="mx-auto max-w-[88rem] px-5 py-16 sm:px-8 lg:px-12">
             <Reveal>
               <div className="flex flex-col justify-between gap-8 border-t border-white/15 pt-8 lg:flex-row lg:items-end">
@@ -271,14 +276,18 @@ export default function WhyNowPage() {
                   id="why-cta-heading"
                   className="max-w-3xl text-3xl font-semibold leading-[0.95] tracking-[-0.05em] sm:text-5xl"
                 >
-                  Start with what <span className="text-cyan-300">you can prove.</span>
+                  Start with what <span className="text-quantum-soft">you can prove.</span>
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   <Link
                     href="/scanner"
-                    className="group inline-flex items-center gap-3 rounded-full bg-cyan-300 px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+                    className="group inline-flex items-center gap-3 rounded-full bg-quantum-soft px-6 py-3.5 text-sm font-semibold text-night transition hover:-translate-y-0.5 hover:bg-quantum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
                   >
-                    Run a scan <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                    Run a scan{" "}
+                    <ArrowRightIcon
+                      className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                      aria-hidden="true"
+                    />
                   </Link>
                   <Link
                     href="/research"

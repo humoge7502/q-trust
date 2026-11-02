@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed — frontend transformation, "Lattice" direction (2026-11-03)
+
+- **Design system v2:** night/quantum/display-role tokens in `globals.css`, page headers unified (mono eyebrow + display title + lede) across routes, GSAP/ScrollTrigger + Lenis motion system (story routes only, reduced-motion/automation guarded), WebGL1 lattice hero with CSS fallback, raw-palette token ratchet 752 → 102 (`scripts/lint_tokens.mjs`).
+
+### Added — motion dependencies + components (2026-11-03)
+
+- **Deps:** `gsap ^3.15.0`, `lenis ^1.3.27` (frontend). Components: `lib/motion.ts` (single GSAP/ScrollTrigger registration point), `components/motion/smooth-scroll.client.tsx`, `components/motion/lattice-field.client.tsx`, `components/motion/workflow-story.client.tsx`, `components/ui/count-up.client.tsx` — all dynamically imported, never in the server build.
+
 ### Added — planning, business model, deps, command palette (2026-10-24/26)
 
 - **Command palette**: global ⌘K/Ctrl+K palette (Radix Dialog, combobox/

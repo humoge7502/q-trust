@@ -47,7 +47,53 @@ const COMMANDS: CommandItem[] = [
 
 const GROUP_ORDER: CommandItem["group"][] = ["Work", "Navigate", "Learn"];
 
-export function CommandPalette() {
+/**
+ * Cross-component open channel for the header-mounted trigger. The palette
+ * owns the Dialog.Root (and the ⌘K listener), but the visible trigger lives
+ * in the header's left cluster — a `Dialog.Trigger` mounted beside it cannot
+ * share that root, so the trigger publishes this event and the palette
+ * listens for it next to the keydown listener below.
+ */
+export const COMMAND_PALETTE_OPEN_EVENT = "qtrust:open-command-palette";
+
+/** The shared trigger markup: one source for the header trigger and the
+ *  (test-exercised) in-palette trigger, so classes and the accessible name
+ *  cannot drift between the two mounts. */
+function CommandPaletteTriggerButton({ onClick }: { onClick?: React.MouseEventHandler<HTMLButtonElement> }) {
+  return (
+    <button
+      type="button"
+      aria-label="Open command palette"
+      onClick={onClick}
+      className="hidden items-center gap-2 rounded-full border border-white/20 px-3.5 py-2 text-xs font-medium text-night-ink-soft transition hover:border-white/50 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft md:inline-flex"
+    >
+      <svg width="13" height="13" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+        <circle cx="6.5" cy="6.5" r="4.75" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M10.25 10.25 13.25 13.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+      Search
+      <kbd className="rounded border border-white/20 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] leading-none text-night-ink-soft">
+        ⌘K
+      </kbd>
+    </button>
+  );
+}
+
+/**
+ * Presentational trigger for the site header (or any surface outside this
+ * component's Dialog.Root). Renders the exact same control the palette used
+ * to render as a body-level orphan; clicking publishes the open event the
+ * palette's effect listens for.
+ */
+export function CommandPaletteTrigger() {
+  return (
+    <CommandPaletteTriggerButton
+      onClick={() => window.dispatchEvent(new CustomEvent(COMMAND_PALETTE_OPEN_EVENT))}
+    />
+  );
+}
+
+export function CommandPalette({ renderTrigger = true }: { renderTrigger?: boolean }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -56,6 +102,9 @@ export function CommandPalette() {
   const pathname = usePathname();
 
   // ⌘K / Ctrl+K toggles; "/" focuses the palette too (common convention).
+  // The header-mounted trigger opens the palette through the same listener
+  // set (see COMMAND_PALETTE_OPEN_EVENT) — one window listener set owns both
+  // entry points, so ⌘K and the button can never disagree about state.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -63,8 +112,13 @@ export function CommandPalette() {
         setOpen((value) => !value);
       }
     };
+    const onOpenRequest = () => setOpen(true);
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(COMMAND_PALETTE_OPEN_EVENT, onOpenRequest);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(COMMAND_PALETTE_OPEN_EVENT, onOpenRequest);
+    };
   }, []);
 
   // Close on route change so the palette never lingers over new content.
@@ -133,27 +187,19 @@ export function CommandPalette() {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>
-        <button
-          type="button"
-          aria-label="Open command palette"
-          className="hidden items-center gap-2 rounded-full border border-white/20 px-3.5 py-2 text-xs font-medium text-slate-300 transition hover:border-white/50 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 md:inline-flex"
-        >
-          <svg width="13" height="13" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-            <circle cx="6.5" cy="6.5" r="4.75" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M10.25 10.25 13.25 13.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Search
-          <kbd className="rounded border border-white/20 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] leading-none text-slate-400">
-            ⌘K
-          </kbd>
-        </button>
-      </Dialog.Trigger>
+      {/* Default-on so unit tests (which render <CommandPalette /> and click
+          the trigger) pass unchanged; the root layout opts out and mounts
+          <CommandPaletteTrigger /> inside the header instead. */}
+      {renderTrigger && (
+        <Dialog.Trigger asChild>
+          <CommandPaletteTriggerButton />
+        </Dialog.Trigger>
+      )}
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-950/70" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-night/70" />
         <Dialog.Content
           aria-label="Command palette"
-          className="fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl focus-visible:outline-none"
+          className="fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-night-raised shadow-2xl focus-visible:outline-none"
         >
           <Dialog.Title className="sr-only">Command palette</Dialog.Title>
           <Dialog.Description className="sr-only">
@@ -174,7 +220,7 @@ export function CommandPalette() {
               placeholder="Search pages and actions…"
               autoComplete="off"
               spellCheck={false}
-              className="w-full bg-transparent px-5 py-4 text-sm text-white placeholder:text-slate-500 focus-visible:outline-none"
+              className="w-full bg-transparent px-5 py-4 text-sm text-white placeholder:text-night-ink-soft focus-visible:outline-none"
             />
           </div>
           <div
@@ -185,7 +231,7 @@ export function CommandPalette() {
             className="max-h-[46vh] overflow-y-auto p-2"
           >
             {results.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-slate-400" role="status">
+              <p className="px-4 py-8 text-center text-sm text-night-ink-soft" role="status">
                 Nothing matches “{query.trim()}”. Try a page name like “scan” or “verify”.
               </p>
             ) : (
@@ -198,7 +244,7 @@ export function CommandPalette() {
                     {header && (
                       <p
                         className={cn(
-                          "px-3 pb-1.5 pt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500",
+                          "px-3 pb-1.5 pt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-night-ink-soft",
                           index === 0 && "pt-1.5",
                         )}
                       >
@@ -217,12 +263,12 @@ export function CommandPalette() {
                       className={cn(
                         "flex w-full items-center justify-between gap-4 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                         index === activeIndex
-                          ? "bg-cyan-300/10 text-white"
-                          : "text-slate-300",
+                          ? "bg-quantum-soft/10 text-white"
+                          : "text-night-ink-soft",
                       )}
                     >
                       <span className="font-medium">{item.label}</span>
-                      <span className="hidden text-xs text-slate-500 sm:block">
+                      <span className="hidden text-xs text-night-ink-soft sm:block">
                         {item.hint}
                       </span>
                     </button>
@@ -231,7 +277,7 @@ export function CommandPalette() {
               })
             )}
           </div>
-          <div className="flex items-center justify-between border-t border-white/10 px-5 py-3 text-[11px] text-slate-500">
+          <div className="flex items-center justify-between border-t border-white/10 px-5 py-3 text-[11px] text-night-ink-soft">
             <span className="inline-flex items-center gap-2">
               <kbd className="rounded border border-white/20 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] leading-none">↑↓</kbd>
               navigate
@@ -239,7 +285,7 @@ export function CommandPalette() {
               open
             </span>
             <span>
-              or <Link href="/scanner" className="underline underline-offset-4 hover:text-slate-300">browse the scanner</Link>
+              or <Link href="/scanner" className="underline underline-offset-4 hover:text-night-ink">browse the scanner</Link>
             </span>
           </div>
         </Dialog.Content>

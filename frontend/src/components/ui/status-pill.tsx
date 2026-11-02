@@ -59,9 +59,9 @@ export function StatusPill({
   return (
     <span
       // `data-tone` is the stable contract for tests: asserting a semantic tone
-      // survives a palette change, whereas asserting a literal Tailwind class
-      // (`text-green-600`) pinned a colour that failed WCAG AA and disagreed
-      // with the same state rendered elsewhere in the app.
+      // survives a palette change, whereas asserting a literal Tailwind palette
+      // class pinned a colour that failed WCAG AA and disagreed with the same
+      // state rendered elsewhere in the app.
       data-tone={tone}
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-micro font-medium ring-1 ring-inset",

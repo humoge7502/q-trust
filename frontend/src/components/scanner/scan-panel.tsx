@@ -24,13 +24,14 @@ import {
 } from "./shared";
 import type { ScannerState } from "./use-scanner-state";
 
-/** Severity bands, in escalating order — the order the rail stacks them. */
+/** Severity bands, in escalating order — the order the rail stacks them.
+ *  Bar fills read the same tokens the swatches render from. */
 const SEVERITY_BANDS = [
-  { key: "critical", label: "Critical", swatch: "bg-risk-critical", fill: "#b91c1c" },
-  { key: "high", label: "High", swatch: "bg-risk-high", fill: "#c2410c" },
-  { key: "medium", label: "Medium", swatch: "bg-risk-medium", fill: "#a16207" },
-  { key: "low", label: "Low", swatch: "bg-risk-low", fill: "#15803d" },
-  { key: "info", label: "Info", swatch: "bg-risk-none", fill: "#64748b" },
+  { key: "critical", label: "Critical", swatch: "bg-risk-critical", fill: "var(--color-risk-critical)" },
+  { key: "high", label: "High", swatch: "bg-risk-high", fill: "var(--color-risk-high)" },
+  { key: "medium", label: "Medium", swatch: "bg-risk-medium", fill: "var(--color-risk-medium)" },
+  { key: "low", label: "Low", swatch: "bg-risk-low", fill: "var(--color-risk-low)" },
+  { key: "info", label: "Info", swatch: "bg-risk-none", fill: "var(--color-risk-none)" },
 ] as const;
 
 /**
@@ -50,13 +51,13 @@ function SeveritySummary({ summary }: { summary: ScanSummary }) {
     .join(", ");
 
   return (
-    <div className="rounded-xl border border-border bg-[#fbfbfa] p-5">
+    <div className="rounded-xl border border-border bg-canvas p-5">
       <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
         <div>
           <p className="text-label font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Findings
           </p>
-          <p className="mt-1.5 text-5xl font-semibold leading-none tracking-[-0.06em] text-slate-950 tabular-nums">
+          <p className="mt-1.5 text-5xl font-semibold leading-none tracking-[-0.06em] text-foreground tabular-nums">
             {total}
           </p>
           <p className="mt-2.5 text-micro text-muted-foreground">
@@ -69,7 +70,7 @@ function SeveritySummary({ summary }: { summary: ScanSummary }) {
           {total > 0 ? (
             <>
               <div
-                className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-200"
+                className="flex h-2.5 w-full overflow-hidden rounded-full bg-neutral-surface"
                 role="img"
                 aria-label={`Severity mix: ${ariaMix}`}
               >
@@ -133,7 +134,7 @@ function AlgorithmMix({ findings }: { findings: ScanFinding[] }) {
   return (
     <div className="mt-4 rounded-xl border border-border p-5">
       <div className="flex items-baseline justify-between gap-4">
-        <h3 className="text-sm font-semibold tracking-[-0.02em] text-slate-950">
+        <h3 className="text-sm font-semibold tracking-[-0.02em] text-foreground">
           Algorithm mix
         </h3>
         <p className="font-mono text-label uppercase tracking-[0.18em] text-muted-foreground">
@@ -168,7 +169,7 @@ const SEVERITY_RAIL: Record<string, string> = {
   high: "border-l-risk-high",
   medium: "border-l-risk-medium",
   low: "border-l-risk-low",
-  info: "border-l-slate-300",
+  info: "border-l-neutral-border",
 };
 
 /**
@@ -192,7 +193,7 @@ function CoverageToggle({
       className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-micro font-medium transition focus-within:ring-2 focus-within:ring-qtrust-600 focus-within:ring-offset-1 ${
         checked
           ? "border-qtrust-600 bg-qtrust-50 text-qtrust-700"
-          : "border-border bg-white text-muted-foreground hover:border-slate-400"
+          : "border-border bg-canvas-raised text-muted-foreground hover:border-foreground/30"
       }`}
     >
       <input
@@ -203,7 +204,7 @@ function CoverageToggle({
       />
       <span
         className={`flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border ${
-          checked ? "border-qtrust-600 bg-qtrust-600" : "border-slate-300 bg-white"
+          checked ? "border-qtrust-600 bg-qtrust-600" : "border-neutral-border bg-canvas-raised"
         }`}
         aria-hidden="true"
       >
@@ -262,9 +263,9 @@ export function ScanPanel({ state }: { state: ScannerState }) {
         {/* Console-style target bar. A directory path is a command argument,
             so it is presented as one instead of as a boxed form field with a
             label above it. */}
-        <div className="rounded-xl bg-slate-950 p-2">
+        <div className="rounded-xl bg-night p-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="pl-2 font-mono text-sm leading-none text-cyan-300" aria-hidden="true">
+            <span className="pl-2 font-mono text-sm leading-none text-quantum" aria-hidden="true">
               ❯
             </span>
             <label htmlFor="scan-target" className="sr-only">
@@ -278,12 +279,12 @@ export function ScanPanel({ state }: { state: ScannerState }) {
               placeholder="/workspace/projects/backend/src"
               spellCheck={false}
               autoComplete="off"
-              className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-2 font-mono text-sm text-white placeholder:text-slate-400 focus:outline-none"
+              className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-2 font-mono text-sm text-night-ink placeholder:text-night-ink-faint focus:outline-none"
             />
             <Button
               onClick={() => void runScan()}
               disabled={scanLoading || !target.trim()}
-              className="h-9 shrink-0 rounded-lg bg-cyan-300 px-4 text-sm font-semibold text-slate-950 hover:bg-cyan-200 focus-visible:ring-cyan-200 focus-visible:ring-offset-slate-950"
+              className="h-9 shrink-0 rounded-lg bg-quantum px-4 text-sm font-semibold text-night hover:bg-quantum-soft focus-visible:ring-quantum-soft focus-visible:ring-offset-night"
             >
               {scanLoading && <Spinner />}
               {scanLoading ? "Scanning…" : "Run scan"}
@@ -305,8 +306,8 @@ export function ScanPanel({ state }: { state: ScannerState }) {
                 aria-pressed={active}
                 className={`rounded-full border px-2.5 py-1 font-mono text-micro transition ${
                   active
-                    ? "border-slate-950 bg-slate-950 text-white"
-                    : "border-border bg-white text-muted-foreground hover:border-slate-400 hover:text-slate-950"
+                    ? "border-night bg-night text-night-ink"
+                    : "border-border bg-canvas-raised text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                 }`}
               >
                 {sample.label}
@@ -328,9 +329,9 @@ export function ScanPanel({ state }: { state: ScannerState }) {
         {/* Public-repository ingestion: the same detectors, run server-side on a
             GitHub archive, so a visitor can scan a real codebase without a
             checkout on the operator machine. */}
-        <div className="mt-5 rounded-xl border border-border bg-white p-4">
+        <div className="mt-5 rounded-xl border border-border bg-canvas-raised p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h3 className="text-sm font-semibold tracking-[-0.02em] text-slate-950">
+            <h3 className="text-sm font-semibold tracking-[-0.02em] text-foreground">
               Scan a public repository
             </h3>
             <p className="text-micro text-muted-foreground">
@@ -349,7 +350,7 @@ export function ScanPanel({ state }: { state: ScannerState }) {
               placeholder="owner/repo or https://github.com/owner/repo"
               spellCheck={false}
               autoComplete="off"
-              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-white px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/20"
+              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-card px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/20"
             />
             <Button
               variant="outline"
@@ -375,7 +376,7 @@ export function ScanPanel({ state }: { state: ScannerState }) {
         {scanResult && (
           <div className="mt-6">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h3 className="text-sm font-semibold tracking-[-0.02em] text-slate-950">
+              <h3 className="text-sm font-semibold tracking-[-0.02em] text-foreground">
                 Results
               </h3>
               <p className="font-mono text-label uppercase tracking-[0.16em] text-muted-foreground">
@@ -397,7 +398,7 @@ export function ScanPanel({ state }: { state: ScannerState }) {
               <table className="w-full text-left text-xs">
                 <caption className="sr-only">Scan findings</caption>
                 <thead>
-                  <tr className="border-b border-border bg-[#fbfbfa] text-label uppercase tracking-[0.14em] text-muted-foreground">
+                  <tr className="border-b border-border bg-canvas text-label uppercase tracking-[0.14em] text-muted-foreground">
                     <th scope="col" className="px-4 py-2.5 font-semibold">File</th>
                     <th scope="col" className="px-4 py-2.5 font-semibold">Line</th>
                     <th scope="col" className="px-4 py-2.5 font-semibold">Algorithm</th>
@@ -409,7 +410,7 @@ export function ScanPanel({ state }: { state: ScannerState }) {
                   {scanResult.findings.map((f, i) => (
                     <tr
                       key={i}
-                      className="border-b border-slate-100 transition-colors last:border-0 hover:bg-[#fbfbfa]"
+                      className="border-b border-border transition-colors last:border-0 hover:bg-canvas"
                     >
                       <td
                         className="max-w-[220px] truncate px-4 py-2.5 font-mono text-foreground"
@@ -447,8 +448,8 @@ export function ScanPanel({ state }: { state: ScannerState }) {
               {scanResult.findings.map((f, i) => (
                 <div
                   key={i}
-                  className={`rounded-xl border border-border border-l-2 bg-white p-3 ${
-                    SEVERITY_RAIL[(f.severity ?? "").toLowerCase()] ?? "border-l-slate-300"
+                  className={`rounded-xl border border-border border-l-2 bg-canvas-raised p-3 ${
+                    SEVERITY_RAIL[(f.severity ?? "").toLowerCase()] ?? "border-l-neutral-border"
                   }`}
                   role="listitem"
                 >
@@ -467,7 +468,7 @@ export function ScanPanel({ state }: { state: ScannerState }) {
                 </div>
               ))}
               {scanResult.findings.length === 0 && (
-                <div className="rounded-xl border border-border bg-white p-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border bg-canvas-raised p-6 text-center text-sm text-muted-foreground">
                   No findings — no quantum-vulnerable algorithms detected.
                 </div>
               )}

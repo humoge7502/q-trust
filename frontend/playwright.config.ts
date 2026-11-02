@@ -61,7 +61,19 @@ export default defineConfig({
     // codebase's own no-cloud signal: injected-only wallets, no relay. The
     // spec additionally aborts Reown/web3modal HTTP fetches, and
     // e2e/global-setup.ts pre-warms routes.
-    env: { ...process.env, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "demo" },
+    //
+    // QTRUST_BACKEND_URL pins the server components' backend origin to a
+    // guaranteed-dead port (nothing listens on 9). Server fetches (e.g.
+    // /certify's issuer lookup) then fail instantly and deterministically —
+    // the harness's documented "no backend runs here" assumption — instead of
+    // accidentally answering when a developer's own backend happens to be up
+    // on the default :3001 origin, which flips /certify into its
+    // suggestion-rendering state and breaks certify.spec mid-run.
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "demo",
+      QTRUST_BACKEND_URL: "http://127.0.0.1:9",
+    },
     command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: true,

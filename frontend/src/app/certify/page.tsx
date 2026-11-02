@@ -73,27 +73,28 @@ export default async function CertifyPage() {
 
   return (
     <main className="flex-1 bg-canvas text-foreground">
-      <header className="relative overflow-hidden bg-slate-950 text-white">
-        <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden="true" />
-        <div className="relative mx-auto max-w-[86rem] px-5 pb-10 pt-8 sm:px-8 sm:pb-14 sm:pt-12 lg:px-12">
-          <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300">
-            <span className="h-px w-10 bg-cyan-300" aria-hidden="true" />
+      {/* Page header — the unified app-layer treatment: mono eyebrow, display
+          title, muted lede, hairline rule. Same pattern as /scanner and /v. */}
+      <header className="border-b border-border bg-canvas">
+        <div className="mx-auto max-w-[86rem] px-5 pb-10 pt-8 sm:px-8 sm:pb-12 sm:pt-12 lg:px-12">
+          <p className="flex items-center gap-3 font-mono text-micro font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+            <span className="h-px w-10 bg-qtrust-600" aria-hidden="true" />
             Q-Trust certification
           </p>
-          <h1 className="mt-5 max-w-3xl text-[clamp(2rem,4.6vw,3.6rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white">
+          <h1 className="mt-5 max-w-3xl font-display text-3xl font-semibold leading-[0.95] tracking-[-0.04em] text-foreground sm:text-4xl">
             Verify a certification bundle.
           </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
+          <p className="mt-5 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
             A certification bundle is a signed snapshot of an organisation&apos;s
             assurance state: the evidence that existed at a block, committed to a
             Merkle root, under a policy verdict and a validity window. The checks
             below run with no account and no network access.
           </p>
-          <p className="mt-4 text-xs text-slate-400">
+          <p className="mt-4 text-xs text-muted-foreground">
             Looking for an on-chain attestation instead?{" "}
             <Link
               href="/v"
-              className="inline-flex items-center gap-1 font-medium text-cyan-300 underline decoration-cyan-300/40 underline-offset-4 transition hover:decoration-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              className="inline-flex items-center gap-1 font-medium text-qtrust-600 underline decoration-qtrust-600/40 underline-offset-4 transition hover:decoration-qtrust-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
             >
               Verify by asset ID
               <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -128,7 +129,7 @@ export default async function CertifyPage() {
 
             <section aria-labelledby="not-proven">
               <SectionHeading id="not-proven">What they do not prove</SectionHeading>
-              <p className="mt-3 border-l-2 border-amber-400/60 pl-3 text-micro leading-5 text-muted-foreground">
+              <p className="mt-3 border-l-2 border-warning-border pl-3 text-micro leading-5 text-muted-foreground">
                 {WHAT_IS_NOT_PROVEN}
               </p>
             </section>
@@ -164,7 +165,7 @@ export default async function CertifyPage() {
                 key — the Python SDK ships that verifier, and the signature does
                 not depend on Q-Trust infrastructure staying online.
               </p>
-              <pre className="mt-3 overflow-x-auto rounded-xl border border-border bg-slate-950 p-3 font-mono text-micro leading-5 text-slate-200">
+              <pre className="mt-3 overflow-x-auto rounded-xl border border-night-edge bg-night p-3 font-mono text-micro leading-5 text-night-ink-soft">
                 <code>{`from qtrust import verify_bundle_file
 
 result = verify_bundle_file("bundle.json")
