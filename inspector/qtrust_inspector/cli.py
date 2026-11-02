@@ -168,6 +168,11 @@ def scan(
     evidence: Optional[Path] = typer.Option(None, "--evidence", help="Hash-chained evidence ledger path"),
     roadmap_out: Optional[Path] = typer.Option(None, "--roadmap", help="Migration roadmap output"),
     daily_rate: float = typer.Option(1500.0, "--daily-rate", help="Daily rate for cost estimation"),
+    ci_gate: Optional[str] = typer.Option(
+        None,
+        "--ci-gate",
+        help="Exit 1 when a finding meets or exceeds this criticality (critical|high|medium). Outputs are written before the gate trips so SARIF still uploads.",
+    ),
 ):
     """Universal scan command -- auto-detects target type and runs all scanners."""
     results: list[ScanResult] = []
@@ -223,6 +228,9 @@ def scan(
     if roadmap_out:
         _write_roadmap(combined, roadmap_out, daily_rate)
     _apply_outputs(combined, output, risk, compliance, cyclonedx, sarif_out, False)
+
+    if ci_gate:
+        _run_ci_gate(combined, ci_gate)
 
 
 @app.command()

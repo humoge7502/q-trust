@@ -3,17 +3,22 @@ import { fileURLToPath } from "node:url";
 import * as dotenv from "dotenv";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { requireApiKey } from "../middleware/auth.js";
+import { PLANNER_API_KEY, PLANNER_URL } from "../config.js";
 import {
   SideChannelAnalyzeSchema,
   AnomalyScoreSchema,
   RLPlanSchema,
 } from "../schemas/index.js";
+import {
+  embeddedPlannerEnabled,
+  plannerErrorResponse,
+  rlPlanEmbedded,
+} from "./planner-embedded.js";
 
 dotenv.config({ quiet: true });
 
 const GPU_BRIDGE = process.env.QTRUST_GPU_BRIDGE ||
   fileURLToPath(new URL("../../scripts/gpu_bridge.py", import.meta.url));
-const PLANNER_URL = process.env.QTRUST_PLANNER_URL ?? "http://127.0.0.1:8000";
 
 const STATUS_CACHE_TTL_MS = 60_000;
 let cachedStatus: { at: number; data: GpuStatus } | null = null;
@@ -330,24 +335,30 @@ export async function registerGPURoutes(server: FastifyInstance): Promise<void> 
     },
     config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
     async handler(request: FastifyRequest<{ Body: { cbom: Record<string, unknown> } }>, reply: FastifyReply) {
+      if (!embeddedPlannerEnabled()) {
+        try {
+          const resp = await fetch(`${PLANNER_URL}/rl/plan`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              // Planner HIGH-1: forward shared key to authenticated planner.
+              ...(PLANNER_API_KEY ? { "x-api-key": PLANNER_API_KEY } : {}),
+            },
+            body: JSON.stringify(request.body),
+            signal: AbortSignal.timeout(30_000),
+          });
+          if (resp.ok) return (await resp.json()) as Record<string, unknown>;
+          request.log.warn({ status: resp.status }, "Remote RL planner rejected request — trying embedded");
+        } catch (err) {
+          request.log.warn({ err }, "Remote RL planner unreachable — trying embedded");
+        }
+      }
       try {
-        const resp = await fetch(`${PLANNER_URL}/rl/plan`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // Planner HIGH-1: forward shared key to authenticated planner.
-            ...(process.env.QTRUST_PLANNER_API_KEY
-              ? { "x-api-key": process.env.QTRUST_PLANNER_API_KEY }
-              : {}),
-          },
-          body: JSON.stringify(request.body),
-          signal: AbortSignal.timeout(30_000),
-        });
-        if (!resp.ok) throw new Error(`planner returned ${resp.status}`);
-        return (await resp.json()) as Record<string, unknown>;
+        return await rlPlanEmbedded({ cbom: request.body.cbom });
       } catch (err) {
         request.log.error(err);
-        return fail(reply, 503, { error: "rl_planner_unavailable" });
+        const mapped = plannerErrorResponse(err);
+        return fail(reply, mapped.status, mapped.body);
       }
     },
   });

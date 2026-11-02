@@ -78,7 +78,7 @@ export function RiskPanel({ state }: { state: ScannerState }) {
                   <span className="font-mono text-label uppercase tracking-[0.18em] text-muted-foreground">
                     {riskScores.length} scored
                   </span>
-                  <span className="h-3 w-px bg-slate-200" aria-hidden="true" />
+                  <span className="h-3 w-px bg-border" aria-hidden="true" />
                   {riskMix.map((entry) => (
                     <StatusPill key={entry.level} tone={severityTone(entry.level)}>
                       {entry.count} {entry.level.toLowerCase()}
@@ -90,7 +90,7 @@ export function RiskPanel({ state }: { state: ScannerState }) {
                   <table className="w-full text-left text-xs">
                     <caption className="sr-only">Quantum risk scores</caption>
                     <thead>
-                      <tr className="border-b border-border bg-[#fbfbfa] text-label uppercase tracking-[0.14em] text-muted-foreground">
+                      <tr className="border-b border-border bg-canvas text-label uppercase tracking-[0.14em] text-muted-foreground">
                         <th scope="col" className="px-4 py-2.5 font-semibold">File</th>
                         <th scope="col" className="px-4 py-2.5 font-semibold">Line</th>
                         <th scope="col" className="px-4 py-2.5 font-semibold">Algorithm</th>
@@ -109,7 +109,7 @@ export function RiskPanel({ state }: { state: ScannerState }) {
                         return (
                           <tr
                             key={i}
-                            className="border-b border-slate-100 transition-colors last:border-0 hover:bg-[#fbfbfa]"
+                            className="border-b border-border transition-colors last:border-0 hover:bg-canvas"
                           >
                             <td
                               className="max-w-[160px] truncate px-4 py-2.5 font-mono text-foreground"
@@ -160,7 +160,7 @@ export function RiskPanel({ state }: { state: ScannerState }) {
                     return (
                       <div
                         key={i}
-                        className="rounded-xl border border-border bg-white p-3"
+                        className="rounded-xl border border-border bg-canvas-raised p-3"
                         role="listitem"
                       >
                         <div className="flex items-center justify-between gap-2">

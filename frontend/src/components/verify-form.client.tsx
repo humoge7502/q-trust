@@ -54,12 +54,12 @@ export function VerifyForm() {
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? "asset-id-error asset-id-help" : "asset-id-help"}
           onChange={clearError}
-          className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-3 font-mono text-xs text-foreground placeholder:text-slate-500 transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25 aria-[invalid=true]:border-risk-critical"
+          className="min-w-0 flex-1 rounded-xl border border-border bg-white px-3 py-3 font-mono text-xs text-foreground placeholder:text-muted-foreground transition focus:border-qtrust-600 focus:outline-none focus:ring-2 focus:ring-qtrust-600/25 aria-[invalid=true]:border-risk-critical"
         />
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 motion-reduce:hover:translate-y-0"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-night px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-night-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-night focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 motion-reduce:hover:translate-y-0"
         >
           {pending ? "Opening…" : "Verify"}
         </button>
@@ -80,7 +80,7 @@ export function VerifyForm() {
                   input.focus();
                 }
               }}
-              className="font-medium text-foreground underline decoration-slate-400 underline-offset-4 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+              className="font-medium text-foreground underline decoration-night-ink-soft underline-offset-4 transition hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-night"
             >
               use the example
             </button>
@@ -100,7 +100,7 @@ export function VerifyForm() {
       ) : null}
 
       <p className="mt-6 flex items-start gap-2 border-t border-border pt-5 text-xs leading-6 text-muted-foreground">
-        <ShieldCheckIcon className="mt-1 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+        <ShieldCheckIcon className="mt-1 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
         <span>
           Verification reads the on-chain record directly: status, organization,
           CBOM hash and timestamp. Nothing about the underlying evidence leaves

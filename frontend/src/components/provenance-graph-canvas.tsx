@@ -36,7 +36,7 @@ export default function ProvenanceGraphCanvas({ asset, verification }: GraphCanv
               }}
             >
               <div className="text-xs font-semibold text-slate-800">{node.label}</div>
-              <div className="mt-1 font-mono text-[10px] text-slate-500">{node.sub}</div>
+              <div className="mt-1 font-mono text-[10px] text-muted-foreground">{node.sub}</div>
             </div>
             {i < nodes.length - 1 && (
               <svg className="h-4 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true" focusable="false">
@@ -46,7 +46,7 @@ export default function ProvenanceGraphCanvas({ asset, verification }: GraphCanv
           </div>
         ))}
       </div>
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-2 text-xs text-muted-foreground">
         Verified by {verification.org_did.slice(0, 8)}...{verification.org_did.slice(-6)} on{" "}
         {verification.chain_name}.
       </div>

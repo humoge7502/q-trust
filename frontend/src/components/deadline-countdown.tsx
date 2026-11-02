@@ -69,16 +69,16 @@ export function DeadlineCountdown() {
           const value = days ? days[i] : null;
           const tone =
             value === null
-              ? "text-slate-500"
+              ? "text-night-ink-soft"
               : value < 800
-                ? "text-red-300"
+                ? "text-[var(--race-broken)]"
                 : value < 2200
-                  ? "text-amber-300"
-                  : "text-cyan-300";
+                  ? "text-[var(--race-weakened)]"
+                  : "text-[var(--race-safe)]";
           return (
-            <div key={d.date} className="bg-slate-950 p-5">
+            <div key={d.date} className="bg-night p-5">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-night-ink-soft">
                   {d.label}
                 </span>
                 <span className="text-[10px] tabular-nums text-muted-foreground">
@@ -90,12 +90,12 @@ export function DeadlineCountdown() {
               >
                 {value === null ? "––––" : value.toLocaleString("en-US")}
                 {value !== null && (
-                  <span className="ml-1.5 text-xs font-normal text-slate-500">
+                  <span className="ml-1.5 text-xs font-normal text-night-ink-soft">
                     days
                   </span>
                 )}
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-400">{d.copy}</p>
+              <p className="mt-3 text-xs leading-5 text-night-ink-soft">{d.copy}</p>
               <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                 {d.source}
               </p>
@@ -103,7 +103,7 @@ export function DeadlineCountdown() {
           );
         })}
       </div>
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="mt-3 text-xs text-night-ink-soft">
         {soonest !== null
           ? `${soonest.toLocaleString("en-US")} days until the first binding date. Counters are computed live in your browser.`
           : "Counters are computed live in your browser."}{" "}

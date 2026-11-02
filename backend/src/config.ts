@@ -131,6 +131,12 @@ export const PLANNER_URL =
  *  (planner audit HIGH-1). */
 export const PLANNER_API_KEY = process.env.QTRUST_PLANNER_API_KEY ?? "";
 
+/** Hosted scanner microservice URL (optional — /v1/scan/repo uses it). */
+export const SCANNER_SERVICE_URL = (process.env.QTRUST_SCANNER_SERVICE_URL ?? "").replace(/\/+$/, "");
+
+/** Shared scanner-service key — sent as X-Api-Key on archive scans. */
+export const SCANNER_SERVICE_API_KEY = process.env.QTRUST_SCANNER_API_KEY ?? "";
+
 /** Block to start indexing from (set to the contract deployment block). */
 export const INDEXER_FROM_BLOCK = Number(process.env.QTRUST_INDEXER_FROM_BLOCK ?? 0);
 

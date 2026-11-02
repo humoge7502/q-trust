@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { Reveal, ScrollProgress } from "@/components/scroll-effects.client";
+import { SmoothScroll } from "@/components/motion/smooth-scroll.client";
 import { ArrowRightIcon, BeakerIcon, DocumentCheckIcon, ShieldCheckIcon } from "@/app/icons";
 
 export const metadata: Metadata = {
@@ -47,26 +48,28 @@ const REQUIREMENTS = [
 
 export default function EvidencePage() {
   return (
-    <div className="bg-slate-950 text-white">
+    <div className="bg-night text-night-ink">
+      {/* Long-scroll narrative: same Lenis treatment as the landing page. */}
+      <SmoothScroll />
       <ScrollProgress />
       <main>
         {/* Hero — the first screen answers what this is (craft floor, rule 6) */}
-        <section className="qtrust-hero relative overflow-hidden border-b border-white/10" aria-labelledby="evidence-heading">
+        <section className="qtrust-hero relative overflow-hidden border-b border-night-edge" aria-labelledby="evidence-heading">
           <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="relative mx-auto max-w-[88rem] px-5 pb-16 pt-16 sm:px-8 sm:pt-24 lg:px-12 lg:pb-24 lg:pt-28">
             <div className="hero-enter max-w-4xl">
-              <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300">
-                <span className="h-px w-10 bg-cyan-300" aria-hidden="true" />
+              <div className="flex items-center gap-3 text-micro font-semibold uppercase tracking-[0.28em] text-quantum-soft">
+                <span className="h-px w-10 bg-quantum-soft" aria-hidden="true" />
                 OMB M-26-15 · June 2026 · Evidence, not assurances
               </div>
               <h1
                 id="evidence-heading"
-                className="mt-8 text-[clamp(2.75rem,7.4vw,7rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-white [overflow-wrap:anywhere]"
+                className="mt-8 text-[clamp(2.75rem,7.4vw,7rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-night-ink [overflow-wrap:anywhere]"
               >
                 The mandate asks<br />
-                <span className="text-cyan-300">for evidence.</span>
+                <span className="text-quantum-soft">for evidence.</span>
               </h1>
-              <p className="mt-9 max-w-2xl text-lg leading-8 text-slate-300">
+              <p className="mt-9 max-w-2xl text-lg leading-8 text-night-ink-soft">
                 Federal guidance now requires agencies to inventory their
                 cryptography, prioritize the riskiest assets, and submit phased
                 migration plans with evidence. Q-Trust produces all three —
@@ -75,14 +78,14 @@ export default function EvidencePage() {
               <div className="mt-9 flex flex-wrap gap-3">
                 <Link
                   href="/scanner"
-                  className="group inline-flex items-center gap-3 rounded-full bg-cyan-300 px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  className="group inline-flex items-center gap-3 rounded-full bg-quantum-soft px-6 py-3.5 text-sm font-semibold text-night transition hover:-translate-y-0.5 hover:bg-quantum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft focus-visible:ring-offset-2 focus-visible:ring-offset-night"
                 >
                   Start an inventory
                   <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                 </Link>
                 <Link
                   href="/v"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-sm font-semibold text-night-ink transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
                 >
                   See a verified record
                 </Link>
@@ -92,11 +95,11 @@ export default function EvidencePage() {
         </section>
 
         {/* Requirement mapping — the substance */}
-        <section id="requirements" className="bg-[#f4f5f2] px-5 py-20 text-slate-950 sm:px-8 sm:py-28 lg:px-12 lg:py-36" aria-labelledby="requirements-heading">
+        <section id="requirements" className="bg-canvas px-5 py-20 text-foreground sm:px-8 sm:py-28 lg:px-12 lg:py-36" aria-labelledby="requirements-heading">
           <div className="mx-auto max-w-[88rem]">
             <Reveal>
               <div className="max-w-2xl">
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-muted-foreground">
+                <p className="text-micro font-bold uppercase tracking-[0.28em] text-muted-foreground">
                   Three requirements, three deliverables
                 </p>
                 <h2 id="requirements-heading" className="mt-6 text-4xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl">
@@ -107,22 +110,22 @@ export default function EvidencePage() {
             <div className="mt-14 grid gap-3 lg:grid-cols-3">
               {REQUIREMENTS.map((item, index) => (
                 <Reveal key={item.requirement} delay={index * 100}>
-                  <article className="group flex min-h-[30rem] flex-col justify-between border-t border-slate-300 pt-5">
+                  <article className="group flex min-h-[30rem] flex-col justify-between border-t border-border pt-5">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
-                        <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-slate-950">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-canvas-raised text-foreground">
                           <item.icon className="h-5 w-5" aria-hidden="true" />
                         </span>
                       </div>
                       <h3 className="mt-14 text-2xl font-semibold leading-tight tracking-[-0.045em]">
                         {item.requirement}
                       </h3>
-                      <p className="mt-4 text-sm leading-6 text-slate-700">{item.copy}</p>
+                      <p className="mt-4 text-sm leading-6 text-muted-foreground">{item.copy}</p>
                     </div>
                     <div>
-                      <p className="text-sm leading-7 text-slate-700">{item.answer}</p>
-                      <p className="mt-4 border-t border-border pt-3 font-mono text-[11px] leading-5 text-muted-foreground">
+                      <p className="text-sm leading-7 text-muted-foreground">{item.answer}</p>
+                      <p className="mt-4 border-t border-border pt-3 font-mono text-micro leading-5 text-muted-foreground">
                         {item.proof}
                       </p>
                     </div>
@@ -143,11 +146,11 @@ export default function EvidencePage() {
         </section>
 
         {/* The evidence chain + countdown — dark close */}
-        <section className="bg-slate-950 px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36" aria-labelledby="chain-heading">
+        <section className="bg-night px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36" aria-labelledby="chain-heading">
           <div className="mx-auto max-w-[88rem]">
             <Reveal>
               <div className="max-w-2xl">
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-300">
+                <p className="text-micro font-bold uppercase tracking-[0.28em] text-quantum-soft">
                   The evidence chain
                 </p>
                 <h2 id="chain-heading" className="mt-6 text-4xl font-semibold leading-[0.93] tracking-[-0.06em] sm:text-6xl">
@@ -155,7 +158,9 @@ export default function EvidencePage() {
                 </h2>
               </div>
             </Reveal>
-            <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+            {/* The hairline grid: the gap filler is the night edge colour, so
+                the seams read as the same rule the borders use. */}
+            <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-night-edge bg-night-edge sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { step: "Scan", copy: "The inspector hashes the CBOM — raw evidence stays private." },
                 { step: "Anchor", copy: "The hash, not the data, is signed EIP-712 and written to Base L2." },
@@ -163,10 +168,10 @@ export default function EvidencePage() {
                 { step: "Verify", copy: "Any auditor checks the record at /v — no wallet, no account, no trust in us." },
               ].map((s, i) => (
                 <Reveal key={s.step} delay={i * 80}>
-                  <div className="h-full bg-slate-950 p-5">
-                    <div className="font-mono text-label text-cyan-300">0{i + 1}</div>
+                  <div className="h-full bg-night p-5">
+                    <div className="font-mono text-label text-quantum-soft">0{i + 1}</div>
                     <h3 className="mt-3 text-lg font-semibold tracking-[-0.03em]">{s.step}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">{s.copy}</p>
+                    <p className="mt-2 text-sm leading-6 text-night-ink-soft">{s.copy}</p>
                   </div>
                 </Reveal>
               ))}
@@ -178,7 +183,7 @@ export default function EvidencePage() {
               <div className="mt-14 flex flex-wrap gap-3">
                 <Link
                   href="/scanner"
-                  className="group inline-flex items-center gap-3 rounded-full bg-cyan-300 px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+                  className="group inline-flex items-center gap-3 rounded-full bg-quantum-soft px-6 py-3.5 text-sm font-semibold text-night transition hover:-translate-y-0.5 hover:bg-quantum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
                 >
                   Produce your first deliverable
                   <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />

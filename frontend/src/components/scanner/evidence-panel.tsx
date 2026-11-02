@@ -57,14 +57,14 @@ export function EvidencePanel({ state }: { state: ScannerState }) {
         )}
 
         {evidenceLedger && (
-          <div className="rounded-xl border border-border bg-[#fbfbfa] p-5">
+          <div className="rounded-xl border border-border bg-canvas p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="font-mono text-label uppercase tracking-[0.2em] text-muted-foreground">
                   Integrity hash
                 </p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-sm text-slate-950">
+                  <span className="font-mono text-sm text-foreground">
                     {evidenceLedger.integrityHash.slice(0, 16)}…
                   </span>
                   {evidenceVerify?.valid ? (
@@ -116,7 +116,7 @@ export function EvidencePanel({ state }: { state: ScannerState }) {
                 <button
                   onClick={() => void verifyLedger()}
                   disabled={verifyLoading || Boolean(evidenceVerify?.valid)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-success hover:text-success focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-canvas-raised px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-success hover:text-success focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 disabled:opacity-50"
                 >
                   {verifyLoading ? <Spinner /> : null}
                   {evidenceVerify?.valid ? "Verified" : verifyLoading ? "Verifying…" : "Verify"}
@@ -127,7 +127,7 @@ export function EvidencePanel({ state }: { state: ScannerState }) {
         )}
 
         {!evidenceLedger && !evidenceError && (
-          <div className="rounded-xl border border-dashed border-slate-300 px-5 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-border px-5 py-10 text-center">
             <p className="text-sm font-medium text-foreground">No evidence record yet</p>
             <p className="mx-auto mt-1.5 max-w-sm text-micro leading-5 text-muted-foreground">
               An evidence record hashes the latest scan result into an append-only
