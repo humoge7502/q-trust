@@ -48,7 +48,10 @@ jobs:
         env:
           FOUNDRY_PROFILE: fuzz-nightly
         run: |
-          cat >> foundry.toml <<'EOF'
+          for v in "$FUZZ_RUNS" "$INVARIANT_RUNS"; do
+            case "$v" in ''|*[!0-9]*) echo "fuzz params must be positive integers (got: '$v')"; exit 1;; esac
+          done
+          cat >> foundry.toml <<EOF
 
           [profile.fuzz-nightly.fuzz]
           runs = ${FUZZ_RUNS}
