@@ -49,7 +49,7 @@ export function RoadmapPanel({ state }: { state: ScannerState }) {
                   value={roadmapDailyRate}
                   onChange={(e) => setRoadmapDailyRate(e.target.value)}
                   placeholder="1500"
-                  className="mt-1 block w-32 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-foreground placeholder:text-slate-400 focus-visible:border-qtrust-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600/20"
+                  className="mt-1 block w-32 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus-visible:border-qtrust-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600/20"
                 />
               </label>
               <Button
@@ -89,29 +89,29 @@ export function RoadmapPanel({ state }: { state: ScannerState }) {
 
             {roadmap && (
               <div>
-                <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-slate-200 sm:grid-cols-3">
-                  <div className="bg-[#fbfbfa] p-5">
+                <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
+                  <div className="bg-canvas p-5">
                     <p className="text-label font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                       Total effort
                     </p>
-                    <p className="mt-2 font-mono text-3xl font-semibold leading-none text-slate-950 tabular-nums">
+                    <p className="mt-2 font-mono text-3xl font-semibold leading-none text-foreground tabular-nums">
                       {roadmap.summary.totalDays}{" "}
                       <span className="text-base font-normal text-muted-foreground">days</span>
                     </p>
                   </div>
-                  <div className="bg-[#fbfbfa] p-5">
+                  <div className="bg-canvas p-5">
                     <p className="text-label font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                       Estimated cost
                     </p>
-                    <p className="mt-2 font-mono text-3xl font-semibold leading-none text-slate-950 tabular-nums">
+                    <p className="mt-2 font-mono text-3xl font-semibold leading-none text-foreground tabular-nums">
                       ${roadmap.summary.totalCost.toLocaleString()}
                     </p>
                   </div>
-                  <div className="bg-[#fbfbfa] p-5">
+                  <div className="bg-canvas p-5">
                     <p className="text-label font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                       Est. completion
                     </p>
-                    <p className="mt-2 flex items-center gap-2 font-mono text-lg font-semibold text-slate-950">
+                    <p className="mt-2 flex items-center gap-2 font-mono text-lg font-semibold text-foreground">
                       <ClockIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       {new Date(roadmap.summary.completionDate).toLocaleDateString()}
                     </p>
@@ -122,17 +122,17 @@ export function RoadmapPanel({ state }: { state: ScannerState }) {
                   {roadmap.phases.map((phase) => (
                     <li
                       key={phase.phase}
-                      className="relative rounded-xl border border-border bg-white p-4 pl-14 transition-colors hover:border-slate-300"
+                      className="relative rounded-xl border border-border bg-canvas-raised p-4 pl-14 transition-colors hover:border-foreground/30"
                     >
                       <div
-                        className="absolute left-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950 font-mono text-micro font-semibold text-cyan-300 tabular-nums"
+                        className="absolute left-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-night font-mono text-micro font-semibold text-quantum tabular-nums"
                         aria-hidden="true"
                       >
                         {phase.phase}
                       </div>
                       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
                         <div>
-                          <h3 className="text-sm font-semibold text-slate-950">{phase.title}</h3>
+                          <h3 className="text-sm font-semibold text-foreground">{phase.title}</h3>
                           <StatusPill tone={severityTone(phase.priority)} className="mt-1.5">
                             {phase.priority}
                           </StatusPill>
@@ -181,7 +181,7 @@ export function RoadmapPanel({ state }: { state: ScannerState }) {
           title="Why this order?"
           copy="While the programme runs, every un-migrated asset keeps accumulating quantum risk. Ordering changes the total."
         >
-          <div className="mt-4 rounded-2xl bg-slate-950 p-5 text-white sm:p-7">
+          <div className="mt-4 rounded-2xl bg-night p-5 text-night-ink sm:p-7">
             <MigrationRace />
           </div>
         </Panel>

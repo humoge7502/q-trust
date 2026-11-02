@@ -103,6 +103,44 @@ describe("ScannerDashboard", () => {
     expect(screen.getAllByText("quantum-vulnerable key exchange")[0]).toBeInTheDocument();
   });
 
+  it("scans a public repository through POST /v1/scan/repo", async () => {
+    fetchMock.mockResolvedValue(
+      okResponse({
+        repo: "octocat/Spoon-Knife",
+        scanType: "full",
+        timestamp: "2026-10-28T00:00:00.000Z",
+        filesScanned: 3,
+        findings: [
+          {
+            file: "services/payments/signing.py",
+            algorithm: "RSA-2048",
+            line: 7,
+            severity: "critical",
+            message: "hardcoded RSA key",
+          },
+        ],
+      }),
+    );
+    render(<ScannerDashboard />);
+
+    fireEvent.change(screen.getByLabelText("GitHub repository"), {
+      target: { value: "octocat/Spoon-Knife" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /scan repo/i }));
+
+    await screen.findByText("Results");
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe("/api/v1/scan/repo");
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual({
+      repo: "octocat/Spoon-Knife",
+      scanType: "full",
+    });
+    expect(screen.getByText(/3 files scanned/i)).toBeInTheDocument();
+    expect(screen.getAllByText("signing.py")[0]).toBeInTheDocument();
+  });
+
   it("shows the backend error message when the scan request fails", async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ error: "scanner offline" }), {

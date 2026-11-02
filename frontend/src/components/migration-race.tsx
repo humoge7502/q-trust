@@ -222,7 +222,7 @@ export function MigrationRace() {
   return (
     <div ref={containerRef} className="w-full">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium text-slate-400">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium text-night-ink-soft">
           <span className="inline-flex items-center gap-2">
             <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-[var(--race-broken)]" />
             Shor-broken (RSA, ECDSA…)
@@ -241,13 +241,13 @@ export function MigrationRace() {
           type="button"
           onClick={play}
           disabled={running && !finished}
-          className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold text-white transition hover:border-white/50 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-full border border-night-edge px-4 py-2 text-xs font-semibold text-night-ink transition hover:border-quantum-soft hover:bg-night-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum disabled:opacity-50"
         >
           {finished ? "Replay the race" : running ? "Racing…" : "Play the race"}
         </button>
       </div>
 
-      <figure className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60">
+      <figure className="mt-5 overflow-hidden rounded-2xl border border-night-edge bg-night-raised">
         <svg
           viewBox={`0 0 ${width} ${svgHeight}`}
           className="block w-full"
@@ -331,24 +331,24 @@ export function MigrationRace() {
             ))}
           </g>
         </svg>
-        <figcaption className="border-t border-white/10 px-5 py-4 text-xs leading-6 text-slate-400">
-          <span className="font-semibold text-slate-200">Asset key:</span>{" "}
+        <figcaption className="border-t border-night-edge px-5 py-4 text-xs leading-6 text-night-ink-soft">
+          <span className="font-semibold text-night-ink-soft">Asset key:</span>{" "}
           {estate.assets.map((a) => (
             <span key={a.idx} className="whitespace-nowrap">
               {a.idx + 1}={a.host.split(".")[0]}·{a.algorithm}
               {a.idx < estate.assets.length - 1 ? ", " : ". "}
             </span>
           ))}
-          Real estate <code className="text-cyan-300">{estate.name}</code> from the
+          Real estate <code className="text-quantum">{estate.name}</code> from the
           host-disjoint scan corpus · simulator {estate.simSpecVersion}.
         </figcaption>
       </figure>
 
-      <p className="mt-5 text-sm leading-7 text-slate-300" aria-live="polite">
+      <p className="mt-5 text-sm leading-7 text-night-ink-soft" aria-live="polite">
         {finished ? (
           <>
             The outcome-aware plan finishes the same estate with{" "}
-            <strong className="text-white">{formatQrd(headline.exposureSaved)} fewer quantum-risk-days</strong>{" "}
+            <strong className="text-night-ink">{formatQrd(headline.exposureSaved)} fewer quantum-risk-days</strong>{" "}
             ({headline.exposureSavedPct}% less exposure), because it front-loads the
             shortest high-exposure migrations instead of deferring them. Across all 42
             real estates: mean ratio 1.0000 vs 1.0473, Wilcoxon p&nbsp;=&nbsp;1.7×10⁻⁸

@@ -62,10 +62,10 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
     <main className="flex-1 bg-canvas text-foreground">
       <JsonLd />
       <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24 lg:px-12">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+        <p className="font-mono text-micro font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Public verification
         </p>
-        <h1 className="mt-6 max-w-2xl text-4xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl">
+        <h1 className="mt-6 max-w-2xl font-display text-3xl font-semibold leading-[0.95] tracking-[-0.04em] text-foreground sm:text-4xl">
           Check the record yourself.
         </h1>
         <p className="mt-5 max-w-xl text-sm leading-7 text-muted-foreground">
@@ -75,12 +75,12 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
           operating it.
         </p>
 
-        <div className="mt-10 rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+        <div className="mt-10 rounded-2xl border border-border bg-canvas-raised p-6 shadow-sm sm:p-8">
           <VerifyForm />
           {raw && !resolved ? (
             <p
               role="alert"
-              className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 ring-1 ring-inset ring-amber-600/20"
+              className="mt-4 rounded-lg bg-warning-surface px-3 py-2 text-xs font-medium text-warning ring-1 ring-inset ring-warning-border"
             >
               That asset ID is not in the expected format. Use 0x followed by 64
               hexadecimal characters.
@@ -88,7 +88,7 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
           ) : null}
         </div>
 
-        <dl className="mt-10 grid border-t border-slate-300 sm:grid-cols-3">
+        <dl className="mt-10 grid border-t border-border sm:grid-cols-3">
           {EXPLAINER.map((item, index) => (
             <div
               key={item.label}
@@ -96,7 +96,7 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
                 index > 0 ? "border-t border-border sm:border-l sm:border-t-0" : ""
               }`}
             >
-              <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              <dt className="font-mono text-label font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 {item.label}
               </dt>
               <dd className="mt-3 text-xs leading-6 text-muted-foreground">{item.body}</dd>
@@ -104,8 +104,8 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
           ))}
         </dl>
 
-        <section aria-labelledby="cli-heading" className="mt-12 border-t border-slate-300 pt-8">
-          <h2 id="cli-heading" className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
+        <section aria-labelledby="cli-heading" className="mt-12 border-t border-border pt-8">
+          <h2 id="cli-heading" className="text-lg font-semibold tracking-[-0.02em] text-foreground">
             Prefer to verify outside the browser?
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
@@ -114,28 +114,28 @@ export default async function VerifyIndexPage({ searchParams }: Props) {
           </p>
           <CodeBlock
             label="Independent verification command"
-            className="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100"
+            className="mt-4 overflow-x-auto rounded-xl border border-night-edge bg-night p-4 font-mono text-xs leading-6 text-night-ink"
           >
             <code>crypto-inspector verify 0x&lt;asset-id&gt;</code>
           </CodeBlock>
           <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm font-semibold">
             <Link
               href="/scanner"
-              className="inline-flex items-center gap-2 text-foreground underline decoration-slate-300 underline-offset-8 transition hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+              className="inline-flex items-center gap-2 text-foreground underline decoration-border underline-offset-8 transition hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
             >
               Start your own scan
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
               href="/certify"
-              className="inline-flex items-center gap-2 text-muted-foreground underline decoration-slate-300 underline-offset-8 transition hover:text-foreground hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+              className="inline-flex items-center gap-2 text-muted-foreground underline decoration-border underline-offset-8 transition hover:text-foreground hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
             >
               Verify a certification bundle
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
               href="/#workflow"
-              className="inline-flex items-center gap-2 text-muted-foreground underline decoration-slate-300 underline-offset-8 transition hover:text-foreground hover:decoration-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+              className="inline-flex items-center gap-2 text-muted-foreground underline decoration-border underline-offset-8 transition hover:text-foreground hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
             >
               How the protocol works
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

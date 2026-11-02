@@ -77,11 +77,15 @@ export default function RootLayout({
             cannot be set via <meta> (browsers ignore and warn on it). */}
         <meta name="referrer" content="strict-origin-when-cross-origin" />
       </head>
-      <body className="flex min-h-screen flex-col bg-slate-950 font-sans text-slate-100 antialiased">
+      <body className="flex min-h-screen flex-col bg-night font-sans text-night-ink antialiased">
         <ErrorBoundary>
           <Providers>
             <SkipLink />
-            <CommandPalette />
+            {/* Portal only — the visible trigger is mounted inside the
+                header's left cluster (SiteHeader), where a Dialog.Trigger
+                could not reach this Dialog.Root. The palette opens it through
+                the COMMAND_PALETTE_OPEN_EVENT channel. */}
+            <CommandPalette renderTrigger={false} />
             <SiteHeader />
             <div id="main-content" className="flex flex-1 flex-col">
               {children}

@@ -22,7 +22,7 @@ describe("Button", () => {
       </Button>,
     );
     const button = screen.getByRole("button", { name: "Export" });
-    expect(button).toHaveClass("border-slate-300");
+    expect(button).toHaveClass("border-border");
     expect(button).toHaveClass("h-8");
     // variant class must not leak in from other variants
     expect(button.className).not.toContain("bg-qtrust-600");

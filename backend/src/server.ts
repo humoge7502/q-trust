@@ -12,6 +12,7 @@ import * as dotenv from "dotenv";
 import { Redis } from "ioredis";
 import { startIndexer, stopIndexer, pool as pgPool } from "./services/indexer.js";
 import { fetchWithRetry } from "./services/upstream.js";
+import { appendScanHistory, hashScanTarget } from "./services/scan-history-store.js";
 import { registerScannerRoutes } from "./routes/scanner.js";
 import { registerRelayRoutes } from "./routes/relay.js";
 import { registerGPURoutes } from "./services/gpu-service.js";
@@ -155,11 +156,12 @@ export async function buildServer(): Promise<FastifyInstance> {
     });
   }
 
-  // Hosted deployments keep the Python inspector, the persistent evidence
-  // chain and the ML model server on the operator machine. When
-  // QTRUST_SCANNER_PROXY_URL is set, the scanner, evidence and GPU routes are
-  // transparently forwarded there (the caller's API key is preserved so the
-  // upstream enforces the same policy).
+  // Hosted deployments keep the Python inspector and the ML model server on
+  // the operator machine. When QTRUST_SCANNER_PROXY_URL is set, the scanner
+  // and GPU routes are transparently forwarded there (the caller's API key is
+  // preserved so the upstream enforces the same policy). The evidence ledger
+  // is NOT proxied: it lives in Postgres and runs in-process on every
+  // instance, so a ledger created anywhere verifies everywhere.
   //
   // Guard: only proxy from a hosted runtime. The local Docker API shares the
   // same .env (which carries the public tunnel URL for the Vercel deploy), so
@@ -173,9 +175,13 @@ export async function buildServer(): Promise<FastifyInstance> {
   if (scannerProxy) {
     server.addHook("preHandler", async (request, reply) => {
       const path = request.url.split("?")[0] ?? "";
+      // Repository ingestion is served by the hosted scanner service (or the
+      // local archive fallback), never by the operator tunnel.
+      if (path === "/v1/scan/repo") {
+        return;
+      }
       if (
         !path.startsWith("/v1/scan/") &&
-        !path.startsWith("/v1/evidence/") &&
         !path.startsWith("/v1/gpu/")
       ) {
         return;
@@ -210,6 +216,25 @@ export async function buildServer(): Promise<FastifyInstance> {
             code: "scanner_unavailable",
             upstream_status: upstream.status,
           });
+        }
+        // Proxied scans never reach the in-process route body, so record them
+        // here; otherwise /v1/stats would only count the scans that run on
+        // this instance and the production totals would undercount.
+        if (request.method === "POST" && path.startsWith("/v1/scan/") && upstream.status === 200) {
+          try {
+            const parsed = JSON.parse(body.toString("utf8")) as { findings?: unknown };
+            const findings = Array.isArray(parsed?.findings) ? parsed.findings.length : 0;
+            const target = (request.body as { target?: unknown; directory?: unknown } | undefined)?.target
+              ?? (request.body as { directory?: unknown } | undefined)?.directory;
+            await appendScanHistory({
+              targetHash: hashScanTarget(typeof target === "string" ? target : path),
+              type: path.slice("/v1/scan/".length),
+              timestamp: new Date().toISOString(),
+              count: findings,
+            });
+          } catch (err) {
+            server.log.warn({ err, path }, "proxied scan history append failed");
+          }
         }
         reply
           .code(upstream.status)

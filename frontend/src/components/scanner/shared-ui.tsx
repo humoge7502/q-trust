@@ -37,13 +37,13 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3 border-b border-border bg-[#fbfbfa] px-5 py-4 sm:px-6">
+    <section className="overflow-hidden rounded-2xl border border-border bg-canvas-raised shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3 border-b border-border bg-canvas px-5 py-4 sm:px-6">
         <div className="min-w-0">
           <p className="font-mono text-label uppercase tracking-[0.22em] text-muted-foreground">
             {index}
           </p>
-          <h2 className="mt-1.5 text-lg font-semibold tracking-[-0.03em] text-slate-950">
+          <h2 className="mt-1.5 text-lg font-semibold tracking-[-0.03em] text-foreground">
             {title}
           </h2>
           <p className="mt-1.5 max-w-xl text-micro leading-5 text-muted-foreground">{copy}</p>

@@ -54,21 +54,21 @@ const columns = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-slate-950 text-slate-400">
+    <footer className="border-t border-white/10 bg-night text-night-ink-soft">
       <div className="mx-auto max-w-[88rem] px-5 py-14 sm:px-8 lg:px-12 lg:py-16">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_repeat(3,minmax(0,0.7fr))] lg:gap-10">
           <div className="max-w-sm">
             <Link
               href="/"
-              className="group inline-flex items-center gap-3 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              className="group inline-flex items-center gap-3 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
             >
               <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-300 text-[11px] font-bold tracking-widest text-slate-950 transition group-hover:bg-cyan-200"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-quantum-soft text-[11px] font-bold tracking-widest text-night transition group-hover:bg-quantum"
                 aria-hidden="true"
               >
                 QT
               </span>
-              <span className="text-sm font-semibold text-white">Q-Trust</span>
+              <span className="text-sm font-semibold text-night-ink">Q-Trust</span>
             </Link>
             <p className="mt-5 text-xs leading-6">
               Post-quantum migration assurance on {CHAIN.name}. Scan the estate,
@@ -76,14 +76,17 @@ export function SiteFooter() {
               checked by anyone — without a wallet or an account.
             </p>
             <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-[11px]">
-              <ShieldCheckIcon className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+              {/* Emerald is the "verified/live" semantic; qtrust-300 (#5eead4,
+                  teal-green family) carries the same cue on the brand token
+                  scale without a raw palette utility. */}
+              <ShieldCheckIcon className="h-3.5 w-3.5 text-qtrust-300" aria-hidden="true" />
               Hash-only on-chain · evidence stays private
             </p>
           </div>
 
           {columns.map((column) => (
             <nav key={column.label} aria-label={column.label} className="text-xs">
-              <h2 className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+              <h2 className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-night-ink-soft">
                 {column.label}
               </h2>
               <ul className="mt-4 space-y-3">
@@ -94,7 +97,7 @@ export function SiteFooter() {
                         href={link.href}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                        className="inline-flex items-center gap-1 transition hover:text-night-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
                       >
                         {link.label}
                         <ArrowTopRightOnSquareIcon className="h-3 w-3" aria-hidden="true" />
@@ -102,7 +105,7 @@ export function SiteFooter() {
                     ) : (
                       <Link
                         href={link.href}
-                        className="transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                        className="transition hover:text-night-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
                       >
                         {link.label}
                       </Link>
@@ -118,7 +121,7 @@ export function SiteFooter() {
           <p>
             © {new Date().getFullYear()} Q-Trust contributors · MIT licensed
           </p>
-          <p className="font-mono uppercase tracking-[0.16em] text-slate-400">
+          <p className="font-mono uppercase tracking-[0.16em] text-night-ink-soft">
             {CHAIN.name} · chain id {CHAIN.id}
           </p>
         </div>

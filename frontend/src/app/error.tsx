@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { fontVariables } from "@/lib/fonts";
+
 export default function GlobalError({
   error,
   reset,
@@ -14,7 +16,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html lang="en">
+    <html lang="en" className={fontVariables}>
       <body className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-8 text-center shadow-sm">
           <h1 className="mb-2 text-2xl font-bold">Something went wrong</h1>

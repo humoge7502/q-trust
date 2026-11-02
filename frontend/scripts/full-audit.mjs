@@ -80,6 +80,52 @@ async function http(url, options = {}) {
   return { status: response.status, headers: response.headers, body, ms: Date.now() - started };
 }
 
+/**
+ * Assert the planner actually returned and rendered a plan.
+ *
+ * The previous checks waited for the text "RSA-2048", which the sample-CBOM
+ * textarea already contains — so they passed even when /v1/plans 503'd. This
+ * waits for one of the two terminal states the panel renders (result or
+ * error), then reads the stable data-* hooks from PlanningPanel.
+ */
+async function assertPlanRendered(section, page, label) {
+  const result = page.locator('[data-testid="plan-result"]');
+  const error = page.locator('[data-testid="plan-error"]');
+  const settled = await Promise.race([
+    result.waitFor({ timeout: 120_000 }).then(() => "result"),
+    error.waitFor({ timeout: 120_000 }).then(() => "error"),
+  ]).catch(() => "timeout");
+
+  if (settled === "error") {
+    const kind = (await error.getAttribute("data-error-kind").catch(() => null)) ?? "unknown";
+    const text = ((await error.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
+    check(section, label, false, `${kind} error: ${text.slice(0, 160)}`);
+    return;
+  }
+  if (settled !== "result") {
+    check(section, label, false, "no plan result after 120s (no error rendered either)");
+    return;
+  }
+
+  const rows = Number(await result.getAttribute("data-plan-rows"));
+  const mode = (await result.getAttribute("data-planner-mode")) ?? "unknown";
+  const rowIds = await page
+    .locator('[data-testid="plan-row"]')
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-asset-id")));
+  const rsaRow = await result
+    .locator('[data-testid="plan-row"][data-asset-id="asset-0001"]')
+    .first()
+    .evaluate((node) => /RSA-2048/.test(node.textContent ?? ""))
+    .catch(() => false);
+  note(section, `${label} planner mode`, mode);
+  check(
+    section,
+    label,
+    rows >= 4 && rowIds.length === rows && rsaRow,
+    `${rows} rows, ${rowIds.length} rendered, mode=${mode}${rsaRow ? "" : ", RSA row missing"}`,
+  );
+}
+
 // ---------------------------------------------------------------------------
 // 1. HTTP surface
 // ---------------------------------------------------------------------------
@@ -673,8 +719,7 @@ async function connectWallet(page, label) {
   // an anonymous visitor (the proxy classifies them as public-compute).
   await page.getByRole("button", { name: "Load sample CBOM" }).click();
   await page.getByRole("button", { name: "Generate plan" }).click();
-  await page.getByText("RSA-2048").first().waitFor({ timeout: 120_000 }).catch(() => {});
-  check("wallet", "dashboard planner produces a plan", (await page.getByText("RSA-2048").count()) > 0);
+  await assertPlanRendered("wallet", page, "dashboard planner produces a plan");
 
   await page.getByRole("button", { name: "Verify on-chain" }).first().click();
   await page.getByRole("button", { name: /Verified ✓ active/ }).first().waitFor({ timeout: 60_000 }).catch(() => {});
@@ -915,8 +960,7 @@ function changedToBase(chain) {
   await page.getByRole("tab", { name: "AI Planner" }).click();
   await page.getByRole("button", { name: "Load sample CBOM" }).click();
   await page.getByRole("button", { name: "Generate plan" }).click();
-  await page.getByText("RSA-2048").first().waitFor({ timeout: 120_000 });
-  check("scanner", "AI planner produces a plan", await page.getByText("RSA-2048").first().isVisible());
+  await assertPlanRendered("scanner", page, "AI planner produces a plan");
 
   await page.getByRole("tab", { name: "AI & GPU Lab" }).click();
   await page.getByRole("heading", { name: "Quantum Threat Estimate" }).waitFor({ timeout: 30_000 });
