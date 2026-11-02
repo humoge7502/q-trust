@@ -96,6 +96,17 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
   const { path } = await context.params;
   const pathName = `/${path.join("/")}`;
 
+  // Audit (post-merge adversarial pass): Next percent-decodes catch-all
+  // segments before they reach this handler, so `/api/v1/stats/%2e%2e/admin`
+  // arrives here with a literal `..` segment. The policy match below runs on
+  // the raw, un-normalized join — the poisoned path inherits the public-read
+  // `/v1/stats` rule — while undici normalizes dot segments before the backend
+  // sees the URL, landing the request on `/v1/admin`. Reject dot segments
+  // outright, before any policy decision is made.
+  if (path.some((segment) => segment === "." || segment === "..")) {
+    return jsonError("API path is not available through this proxy", 400);
+  }
+
   // Only the versioned API surface (and bare health) is proxied at all.
   if (!pathName.startsWith("/v1/") && pathName !== "/health") {
     return jsonError("API path is not available through this proxy", 404);
