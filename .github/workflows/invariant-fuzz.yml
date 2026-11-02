@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@df0e4c8b6bbcd4b105e0e29e4043736c16a1c6e4 # v1.4.1
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
         with:
           version: stable
 
@@ -48,7 +48,10 @@ jobs:
         env:
           FOUNDRY_PROFILE: fuzz-nightly
         run: |
-          cat >> foundry.toml <<'EOF'
+          for v in "$FUZZ_RUNS" "$INVARIANT_RUNS"; do
+            case "$v" in ''|*[!0-9]*) echo "fuzz params must be positive integers (got: '$v')"; exit 1;; esac
+          done
+          cat >> foundry.toml <<EOF
 
           [profile.fuzz-nightly.fuzz]
           runs = ${FUZZ_RUNS}
