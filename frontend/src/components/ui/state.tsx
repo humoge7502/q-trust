@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 /**
  * Empty and error states.
  *
- * Both replaced a bare `<p className="p-6 text-sm text-slate-500">No assets
- * registered yet.</p>`. A one-line grey sentence answers "is it broken or
+ * Both replaced a bare grey `<p>No assets registered yet.</p>`. A one-line grey
+ * sentence answers "is it broken or
  * empty?" badly: it does not say what happened, whether the user did anything
  * wrong, or what to do next — and in a data-bound tool those are the only three
  * questions that matter.

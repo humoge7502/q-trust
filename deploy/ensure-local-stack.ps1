@@ -197,12 +197,27 @@ function Ensure-Tunnel {
         return @{ Url = $url; Changed = $true }
       }
       if (-not (Test-TunnelUrl -Url $url)) {
-        Write-Log "$Name tunnel URL $url is temporarily unreachable; keeping the process so it can reconnect with the same URL"
+        # A quick tunnel can survive a short 530 blip, but a QUIC connection
+        # that has been dead for many minutes will not recover on its own.
+        # Restarting changes the URL, which triggers an automatic Vercel env
+        # sync and redeploy below, so only do it after a sustained outage.
+        $ageMinutes = 0
+        try { $ageMinutes = ((Get-Date) - [datetime]$process.CreationDate).TotalMinutes } catch { }
+        if ($ageMinutes -lt 15) {
+          Write-Log "$Name tunnel URL $url is temporarily unreachable; keeping the process so it can reconnect with the same URL"
+          return @{ Url = $url; Changed = $false }
+        }
+        Write-Log "$Name tunnel URL $url has been unreachable for $([math]::Round($ageMinutes, 1)) minutes; restarting with HTTP/2"
+        Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+        $process = $null
+      } else {
+        return @{ Url = $url; Changed = $false }
       }
-      return @{ Url = $url; Changed = $false }
+    } else {
+      Write-Log "$Name tunnel (pid $($process.ProcessId)) is running; no URL in the log yet, keeping it"
+      return @{ Url = $ExistingUrl; Changed = $false }
     }
-    Write-Log "$Name tunnel (pid $($process.ProcessId)) is running; no URL in the log yet, keeping it"
-    return @{ Url = $ExistingUrl; Changed = $false }
   }
 
   $exe = Ensure-Cloudflared
@@ -211,7 +226,7 @@ function Ensure-Tunnel {
   Write-Log "Starting $Name tunnel on port $Port"
   Start-Process -FilePath $exe -ArgumentList @(
     'tunnel', '--url', "http://127.0.0.1:$Port", '--no-autoupdate',
-    '--edge-ip-version', '4',
+    '--edge-ip-version', '4', '--protocol', 'http2',
     '--logfile', ('"{0}"' -f $logPath), '--loglevel', 'info'
   ) -WindowStyle Hidden | Out-Null
 

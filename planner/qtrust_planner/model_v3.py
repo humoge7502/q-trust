@@ -19,7 +19,7 @@ Key differences from v2:
   - 2-layer MLP heads (vs single Linear)
   - Designed for BF16 mixed-precision training
 
-AUDIT NOTE — BatchNorm correctness (planner/model_v3.py:67,105,116,121,126):
+AUDIT NOTE — BatchNorm correctness (RESOLVED 2026-10-23):
 
     BatchNorm1d normalizes over the N (node) dimension. Under PyG batching,
     DataLoader concatenates all graphs in a mini-batch into one tensor
@@ -31,42 +31,33 @@ AUDIT NOTE — BatchNorm correctness (planner/model_v3.py:67,105,116,121,126):
 
     Correct choices for batched GNNs are GraphNorm (Li et al., 2020 — per-graph
     affine normalization) or LayerNorm (Ba et al., 2016 — per-node, batch-
-    agnostic). Input already uses LayerNorm; hidden layers should follow.
+    agnostic).
 
-    Current status (2026-08-26):
-      * Shipped checkpoints (model.pt, model_gpu_v3.pt) were trained with
-        BatchNorm, so this file keeps ``norm="batch"`` as the **default for
-        checkpoint compatibility**.
-      * ``MigrationGNNv3(norm="layer")`` and ``norm="graph"`` are available
-        for the retrain. Pass ``norm="layer"`` to train with LayerNorm
-        (no batch dependence, works for single-node graphs) or ``norm="graph"``
-        to train with PyG GraphNorm (per-graph statistics via ``batch``).
-      * Promotion gate: v2 (BatchNorm, τ=0.970 canonical, refreshed
-        2026-09-02 after the corrected-pool retrain) remains the default
-        in planner/server.py (QTRUST_MODEL_PATH → model.pt) until a LayerNorm/
-        GraphNorm v3 retrain **beats v2 on the canonical held-out benchmark**
-        (scipy Kendall tau, seed=999, same split as benchmark.py). See
-        docs/WHITEPAPER.md §6.5, results/benchmark*.json, and
-        qtrust_planner/benchmark_v3.py. CI should enforce this (see below).
+    RESOLUTION (2026-10-23):
+      * ``norm="layer"`` (LayerNorm) is now the **default** for both
+        ``MigrationGNNv3`` and ``MLPHead``. New models are correct-by-default
+        under PyG batching. ``norm="graph"`` (GraphNorm) is also available.
+      * ``norm="batch"`` is RETAINED ONLY for reproducing the legacy
+        BatchNorm-trained checkpoints (model_gpu_v3.pt, model_real_v3.pt,
+        model_ddp_v3.pt). It is NOT valid for multi-estate batched inference
+        and must not be used for new training; ``train_gpu.py`` now defaults
+        to ``--norm layer``.
+      * Legacy BatchNorm checkpoints were trained with the leaky normalization.
+        Their leave-one-out / in-distribution numbers are therefore produced
+        with a known cross-graph-statistic artifact and must be RETRAINED with
+        ``norm="layer"`` before those numbers are claimed as validated results.
+        See the deprecation warning emitted by ``predict._load_trained_model``
+        when it loads a ``norm="batch"`` v3 checkpoint.
+      * Promotion gate: v2 (BatchNorm, τ=0.970 canonical) remains the served
+        default (QTRUST_MODEL_PATH → model.pt) until a LayerNorm v3 retrain
+        beats v2 on the canonical held-out benchmark (scipy Kendall tau,
+        seed=999). See qtrust_planner/benchmark_v3.py.
 
-    Recommended CI gate (not yet in .github/workflows/ci.yml):
-
-        python -m qtrust_planner.benchmark_v3 --n-graphs 1000 --json-out /tmp/v3.json
-        python -c "
-        import json
-        v2 = json.load(open('planner/results/benchmark.json'))['gnn-listmle']['mean']['kendall']
-        v3 = json.load(open('/tmp/v3.json'))['v3 (GPU-trained, 256-dim)']['kendall']
-        assert v3 > v2, f'v3 tau {v3:.4f} must beat v2 tau {v2:.4f} before promotion'
-        "
-
-    Migration plan:
-      1. Train ``MigrationGNNv3(norm="layer")`` at 10K/100K scale via train_gpu.py
-         (add ``--norm layer`` flag — TODO).
-      2. Evaluate with benchmark_v3.py on the canonical seed=999 split.
-      3. If τ_layer > τ_v2, replace planner/model.pt and update server default.
-
-    Checkpoint compatibility: state_dict keys are ``bn*`` for batch and
-    ``norm*``/``gn*`` for layer/graph — a small loader shim maps legacy keys.
+    Checkpoint compatibility: the storage attribute is always named ``bn*``
+    regardless of module type, so LayerNorm/BatchNorm/GraphNorm state dicts
+    load via ``load_state_dict(strict=False)``; the running-statistic keys of
+    a BatchNorm checkpoint are simply ignored when mapped onto a LayerNorm
+    module (their shapes match for the affine weights).
 """
 from __future__ import annotations
 
@@ -146,12 +137,13 @@ class MLPHead(nn.Module):
     """2-layer MLP head with configurable normalization and dropout.
 
     Args:
-        norm: "batch" (legacy BatchNorm1d), "layer" (LayerNorm, recommended),
-              or "graph" (GraphNorm — per-graph). Defaults to "batch" for
-              checkpoint compatibility with shipped model_gpu_v3.pt.
+        norm: "layer" (LayerNorm, default — correct under PyG batching),
+              "graph" (GraphNorm — per-graph), or "batch" (legacy BatchNorm1d,
+              retained only to reproduce legacy checkpoints). New training
+              should use "layer".
     """
 
-    def __init__(self, in_dim: int, hidden_dim: int, out_dim: int, dropout: float = 0.15, norm: str = "batch"):
+    def __init__(self, in_dim: int, hidden_dim: int, out_dim: int, dropout: float = 0.15, norm: str = "layer"):
         super().__init__()
         self.norm = _make_norm(norm, in_dim)
         self.norm_type = norm.lower()
@@ -188,10 +180,10 @@ class MigrationGNNv3(nn.Module):
         dropout: Dropout rate (default 0.15).
         use_centrality: If True, augment features with in/out degree.
         variant: 'hybrid' (GCN+GAT) or 'gcn' (all GCN).
-        norm: Normalization for hidden GCN layers and MLP heads — "batch"
-              (legacy BatchNorm1d, checkpoint-compatible default), "layer"
-              (LayerNorm, recommended for batched graphs), or "graph"
-              (GraphNorm, per-graph). See module AUDIT NOTE.
+        norm: Normalization for hidden GCN layers and MLP heads — "layer"
+              (LayerNorm, default — correct under PyG batching), "graph"
+              (GraphNorm, per-graph), or "batch" (legacy BatchNorm1d, retained
+              only to reproduce legacy checkpoints). See module AUDIT NOTE.
     """
 
     def __init__(
@@ -203,7 +195,7 @@ class MigrationGNNv3(nn.Module):
         dropout: float = 0.15,
         use_centrality: bool = True,
         variant: str = "hybrid",
-        norm: str = "batch",
+        norm: str = "layer",
     ) -> None:
         super().__init__()
         self.input_features = input_features

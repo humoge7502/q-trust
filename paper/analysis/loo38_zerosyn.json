@@ -1,0 +1,1044 @@
+{
+  "protocol": "leave-one-out (host-disjoint CBOMs, real TLS scan)",
+  "n_cboms": 38,
+  "n_hosts": 275,
+  "fold_metrics": {
+    "real_finance_0.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.071429,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_finance_1.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 0.5
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.545545,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_finance_2.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 0.125
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.094491,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_gov_edu_0.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.436436,
+        "node_rank": 0.25
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.109109,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_gov_edu_1.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.357143,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.071429,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_gov_edu_2.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.071429,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_gov_edu_3.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.243975,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_gov_edu_4.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.043355,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_gov_edu_5.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.536745,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_gov_edu_6.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "n_assets": 2
+    },
+    "real_infra_0.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 0.5
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.094491,
+        "node_rank": 0.25
+      },
+      "n_assets": 8
+    },
+    "real_infra_1.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.779194,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.779194,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.229175,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_infra_2.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.632456,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.632456,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.632456,
+        "node_rank": 0.4
+      },
+      "n_assets": 5
+    },
+    "real_media_0.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.357143,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_media_1.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.816497,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.816497,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.0,
+        "node_rank": 0.0
+      },
+      "n_assets": 3
+    },
+    "real_mixed_0.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 0.25
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.146385,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_mixed_1.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.0,
+        "node_rank": 0.25
+      },
+      "n_assets": 8
+    },
+    "real_mixed_10.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.681385,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.681385,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.052414,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_mixed_11.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.341565,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_mixed_12.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.83666,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.83666,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": -0.597614,
+        "node_rank": 0.0
+      },
+      "n_assets": 5
+    },
+    "real_mixed_2.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.779194,
+        "node_rank": 0.5
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.779194,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.137505,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_mixed_3.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.779194,
+        "node_rank": 0.5
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.779194,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.320844,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_mixed_4.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.048795,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_mixed_5.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.218218,
+        "node_rank": 0.25
+      },
+      "n_assets": 8
+    },
+    "real_mixed_6.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.327327,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_mixed_7.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 0.375
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.130066,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_mixed_8.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.5,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.5,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_mixed_9.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 0.5
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_security_0.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 0.5
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.0,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_security_1.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.216777,
+        "node_rank": 0.25
+      },
+      "n_assets": 8
+    },
+    "real_security_2.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.333333,
+        "node_rank": 0.333333
+      },
+      "n_assets": 3
+    },
+    "real_tech_0.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.681385,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.681385,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.576557,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_tech_1.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.109109,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_tech_2.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 0.5
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.654654,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.109109,
+        "node_rank": 0.125
+      },
+      "n_assets": 8
+    },
+    "real_tech_3.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 0.75
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.823754,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.216777,
+        "node_rank": 0.5
+      },
+      "n_assets": 8
+    },
+    "real_tech_4.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.283473,
+        "node_rank": 0.25
+      },
+      "n_assets": 8
+    },
+    "real_tech_5.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 0.375
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.731925,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.341565,
+        "node_rank": 0.0
+      },
+      "n_assets": 8
+    },
+    "real_tech_6.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 1.0,
+        "node_rank": 1.0
+      },
+      "n_assets": 1
+    }
+  },
+  "aggregate": {
+    "model": {
+      "exact_rank": {
+        "mean": 0.368421,
+        "median": 0.0,
+        "stdev": 0.488852,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "top5": {
+        "mean": 0.684211,
+        "median": 1.0,
+        "stdev": 0.471069,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "top10": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "kendall": {
+        "mean": 0.71713,
+        "median": 0.731925,
+        "stdev": 0.142989,
+        "min": 0.357143,
+        "max": 1.0
+      },
+      "node_rank": {
+        "mean": 0.733553,
+        "median": 0.75,
+        "stdev": 0.258587,
+        "min": 0.125,
+        "max": 1.0
+      }
+    },
+    "heuristic": {
+      "exact_rank": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "top5": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "top10": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "kendall": {
+        "mean": 0.726632,
+        "median": 0.731925,
+        "stdev": 0.12689,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "node_rank": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "random": {
+      "exact_rank": {
+        "mean": 0.052632,
+        "median": 0.0,
+        "stdev": 0.226294,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "top5": {
+        "mean": 0.157895,
+        "median": 0.0,
+        "stdev": 0.369537,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "top10": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "kendall": {
+        "mean": -0.036054,
+        "median": -0.071429,
+        "stdev": 0.387676,
+        "min": -0.597614,
+        "max": 1.0
+      },
+      "node_rank": {
+        "mean": 0.160746,
+        "median": 0.125,
+        "stdev": 0.235662,
+        "min": 0.0,
+        "max": 1.0
+      }
+    }
+  },
+  "model_vs_heuristic_tau_b": -0.009502,
+  "model_vs_random_tau_b": 0.753184,
+  "config": {
+    "init": "planner\\model_gpu_v3.pt",
+    "epochs": 30,
+    "n_synthetic": 0,
+    "batch_size": 16,
+    "learning_rate": 0.0005,
+    "seed": 42
+  },
+  "device": "cpu",
+  "generated_at": "2026-10-22T06:48:44Z"
+}

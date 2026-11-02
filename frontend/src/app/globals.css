@@ -80,6 +80,50 @@
   --color-canvas: #f6f7f5;
   --color-canvas-raised: #ffffff;
 
+  /* Night surface system (marketing layer). The dark pages rendered
+     slate-950/900 with white-alpha hairlines before this existed — the same
+     unnamed-palette drift the light layer cured with --color-canvas, on the
+     other side of the theme. One dark canvas, named once:
+       night           the single dark canvas (was bg-slate-950 everywhere)
+       night-raised    cards/sheets lifted off the canvas
+       night-edge      hairline separators on dark (decorative, carries no text)
+       night-ink       primary text on dark (#e2e8f0 on #020617 = 16.4:1)
+       night-ink-soft  secondary text on dark (#94a3b8 on #020617 = 7.9:1)
+       night-ink-faint RESERVED for non-text roles on dark (placeholder tint,
+                       decorative strokes): #64748b on #020617 = 4.23:1, below
+                       the 4.5:1 AA text minimum — do NOT use for text; use
+                       night-ink-soft (#94a3b8, 7.9:1) instead
+     All pairs measured against --color-night, the same "check the pair, not
+     just the colour" rule the state palette documents. */
+  --color-night: #020617;
+  --color-night-raised: #0b1220;
+  --color-night-edge: #1e293b;
+  --color-night-ink: #e2e8f0;
+  --color-night-ink-soft: #94a3b8;
+  --color-night-ink-faint: #64748b;
+
+  /* Quantum accent — the cyan family already carried every "live / on-chain /
+     verified" cue in the marketing layer, as raw cyan-300/400 literals. Named
+     once so the accent can be audited like the risk scale: on night surfaces
+     it reads as instrument light, not decoration. */
+  --color-quantum: #22d3ee;      /* cyan-400 — primary accent on dark */
+  --color-quantum-soft: #67e8f9; /* cyan-300 — bright/hover state */
+  --color-quantum-dim: #0e7490;  /* cyan-700 — pressed/subdued edge */
+
+  /* Display type scale. The marketing layer was setting the same editorial
+     scale through per-section clamp() literals; these roles make the hierarchy
+     a token decision. Tailwind v4 exposes each as `text-hero`, etc., with the
+     line-height/tracking applied automatically. */
+  --text-hero: clamp(2.75rem, 8.6vw, 8.8rem);
+  --text-hero--line-height: 0.86;
+  --text-hero--letter-spacing: -0.075em;
+  --text-display-xl: clamp(2.5rem, 5.5vw, 6rem);
+  --text-display-xl--line-height: 0.9;
+  --text-display-xl--letter-spacing: -0.06em;
+  --text-display-lg: clamp(2.25rem, 4.5vw, 4rem);
+  --text-display-lg--line-height: 0.95;
+  --text-display-lg--letter-spacing: -0.055em;
+
   /* shadcn/ui design tokens (audit Critical #4). GPU/analytics panels use
      bg-card, text-foreground, border-border, etc. — without these the
      components render transparent and borderless. */
@@ -118,6 +162,11 @@
 :root {
   color-scheme: light;
   --scroll-progress: 0;
+  /* Migration Race exposure tones (dark-section fills; numbers and labels
+     always repeat the information in text — colour is never the only cue). */
+  --race-broken: #f87171; /* Shor-vulnerable algorithm families */
+  --race-weakened: #fbbf24; /* Grover-weakened / unknown */
+  --race-safe: #67e8f9; /* PQC or no quantum exposure */
 }
 
 /* Base typography roles. Headings take the display face so the editorial
@@ -145,6 +194,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* Anchor targets land clear of the 4.5rem (72px) sticky header — the root
+     scroll-padding is honored by native scrolling and by Lenis 1.3.27. */
+  scroll-padding-top: 4.5rem;
 }
 
 body {
@@ -179,20 +231,18 @@ html, body {
   box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--color-qtrust-600);
 }
 
-/* Ambient visual helpers */
-.aurora-blob {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(48px);
-  opacity: 0.45;
-  pointer-events: none;
+/* Mount-time grow-in for measurement bars (compliance segments, score bars).
+   transform/opacity only — never width — so the fill animates on the
+   compositor; @starting-style makes it a pure-CSS entry (no JS state). The
+   reduced-motion kill-switch below already collapses this to a no-op. */
+.grow-in-x {
+  transform-origin: left;
+  transition: transform 550ms var(--ease-brand);
 }
-
-.glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+@starting-style {
+  .grow-in-x {
+    transform: scaleX(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -203,9 +253,6 @@ html, body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-  .aurora-blob {
-    display: none;
   }
   /* Essential feedback must survive the kill-switch: loading spinners and
      pending indicators stay visible (slowed, not frozen) so the UI never
@@ -223,8 +270,8 @@ html, body {
   z-index: 100;
   height: 2px;
   width: calc(var(--scroll-progress) * 100%);
-  background: linear-gradient(90deg, #67e8f9, #a78bfa 55%, #6ee7b7);
-  box-shadow: 0 0 18px rgba(103, 232, 249, 0.65);
+  background: linear-gradient(90deg, var(--color-quantum-soft), var(--color-qtrust-400) 55%, var(--color-qtrust-300));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--color-quantum-soft) 65%, transparent);
   pointer-events: none;
   transform-origin: left;
 }
@@ -239,11 +286,6 @@ html, body {
   filter: blur(2px);
   opacity: 0.5;
   mix-blend-mode: screen;
-}
-
-.hero-orb-one {
-  background: radial-gradient(circle at 45% 45%, rgba(34, 211, 238, 0.2), transparent 62%);
-  animation: orb-drift-one 16s ease-in-out infinite alternate;
 }
 
 .hero-orb-two {
@@ -293,11 +335,6 @@ html, body {
   to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
-@keyframes orb-drift-one {
-  from { transform: translate3d(-2%, -1%, 0) scale(1); }
-  to { transform: translate3d(8%, 7%, 0) scale(1.08); }
-}
-
 @keyframes orb-drift-two {
   from { transform: translate3d(3%, -3%, 0) scale(1); }
   to { transform: translate3d(-8%, 8%, 0) scale(1.12); }
@@ -310,8 +347,27 @@ html, body {
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .hero-enter, .signal-track, .hero-orb-one, .hero-orb-two { animation: none; }
+  .hero-enter, .signal-track, .hero-orb-two { animation: none; }
   .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+}
+
+/* Per-tab result badge.
+   Rendered from `data-badge` as a pseudo-element on purpose: `textContent` of a
+   tab trigger is its accessible name, and `scripts/full-audit.mjs` asserts the
+   eight exact labels. A real `<span>` badge would turn "Scan" into "Scan20" and
+   silently break that contract. `color-mix` keeps the chip legible on both the
+   inactive (light) and active (near-black) trigger without a second class. */
+.qtab[data-badge]::after {
+  content: attr(data-badge);
+  margin-left: 0.125rem;
+  border-radius: 9999px;
+  padding: 0 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  background-color: color-mix(in srgb, currentColor 16%, transparent);
+  color: inherit;
 }
 
 /* Custom scrollbar for long lists */
@@ -328,4 +384,41 @@ html, body {
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.6);
+}
+
+/* ── Lenis smooth scroll (story pages only) ─────────────────────────
+   Mounted by <SmoothScroll/> on the routes that tell a long-scroll story.
+   scroll-behavior must yield to the smoother while it is active. Reduced
+   motion never mounts Lenis (the component checks prefers-reduced-motion),
+   and the reduced-motion kill-switch above already forces scroll-behavior:
+   auto — these rules only exist for the mounted state. */
+html.lenis-on {
+  scroll-behavior: auto !important;
+}
+
+html.lenis-on body {
+  overscroll-behavior-y: none;
+}
+
+/* Stage lines for the hero entrance choreography. Split lines animate with
+   a staggered clip reveal; with JavaScript unavailable or motion reduced,
+   the base `.hero-enter` animation on the parent keeps the section visible
+   (no content is ever hidden behind a failed animation). */
+.hero-line {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .js-hero .hero-line {
+    clip-path: inset(0 0 110% 0);
+    transform: translateY(0.35em);
+    animation: hero-line-rise 1.1s var(--ease-brand) forwards;
+    animation-delay: calc(150ms + var(--line-index, 0) * 120ms);
+  }
+}
+
+@keyframes hero-line-rise {
+  from { clip-path: inset(0 0 110% 0); transform: translateY(0.35em); }
+  60%  { clip-path: inset(0 0 -10% 0); }
+  to   { clip-path: inset(-10% 0 -10% 0); transform: translateY(0); }
 }

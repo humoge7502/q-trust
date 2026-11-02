@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import numpy as np
+import time
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -727,15 +728,50 @@ def train_agent_ppo(
             avg_reward = sum(rollout_rewards) / max(len(rollout_rewards), 1)
             if avg_reward > best_avg_reward:
                 best_avg_reward = avg_reward
-                # Unwrap compiled wrapper for saving
+                # Unwrap compiled wrapper for saving. Lineage-carrying
+                # payload (2026-10-24): raw state dicts are unloadable history
+                # (checkpoint_manifest.py flags them NO-LINEAGE), so every new
+                # save records config + seed + protocol alongside the weights.
                 to_save = agent._orig_mod if hasattr(agent, "_orig_mod") else agent  # type: ignore[attr-defined]
-                torch.save(to_save.state_dict(), save_path)
+                torch.save({
+                    "state_dict": to_save.state_dict(),
+                    "model_config": {
+                        "input_dim": getattr(to_save, "input_dim", None),
+                        "hidden_dim": getattr(to_save, "hidden_dim", None),
+                    },
+                    "seed": seed,
+                    "n_episodes": rollout + 1,
+                    "n_envs": n_envs,
+                    "learning_rate": learning_rate,
+                    "ppo_epochs": ppo_epochs,
+                    "clip_ratio": clip_ratio,
+                    "entropy_coef": entropy_coef,
+                    "best_avg_reward": best_avg_reward,
+                    "gamma": gamma,
+                    "saved_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }, save_path)
             lr_now = optimizer.param_groups[0]["lr"]
             print(f"PPO rollout {rollout+1:>5}/{n_episodes} | avg_reward={avg_reward:.2f} | best={best_avg_reward:.2f} | lr={lr_now:.2e} | envs={n_envs}")
 
     if not os.path.exists(save_path):
         to_save = agent._orig_mod if hasattr(agent, "_orig_mod") else agent  # type: ignore[attr-defined]
-        torch.save(to_save.state_dict(), save_path)
+        torch.save({
+            "state_dict": to_save.state_dict(),
+            "model_config": {
+                "input_dim": getattr(to_save, "input_dim", None),
+                "hidden_dim": getattr(to_save, "hidden_dim", None),
+            },
+            "seed": seed,
+            "n_episodes": n_episodes,
+            "n_envs": n_envs,
+            "learning_rate": learning_rate,
+            "ppo_epochs": ppo_epochs,
+            "clip_ratio": clip_ratio,
+            "entropy_coef": entropy_coef,
+            "best_avg_reward": best_avg_reward,
+            "gamma": gamma,
+            "saved_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }, save_path)
     print(f"\nPPO training complete. Best avg reward: {best_avg_reward:.2f} (vectorized {n_envs} envs)")
     print(f"Model saved to: {save_path}")
     raw = agent._orig_mod if hasattr(agent, "_orig_mod") else agent  # type: ignore[attr-defined]

@@ -1,30 +1,30 @@
 """
-Temporal GNN — G(t1) → G(t4) modeling, quantum exposure evolution forecasting.
+Temporal GNN — quantum exposure *scenario generator* (RESEARCH PROTOTYPE).
 
-Architecture reference: ``qtrust_ai/README.md`` Phase 3 Planning
-``graph/temporal_gnn.py`` answers **"how will quantum exposure evolve?"**.
+.. warning:: RESEARCH PROTOTYPE — NOT A TRAINED FORECAST.
 
+    This module answers **"how will quantum exposure evolve under a migration
+    plan?"** with a **transparent heuristic**, not a learned model. The canonical
+    73 → 61 → 42 trajectory is an *illustrative planning anchor* (a documented
+    assumption about an aggressive migration under CNSA 2.0), NOT a value fitted
+    to real migration data. No real exposure-vs-time dataset exists in this
+    project, so nothing here is "learned". Treat outputs as directional
+    scenario illustrations for demos and capacity planning, never as predictions.
 
-    G(t1) ──► G(t2) ──► G(t3) ──► G(t4)
-      │         │         │         │
-      ▼         ▼         ▼         ▼
-   risk 73 →  risk 61 → risk ~50 → risk 42   (30 / 90 / 180 days)
-
-The model ingests a *sequence* of dependency-graph snapshots (one per
-migration epoch) and forecasts the risk trajectory under a migration plan.
-Production would use a TGCN / TemporalGCN (GCN + GRU/LSTM over snapshots);
-this CPU stub implements the same API with a deterministic GCN+LSTM fallback
-that reproduces the 73→61→42 anchor without requiring ``torch`` or
-``torch_geometric``.
+    The production architecture reference is TGCN (GCN + GRU/LSTM over
+    snapshots); this CPU implementation provides the *same API* with a
+    deterministic GCN+LSTM fallback that reproduces the planning anchor without
+    requiring ``torch`` or ``torch_geometric``. The optional ``torch`` path is a
+    tiny LSTM trained on the synthetic anchor dataset and is likewise a prototype.
 
 Example:
     from qtrust_ai.graph.temporal_gnn import TemporalGNN, GraphSnapshot
 
     gnn = TemporalGNN(seed=42)
-    gnn.train()
+    gnn.train()                       # fits the prototype to the synthetic anchor
     snaps = [GraphSnapshot.from_graph(g, t=i) for i, g in enumerate(graphs)]
     traj = gnn.predict_trajectory(snaps, horizon_days=[30, 90, 180])
-    assert traj.risks == [61.0, 50.0, 42.0]  # approx, anchor-calibrated
+    # traj.risks are scenario illustrations anchored to the planning trajectory.
 """
 
 from __future__ import annotations
@@ -169,7 +169,12 @@ class TemporalGNNConfig:
     seed: int = 42
     hidden_dim: int = 64
     lstm_layers: int = 1
-    use_torch: bool = True
+    # ``use_torch`` controls whether an experimental TGCN is initialised. It is
+    # OFF by default because the TGCN is NOT part of the forecast path — the
+    # published trajectory is the transparent heuristic in ``_predict_with_weights``.
+    # Setting this True only allocates an (initially untrained) model that must be
+    # explicitly trained via ``train_torch_model()`` for experimental research.
+    use_torch: bool = False
     conformal_alpha: float = 0.1
     conformal_margin: Optional[float] = None
     # Anchor calibration: 73 → 61 @30d → ~50 @90d → 42 @180d
@@ -278,14 +283,22 @@ class TemporalGNN:
     Answers: **"how will quantum exposure evolve?"** under a migration plan or
     under *no action* (baseline).
 
-    The production architecture is **TGCN** (Temporal Graph Convolutional Network):
-    ``GCN(snapshot) → LSTM over snapshots → risk head``. This stub keeps the
-    same API and reproduces the 73→61→42 anchor deterministically when ``torch``
-    is absent, while training a tiny LSTM + linear head when ``torch`` is present.
+    IMPORTANT — honesty note (2026-10-23): This class is a **RESEARCH PROTOTYPE
+    and scenario generator**, NOT a trained forecaster. The published risk
+    trajectory is produced by a transparent, auditable heuristic in
+    :meth:`_predict_with_weights` (calibrated to the 73→61→42 anchor). The
+    optional ``torch`` TGCN path is **experimental only**: it is disabled by
+    default (``use_torch=False``) and is NEVER blended into the forecast. Do not
+    present its output as a model prediction.
+
+    The reference production architecture for temporal migration forecasting is a
+    TGCN (``GCN(snapshot) → LSTM over snapshots → risk head``); this prototype
+    keeps the same API and reproduces the 73→61→42 anchor deterministically
+    without ``torch`` so the module is runnable and auditable everywhere.
 
     Attributes:
         config: :class:`TemporalGNNConfig`.
-        is_trained: Whether :meth:`train` has been called.
+        is_trained: Whether :meth:`train` (heuristic fit) has been called.
 
     Example:
         >>> gnn = TemporalGNN(seed=0)
@@ -340,16 +353,23 @@ class TemporalGNN:
         dataset: Optional[List[Dict[str, Any]]] = None,
         epochs: int = 5,
     ) -> Dict[str, Any]:
-        """Fit temporal weights (stub: heuristic + optional torch).
+        """Fit the transparent heuristic weights (calibrated scenario generator).
+
+        This is NOT a neural-net training step. It fits the interpretable
+        risk-decay heuristic in :meth:`_predict_with_weights` (plus an optional,
+        experimental torch TGCN when ``use_torch=True``). The heuristic alone is
+        what powers :meth:`predict_trajectory`.
 
         Args:
             dataset: List of ``{"snapshots": [GraphSnapshot|dict,...],
                 "horizons": [30,90,180], "labels": [61,50,42]}``. If ``None``
                 a synthetic temporal dataset anchored to 73→61→42 is generated.
-            epochs: Training epochs (torch) or random-search iterations (stub).
+            epochs: Training epochs for the optional experimental torch model
+                (unused by the heuristic).
 
         Returns:
-            Dict with ``examples``, ``mae``, ``has_torch``.
+            Dict with ``examples``, ``mae``, ``experimental_torch_model_present``,
+            ``torch_model_used_in_forecast`` (always ``False``).
         """
         random.seed(self.config.seed)
         if dataset is None:
@@ -411,7 +431,11 @@ class TemporalGNN:
             "examples": len(pairs),
             "mae": round(float(best_mae), 3),
             "conformal_margin": self.config.conformal_margin,
-            "has_torch": self._torch_model is not None,
+            "experimental_torch_model_present": self._torch_model is not None,
+            # The torch model, if present, is an EXPERIMENTAL research component.
+            # It is NEVER used in the forecast path — forecasts use the transparent
+            # heuristic. ``torch_model_used_in_forecast`` is therefore always False.
+            "torch_model_used_in_forecast": False,
             "hidden_dim": self.config.hidden_dim,
         }
 
@@ -451,20 +475,15 @@ class TemporalGNN:
         old_w, old_b = self._risk_head_w, self._risk_head_b
         self._risk_head_w, self._risk_head_b = w, b
         try:
-            # Build feature seq and run stub LSTM → risk head → anchor blend
-            seq = [s.to_feature_vec() for s in snaps] if snaps else [[0.2] * 8]
-            h = self._lstm_stub.forward(seq)
-            # Risk head: sigmoid(w·h + b) * 100 → 0-100 but we blend with anchor
-            logit = b + sum(wi * hi for wi, hi in zip(w, h))
-            learned_center = _sigmoid(logit) * 80 + 10  # 10..90
+            # RESEARCH PROTOTYPE: prediction is a transparent decay heuristic
+            # (see module docstring). There is no learned risk model — the
+            # "LSTM / learned center" was a placeholder and has been removed to
+            # avoid implying a fit that does not exist.
             preds: List[float] = []
             base_snap = snaps[-1] if snaps else GraphSnapshot()
             for day in horizons:
                 heur = _risk_decay_heuristic(base_snap, day, self.config)
-                # Blend 75% anchor/heuristic, 25% learned to keep anchor stable
-                p = heur * 0.75 + learned_center * 0.15 + (learned_center * (day / 300.0)) * 0.10
-                # Horizon-aware drift toward learned
-                preds.append(max(5.0, min(100.0, p)))
+                preds.append(max(5.0, min(100.0, heur)))
             return preds
         finally:
             self._risk_head_w, self._risk_head_b = old_w, old_b
@@ -514,20 +533,16 @@ class TemporalGNN:
         # If current is default 73 but snapshots carry PQC, adjust
         risks = self._predict_with_weights(snapshots, horizon_days, self._risk_head_w, self._risk_head_b)
 
-        # Torch blend if available (small)
-        if self._torch_model is not None and HAS_TORCH:
-            try:
-                import torch as _torch  # type: ignore
-                seq = [s.to_feature_vec() for s in snapshots]
-                x = _torch.tensor([seq], dtype=_torch.float32).to(self._device or "cpu")
-                self._torch_model.eval()
-                with _torch.no_grad():
-                    torch_risk = float(self._torch_model(x).cpu().numpy().flatten()[0])  # type: ignore
-                # Nudge toward torch by 10%
-                risks = [r * 0.90 + torch_risk * 0.10 * (d / 180.0 + 0.5) for r, d in zip(risks, horizon_days)]
-                risks = [max(5.0, min(100.0, r)) for r in risks]
-            except Exception:
-                pass
+        # NOTE (honesty refactor, 2026-10-23): the optional TGCN in
+        # ``self._torch_model`` is an *experimental* research component that is
+        # NEVER used in the default forecast path. It is only populated when
+        # ``TemporalGNNConfig.use_torch`` is True AND ``train_torch_model()`` has
+        # been explicitly called with real labels. Blending an untrained (or
+        # weakly trained) neural net into the user-facing risk trajectory would
+        # misrepresent this module as a "trained forecaster", which it is not.
+        # Forecasts are therefore always the transparent, auditable heuristic in
+        # ``_predict_with_weights``. See module docstring: this is a SCENARIO
+        # GENERATOR, not a trained forecast.
 
         risks = [round(float(r), 1) for r in risks]
         # Confidence decays with horizon
@@ -569,7 +584,7 @@ class TemporalGNN:
                 risks = [61.0, 50.0, 42.0]
                 intervals = [(round(r - margin, 1), round(r + margin, 1)) for r in risks]
                 confidence = [0.88, 0.82, 0.76]
-                parts[0] = "now 73 → 61 (30d) → 50 (90d) → 42 (180d) — anchor-calibrated TGCN"
+                parts[0] = "now 73 → 61 (30d) → 50 (90d) → 42 (180d) — anchor-calibrated transparent heuristic"
             elif any(d in anchor_map for d in horizon_days):
                 new_risks = []
                 new_intervals = []
@@ -591,7 +606,7 @@ class TemporalGNN:
                 # Update first part to reflect anchor
                 anchor_str = " → ".join(f"{anchor_map[d]:.0f} ({d}d)" for d in horizon_days if d in anchor_map)
                 if anchor_str:
-                    parts[0] = f"now 73 → {anchor_str} — anchor-calibrated TGCN"
+                    parts[0] = f"now 73 → {anchor_str} — anchor-calibrated transparent heuristic"
 
         explanation = "; ".join(parts)
         return TemporalPrediction(
@@ -680,7 +695,8 @@ class TemporalGNN:
             "rmse": round(float(rmse), 3),
             "mae_per_horizon": {str(k): round(_mae(v), 3) for k, v in per_horizon.items() if v},
             "n": len(pairs),
-            "has_torch": self._torch_model is not None,
+            "experimental_torch_model_present": self._torch_model is not None,
+            "torch_model_used_in_forecast": False,
             "conformal_margin": self.config.conformal_margin,
         }
 

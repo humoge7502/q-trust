@@ -1,0 +1,53 @@
+{
+    "voice":  "en-US-AndrewNeural",
+    "rate":  "-2%",
+    "pitch":  "-4Hz",
+    "lines":  [
+                  {
+                      "id":  "vo-01",
+                      "scene":  "deadline",
+                      "text":  "The algorithms protecting most of today\u0027s data are already obsolete. Attackers are recording traffic now, waiting for the day they can read it."
+                  },
+                  {
+                      "id":  "vo-02",
+                      "scene":  "loop",
+                      "text":  "Q-Trust is the operating system for the migration. Scan the estate. Rank the exposure. Plan the move. Anchor the evidence. Let anyone verify it."
+                  },
+                  {
+                      "id":  "vo-03",
+                      "scene":  "scan",
+                      "text":  "It starts with a scan. Q-Trust reads source code and dependency manifests, and maps every algorithm in use. Here, twenty findings across three services."
+                  },
+                  {
+                      "id":  "vo-04",
+                      "scene":  "risk",
+                      "text":  "Each finding gets a harvest-now-decrypt-later score. The gateway\u0027s RSA key: eighty-four. The payments key, the same. The mobile exchange uses ML-KEM-768, and scores ten.",
+                      "rate":  "+12%"
+                  },
+                  {
+                      "id":  "vo-05",
+                      "scene":  "roadmap",
+                      "text":  "The planner turns those scores into an ordered roadmap: what to migrate first, and which evidence each step must produce."
+                  },
+                  {
+                      "id":  "vo-06",
+                      "scene":  "evidence",
+                      "text":  "Every step writes an evidence record. Only its hash goes on chain, to Base Sepolia. The evidence never leaves the organization. Anyone can check the hash. No one can read the file."
+                  },
+                  {
+                      "id":  "vo-07",
+                      "scene":  "verify",
+                      "text":  "Paste an asset I.D., and Q-Trust reads the registry directly. No wallet. No account. The record is verified, and the transaction is public."
+                  },
+                  {
+                      "id":  "vo-08",
+                      "scene":  "vendor",
+                      "text":  "Vendors publish the same way. Connect a wallet, sign the claim with EIP-712, and Q-Trust relays it gaslessly. But only for wallets holding the vendor role."
+                  },
+                  {
+                      "id":  "vo-09",
+                      "scene":  "finale",
+                      "text":  "Q-Trust. Make trust verifiable."
+                  }
+              ]
+}

@@ -37,22 +37,22 @@ describe("resolveApiRequest", () => {
   it("never sends the caller's operator key from the server", () => {
     const { headers } = resolveApiRequest("/v1/assets/0xabc", "server", {
       backendOrigin: BACKEND,
-      serverApiKey: "server-admin-key",
-      operatorKey: "operator-key-from-a-request",
+      serverApiKey: "qtrust-fixture-server-value",
+      operatorKey: "qtrust-fixture-caller-value",
     });
     expect(headers[OPERATOR_KEY_HEADER]).toBeUndefined();
-    expect(headers["x-api-key"]).toBe("server-admin-key");
+    expect(headers["x-api-key"]).toBe("qtrust-fixture-server-value");
   });
 
   it("sends the caller's operator key from the browser, not the admin key", () => {
     const { headers } = resolveApiRequest("/v1/scan/full", "browser", {
       backendOrigin: BACKEND,
-      serverApiKey: "server-admin-key",
-      operatorKey: "operator-own-key",
+      serverApiKey: "qtrust-fixture-server-value",
+      operatorKey: "qtrust-fixture-caller-value",
     });
     // The server-side admin key must never be reachable from the browser.
     expect(headers["x-api-key"]).toBeUndefined();
-    expect(headers[OPERATOR_KEY_HEADER]).toBe("operator-own-key");
+    expect(headers[OPERATOR_KEY_HEADER]).toBe("qtrust-fixture-caller-value");
   });
 
   it("omits auth headers entirely when no key is configured", () => {

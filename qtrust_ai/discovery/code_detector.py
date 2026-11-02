@@ -37,6 +37,7 @@ import json
 import os
 import random
 import re
+import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -333,9 +334,20 @@ class DetectorConfig:
     dataflow_weight: float = 0.20
     ml_weight: float = 0.20
     threshold: float = 0.5
+    # A confident ML hit with no rule/AST/dataflow corroboration is allowed to
+    # decide alone only above this probability. 0.5 was selected on the
+    # source-disjoint native v4 split (F1 0.9235 vs 0.9077 at 0.85) and
+    # confirmed on the pinned split (0.9144 vs 0.8966); it matches the model's
+    # own operating point instead of suppressing its mid-confidence detections.
+    ml_decisive_threshold: float = 0.5
     seed: int = 42
     max_file_size_bytes: int = 2_000_000
     context_lines: int = 2
+    # Long files are scored as several overlapping windows and aggregated with
+    # max-pooling. A single 192/256-token window misses crypto APIs that appear
+    # after licence headers and large function bodies. 1 disables chunking
+    # (the historical behaviour); 4 is the recommended inference setting.
+    max_chunks: int = 4
 
 
 # ---------------------------------------------------------------------------
@@ -435,6 +447,14 @@ class CryptoCodeDetector:
         self._hf_tokenizer: Any = None
         self._hf_device: Any = None
         self._hf_max_len: int = 256
+        self._hf_max_chunks: int = max(1, int(self.config.max_chunks))
+        # Fine-tuned checkpoints can ship their own calibration and decision
+        # threshold next to the weights. Keeping these per-checkpoint avoids
+        # silently applying the v1 calibration artifact to a different model.
+        self._checkpoint_dir: Optional[Path] = None
+        self._calibration_path: Optional[Path] = None
+        self._calibrator: Any = None
+        self._calibrator_loaded_path: Optional[Path] = None
 
     # -- internal layers ---------------------------------------------------
 
@@ -610,6 +630,184 @@ class CryptoCodeDetector:
                         break
         return findings
 
+    def _default_calibration_path(self) -> Path:
+        """Calibration shipped with the v1 checkpoint (legacy fallback)."""
+        return Path(__file__).resolve().parents[1] / "artifacts" / "calibration.json"
+
+    def _resolve_calibration_path(self) -> Optional[Path]:
+        """Prefer calibration next to the active checkpoint, then the legacy artifact."""
+        if self._calibration_path is not None and Path(self._calibration_path).exists():
+            return Path(self._calibration_path)
+        if self._checkpoint_dir is not None:
+            local = Path(self._checkpoint_dir) / "calibration.json"
+            if local.exists():
+                return local
+            # Do not apply another checkpoint's calibration to these weights.
+            return None
+        legacy = self._default_calibration_path()
+        return legacy if legacy.exists() else None
+
+    def _calibrate_probability(self, prob: float) -> float:
+        """Apply the active checkpoint's calibrator, if one is available.
+
+        The calibrator is cached by path so inference does not re-read JSON for
+        every file. A missing/invalid artifact fails open to the raw score —
+        calibration must never break discovery.
+        """
+        path = self._resolve_calibration_path()
+        if path is None:
+            return prob
+        try:
+            if self._calibrator is None or self._calibrator_loaded_path != path:
+                from .calibration import load_shipped_calibrator
+
+                self._calibrator = load_shipped_calibrator(path)
+                self._calibrator_loaded_path = path
+            return float(self._calibrator.transform(float(prob)))
+        except Exception:
+            return prob
+
+    def _fallback_ml_score(self, code: str, language: str) -> float:
+        score = _deterministic_score(code, seed=self.config.seed)
+        return max(0.0, min(1.0, score + self._ml_bias.get(language, 0.0)))
+
+    def _score_texts(self, texts: List[str], languages: List[str],
+                     batch_size: int = 32) -> List[float]:
+        """Score raw code texts with optional multi-window max-pooling.
+
+        A file-level label ("contains crypto somewhere") is a multiple-instance
+        problem. Training uses the first window for throughput, but at
+        inference we can score up to ``max_chunks`` overlapping windows and
+        take the maximum. This is particularly important for long C files,
+        where includes and crypto calls can sit thousands of tokens after a
+        licence header.
+        """
+        if self._hf_model is None or self._hf_tokenizer is None:
+            return [self._fallback_ml_score(t, lang) for t, lang in zip(texts, languages)]
+        max_chunks = max(1, int(self._hf_max_chunks))
+        char_cap = max(1024, self._hf_max_len * 16 * max_chunks)
+        raw_scores: List[float] = []
+        self._hf_model.eval()
+        batch_size = max(1, int(batch_size))
+        for start in range(0, len(texts), batch_size):
+            batch_texts = [str(t)[:char_cap] for t in texts[start:start + batch_size]]
+            try:
+                if max_chunks == 1:
+                    enc = self._hf_tokenizer(
+                        batch_texts, truncation=True, max_length=self._hf_max_len,
+                        padding=True, return_tensors="pt",
+                    )
+                    enc = {k: v.to(self._hf_device) for k, v in enc.items()}
+                    with torch.no_grad():
+                        logits = self._hf_model(**enc).logits  # type: ignore
+                        probs = torch.softmax(logits, dim=-1)[:, 1].tolist()
+                    raw_scores.extend(float(p) for p in probs)
+                    continue
+
+                enc = self._hf_tokenizer(
+                    batch_texts,
+                    truncation=True,
+                    max_length=self._hf_max_len,
+                    stride=max(1, self._hf_max_len // 2),
+                    padding=True,
+                    return_overflowing_tokens=True,
+                    return_tensors="pt",
+                )
+                mapping_obj = enc.pop("overflow_to_sample_mapping", None)
+                if mapping_obj is None:
+                    # Slow-tokenizer fallback: score each sample independently.
+                    for text in batch_texts:
+                        raw_scores.append(self._score_single_chunked(text))
+                    continue
+                mapping = mapping_obj.tolist() if hasattr(mapping_obj, "tolist") else list(mapping_obj)
+                Counter(mapping)
+                seen: Counter[int] = Counter()
+                keep = []
+                for chunk_index, sample_index in enumerate(mapping):
+                    if seen[sample_index] < max_chunks:
+                        keep.append(chunk_index)
+                        seen[sample_index] += 1
+                enc = {k: v[keep].to(self._hf_device) for k, v in enc.items()}
+                with torch.no_grad():
+                    logits = self._hf_model(**enc).logits  # type: ignore
+                    chunk_probs = torch.softmax(logits, dim=-1)[:, 1].tolist()
+                pooled = [0.0] * len(batch_texts)
+                keep_positions = {chunk_index: pos for pos, chunk_index in enumerate(keep)}
+                for chunk_index, sample_index in enumerate(mapping):
+                    pos = keep_positions.get(chunk_index)
+                    if pos is not None:
+                        pooled[sample_index] = max(pooled[sample_index], float(chunk_probs[pos]))
+                raw_scores.extend(pooled)
+            except Exception:
+                raw_scores.extend(
+                    self._fallback_ml_score(t, lang)
+                    for t, lang in zip(batch_texts, languages[start:start + batch_size])
+                )
+        return raw_scores
+
+    def _score_single_chunked(self, text: str) -> float:
+        """Per-example chunking for tokenizers without overflow mappings."""
+        max_chunks = max(1, int(self._hf_max_chunks))
+        best = 0.0
+        step = max(1, self._hf_max_len // 2)
+        # Character slicing is approximate; the tokenizer enforces max_len.
+        window_chars = self._hf_max_len * 8
+        stride_chars = step * 8
+        for offset in range(0, min(len(text), window_chars * max_chunks), stride_chars):
+            piece = text[offset:offset + window_chars]
+            if not piece:
+                break
+            enc = self._hf_tokenizer(
+                piece, truncation=True, max_length=self._hf_max_len,
+                return_tensors="pt",
+            )
+            enc = {k: v.to(self._hf_device) for k, v in enc.items()}
+            with torch.no_grad():
+                logits = self._hf_model(**enc).logits  # type: ignore
+                prob = float(torch.softmax(logits, dim=-1)[0, 1])
+            best = max(best, prob)
+            if offset + window_chars >= len(text):
+                break
+        return best
+
+    def _raw_ml_score(self, code: str, language: str) -> float:
+        """Return the uncalibrated crypto probability from the active model."""
+        return self._score_texts([code], [language])[0]
+
+    def predict_proba(self, code: str, language: str = "python", *,
+                      calibrated: bool = True) -> float:
+        """Public probability API for calibration, evaluation, and reports.
+
+        ``calibrated=False`` returns the raw model score (useful for fitting a
+        calibrator without accidentally double-transforming it).
+        """
+        raw = self._raw_ml_score(code, language)
+        return self._calibrate_probability(raw) if calibrated else raw
+
+    def set_max_chunks(self, max_chunks: int) -> None:
+        """Set the number of overlapping windows used at inference (>=1)."""
+        if int(max_chunks) < 1:
+            raise ValueError("max_chunks must be >= 1")
+        self._hf_max_chunks = int(max_chunks)
+
+    def score_codes(self, examples: List[Dict[str, Any]], *,
+                    batch_size: int = 32, calibrated: bool = True) -> List[float]:
+        """Batch-score ``{"code", "language"}`` examples with the ML layer.
+
+        This is the fast path used by evaluation and calibration scripts; the
+        single-example :meth:`predict_proba` path is kept for API callers.
+        """
+        if not examples:
+            return []
+        scores = self._score_texts(
+            [str(ex.get("code", "")) for ex in examples],
+            [str(ex.get("language", "python")) for ex in examples],
+            batch_size=batch_size,
+        )
+        if calibrated:
+            scores = [self._calibrate_probability(float(p)) for p in scores]
+        return [float(p) for p in scores]
+
     def _ml_layer(self, code: str, language: str) -> Tuple[bool, str, float]:
         """ML code model — real fine-tuned transformer when available.
 
@@ -617,33 +815,8 @@ class CryptoCodeDetector:
         fine-tuned via :meth:`fine_tune`, a real forward pass runs on GPU/CPU.
         Otherwise a deterministic hash-based score is used.
         """
-        if self._hf_model is not None and self._hf_tokenizer is not None:
-            try:
-                enc = self._hf_tokenizer(
-                    code, truncation=True, max_length=self._hf_max_len, return_tensors="pt"
-                )
-                enc = {k: v.to(self._hf_device) for k, v in enc.items()}
-                self._hf_model.eval()
-                with torch.no_grad():
-                    logits = self._hf_model(**enc).logits  # type: ignore
-                    probs = torch.softmax(logits, dim=-1)[0]
-                p_crypto = float(probs[1])
-                is_crypto = p_crypto >= self.config.threshold
-                algo = "UNKNOWN"
-                if is_crypto:
-                    if self._label_counts:
-                        algo = self._label_counts.most_common(1)[0][0]
-                    else:
-                        algo = "AES-256"
-                return is_crypto, algo, p_crypto
-            except Exception:
-                pass  # fall through to deterministic stub
-        score = _deterministic_score(code, seed=self.config.seed)
-        # Apply learned bias if train() was called
-        bias = self._ml_bias.get(language, 0.0)
-        score = max(0.0, min(1.0, score + bias))
-        is_crypto = score >= self.config.threshold
-        # Algorithm from most frequent training label or heuristic
+        p_crypto = self.predict_proba(code, language, calibrated=True)
+        is_crypto = p_crypto >= self.config.threshold
         algo = "UNKNOWN"
         if is_crypto:
             if self._label_counts:
@@ -656,7 +829,13 @@ class CryptoCodeDetector:
                         break
                 if algo == "UNKNOWN" and any(kw in lower for kw in ("cipher", "crypto", "hash")):
                     algo = "AES-256"
-        return is_crypto, algo, score
+        return is_crypto, algo, p_crypto
+
+    def set_threshold(self, threshold: float) -> None:
+        """Set the ML decision threshold (0-1), typically from validation."""
+        if not 0.0 < float(threshold) < 1.0:
+            raise ValueError("threshold must be strictly between 0 and 1")
+        self.config.threshold = float(threshold)
 
     def _ensemble(
         self, code: str, language: str
@@ -693,12 +872,19 @@ class CryptoCodeDetector:
             is_crypto = True
 
         # Decisive high-confidence ML hit: when the fine-tuned transformer is
-        # confidently crypto AND *no* deterministic layer fired, the learned
+        # confident enough AND *no* deterministic layer fired, the learned
         # signal alone should flag the file. This is what recovers obfuscated /
         # renamed / cross-language crypto that static+AST miss (and previously
-        # fell through because a flat ml_weight < threshold). The high bar
-        # (0.85) keeps precision: weak ML evidence never overrides the ensemble.
-        if ml_is_crypto and not static and not ast_f and not dflow and ml_score >= 0.85:
+        # fell through because a flat ml_weight < threshold). The gate is a
+        # config value selected on a held-out split; raising it suppresses
+        # ML-only detections, lowering it trades precision for recall.
+        if (
+            ml_is_crypto
+            and not static
+            and not ast_f
+            and not dflow
+            and ml_score >= cfg.ml_decisive_threshold
+        ):
             is_crypto = True
 
         # Choose algorithm: prefer static > ast > ml
@@ -824,6 +1010,50 @@ class CryptoCodeDetector:
 
     # -- real transformer fine-tuning (GPU) --------------------------------
 
+    def _persist_hf_checkpoint(
+        self,
+        save_dir: str,
+        model: Any,
+        tok: Any,
+        *,
+        model_name: str,
+        max_len: int,
+        batch_size: int,
+        lr: float,
+        examples: int,
+        epochs_this_run: int,
+        epochs_completed: int,
+        init_from: Optional[str],
+    ) -> None:
+        """Write a reloadable checkpoint plus the metadata resume needs.
+
+        Called after every epoch, not only at the end: a multi-hour CPU
+        fine-tune that hits a native crash (observed intermittently on Windows)
+        otherwise loses all progress. ``epochs_completed`` lets the training
+        driver continue from the last finished epoch.
+        """
+        import os
+
+        os.makedirs(save_dir, exist_ok=True)
+        model.save_pretrained(save_dir)  # type: ignore
+        tok.save_pretrained(save_dir)  # type: ignore
+        (Path(save_dir) / "training_config.json").write_text(
+            json.dumps({
+                "base_model": model_name,
+                "max_len": max_len,
+                "epochs": epochs_this_run,
+                "epochs_completed": epochs_completed,
+                "batch_size": batch_size,
+                "learning_rate": lr,
+                "seed": self.config.seed,
+                "max_chunks": self._hf_max_chunks,
+                "examples": examples,
+                "resumed_from": init_from,
+                "trained_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }, indent=2),
+            encoding="utf-8",
+        )
+
     def fine_tune(
         self,
         corpus: List[Dict[str, Any]],
@@ -835,6 +1065,8 @@ class CryptoCodeDetector:
         max_len: int = 256,
         save_dir: Optional[str] = None,
         model_revision: Optional[str] = None,
+        init_from: Optional[str] = None,
+        start_epoch: int = 0,
     ) -> Dict[str, Any]:
         """Real transformer fine-tune on labelled code (GPU when available).
 
@@ -844,6 +1076,11 @@ class CryptoCodeDetector:
         available. Skips gracefully (returns ``status=skipped``) when torch /
         transformers are missing or the model download fails — the detector
         keeps working with its deterministic fallback.
+
+        ``init_from`` resumes from a checkpoint written by a previous call;
+        ``start_epoch`` records how many epochs already completed so the saved
+        metadata stays cumulative across resumed runs. A checkpoint is written
+        after every epoch, so a crash costs at most the current epoch.
         """
         if not HAS_TORCH or not HAS_TRANSFORMERS or torch is None:
             return {"status": "skipped", "reason": "torch/transformers unavailable"}
@@ -866,15 +1103,22 @@ class CryptoCodeDetector:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         try:
-            # S-5 FIX (bandit B615): pin hub downloads to a verified revision so
-            # an upstream model swap cannot silently change classifier behavior
-            # mid-release. The default pins CodeBERTa-small-v1 @ e93b589 (its
-            # current main); callers may pass any full 40-char commit SHA.
-            revision = model_revision or _default_model_revision(model_name)
-            tok = AutoTokenizer.from_pretrained(model_name, revision=revision)  # type: ignore
-            model = AutoModelForSequenceClassification.from_pretrained(
-                model_name, revision=revision, num_labels=2
-            )  # type: ignore
+            init_path = Path(init_from) if init_from else None
+            if init_path is not None and init_path.exists():
+                tok = AutoTokenizer.from_pretrained(str(init_path))  # type: ignore
+                model = AutoModelForSequenceClassification.from_pretrained(
+                    str(init_path)
+                )  # type: ignore
+            else:
+                # S-5 FIX (bandit B615): pin hub downloads to a verified revision so
+                # an upstream model swap cannot silently change classifier behavior
+                # mid-release. The default pins CodeBERTa-small-v1 @ e93b589 (its
+                # current main); callers may pass any full 40-char commit SHA.
+                revision = model_revision or _default_model_revision(model_name)
+                tok = AutoTokenizer.from_pretrained(model_name, revision=revision)  # type: ignore
+                model = AutoModelForSequenceClassification.from_pretrained(
+                    model_name, revision=revision, num_labels=2
+                )  # type: ignore
         except Exception as exc:
             return {"status": "skipped", "reason": f"model download failed: {exc}"}
         model = model.to(dev)
@@ -882,10 +1126,14 @@ class CryptoCodeDetector:
         self._hf_model = model
         self._hf_device = dev
         self._hf_max_len = max_len
+        self._checkpoint_dir = Path(save_dir) if save_dir else None
+        self._calibration_path = None
+        self._calibrator = None
+        self._calibrator_loaded_path = None
 
         labels = [1 if c.get("is_crypto") else 0 for c in corpus]
         encs = tok(
-            [c.get("code", "")[: max_len * 8] for c in corpus],
+            [str(c.get("code", ""))[: max(1024, max_len * 16)] for c in corpus],
             truncation=True, max_length=max_len, padding=True, return_tensors="pt",
         )
         inputs = encs["input_ids"].to(dev)
@@ -904,10 +1152,15 @@ class CryptoCodeDetector:
         epoch_rng = random.Random(self.config.seed)
         train_acc: Optional[float] = None
         final_loss = 0.0
-        for _ in range(epochs):
+        saved_to: Optional[str] = None
+        save_error: Optional[str] = None
+        for epoch_index in range(epochs):
             epoch_rng.shuffle(epoch_order)
             model.train()
             total_loss, correct, seen = 0.0, 0, 0
+            print(f"[code-detector] epoch {epoch_index + 1}/{epochs} "
+                  f"start ({n} examples, batch={batch_size}, max_len={max_len})",
+                  flush=True)
             for i in range(0, n, batch_size):
                 idx = epoch_order[i : i + batch_size]
                 b_in = inputs[idx]
@@ -923,6 +1176,25 @@ class CryptoCodeDetector:
                 seen += len(b_t)
             train_acc = round(correct / seen, 4)
             final_loss = round(total_loss / seen, 4)
+            print(f"[code-detector] epoch {epoch_index + 1}/{epochs} "
+                  f"done: loss={final_loss:.4f} train_acc={train_acc:.4f}",
+                  flush=True)
+            if save_dir:
+                try:
+                    self._persist_hf_checkpoint(
+                        save_dir, model, tok,
+                        model_name=model_name, max_len=max_len,
+                        batch_size=batch_size, lr=lr, examples=n,
+                        epochs_this_run=epochs,
+                        epochs_completed=start_epoch + epoch_index + 1,
+                        init_from=init_from,
+                    )
+                    saved_to = save_dir
+                    save_error = None
+                except Exception as exc:
+                    save_error = str(exc)
+                    print(f"[code-detector] checkpoint save failed: {exc}",
+                          flush=True)
 
         # Persist label priors so predict() can name the algorithm
         self._label_counts = Counter(
@@ -931,19 +1203,16 @@ class CryptoCodeDetector:
         self._trained = True
         result: Dict[str, Any] = {
             "status": "trained", "model": model_name, "device": dev,
-            "epochs": epochs, "examples": n, "batch_size": batch_size,
+            "epochs": epochs, "epochs_completed": start_epoch + epochs,
+            "examples": n, "batch_size": batch_size,
             "train_accuracy": train_acc, "final_loss": final_loss,
             "gpus_visible": torch.cuda.device_count(),
         }
         if save_dir:
-            try:
-                import os
-                os.makedirs(save_dir, exist_ok=True)
-                model.save_pretrained(save_dir)  # type: ignore
-                tok.save_pretrained(save_dir)  # type: ignore
-                result["saved_to"] = save_dir
-            except Exception as exc:
-                result["save_error"] = str(exc)
+            if save_error:
+                result["save_error"] = save_error
+            elif saved_to:
+                result["saved_to"] = saved_to
         return result
 
     def load_fine_tuned(self, save_dir: str) -> bool:
@@ -956,6 +1225,27 @@ class CryptoCodeDetector:
             self._hf_model = AutoModelForSequenceClassification.from_pretrained(save_dir)  # type: ignore
             self._hf_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             self._hf_model = self._hf_model.to(self._hf_device)
+            self._checkpoint_dir = Path(save_dir)
+            self._calibration_path = None
+            self._calibrator = None
+            self._calibrator_loaded_path = None
+            config_path = Path(save_dir) / "training_config.json"
+            if config_path.exists():
+                try:
+                    cfg = json.loads(config_path.read_text(encoding="utf-8"))
+                    self._hf_max_len = int(cfg.get("max_len", self._hf_max_len))
+                    self.set_max_chunks(int(cfg.get("max_chunks", self._hf_max_chunks)))
+                except Exception:
+                    pass
+            threshold_path = Path(save_dir) / "threshold.json"
+            if threshold_path.exists():
+                try:
+                    meta = json.loads(threshold_path.read_text(encoding="utf-8"))
+                    thr = float(meta["threshold"])
+                    if 0.0 < thr < 1.0:
+                        self.config.threshold = thr
+                except Exception:
+                    pass
             return True
         except Exception:
             return False
@@ -1090,6 +1380,70 @@ class CryptoCodeDetector:
             "fn_rate": round(fn_rate, 4),
             "coverage": coverage,
             "n": len(dataset),
+            "per_language": {k: dict(v) for k, v in per_lang.items()},
+        }
+
+    def evaluate_ml(
+        self,
+        dataset: List[Dict[str, Any]],
+        *,
+        threshold: Optional[float] = None,
+        calibrated: bool = True,
+    ) -> Dict[str, Any]:
+        """Evaluate the learned ML layer only (no static/AST ensemble).
+
+        The ensemble metric in :meth:`evaluate` answers "does the product flag
+        this file?" and is dominated by deterministic rules. This method
+        answers the research question "did the trained model improve?" and is
+        the correct metric for checkpoint comparison, calibration, and
+        threshold selection.
+        """
+        if not dataset:
+            return {"n": 0, "f1": 0.0, "precision": 0.0, "recall": 0.0}
+        thr = self.config.threshold if threshold is None else float(threshold)
+        probs = self.score_codes(dataset, calibrated=calibrated)
+        y_true = [1 if ex.get("is_crypto", False) else 0 for ex in dataset]
+        y_pred = [1 if p >= thr else 0 for p in probs]
+        per_lang: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: {"tp": 0, "fp": 0, "fn": 0, "tn": 0}
+        )
+        for ex, true, pred in zip(dataset, y_true, y_pred):
+            key = _canonical_language(str(ex.get("language", "python")))
+            if true == 1 and pred == 1:
+                per_lang[key]["tp"] += 1
+            elif true == 0 and pred == 1:
+                per_lang[key]["fp"] += 1
+            elif true == 1 and pred == 0:
+                per_lang[key]["fn"] += 1
+            else:
+                per_lang[key]["tn"] += 1
+        if HAS_SKLEARN:
+            try:
+                from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
+
+                p, r, f1, _ = precision_recall_fscore_support(
+                    y_true, y_pred, average="binary", zero_division=0
+                )
+                auc = roc_auc_score(y_true, probs) if len(set(y_true)) > 1 else 0.5
+                acc = sum(1 for t, q in zip(y_true, y_pred) if t == q) / len(y_true)
+            except Exception:
+                p, r, f1 = _precision_recall_f1_fallback(y_true, y_pred)
+                auc = 0.0
+                acc = sum(1 for t, q in zip(y_true, y_pred) if t == q) / len(y_true)
+        else:
+            p, r, f1 = _precision_recall_f1_fallback(y_true, y_pred)
+            auc = 0.0
+            acc = sum(1 for t, q in zip(y_true, y_pred) if t == q) / len(y_true)
+        return {
+            "precision": round(float(p), 4),
+            "recall": round(float(r), 4),
+            "f1": round(float(f1), 4),
+            "accuracy": round(float(acc), 4),
+            "roc_auc": round(float(auc), 4),
+            "threshold": round(thr, 4),
+            "n": len(dataset),
+            "positives": sum(y_true),
+            "predicted_positives": sum(y_pred),
             "per_language": {k: dict(v) for k, v in per_lang.items()},
         }
 

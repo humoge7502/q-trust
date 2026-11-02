@@ -22,6 +22,8 @@ class ComplianceFramework(str, Enum):
     BSI_TR_02102 = "BSI_TR_02102"
     NCSC_UK = "NCSC_UK"
     ASD_ISM = "ASD_ISM"
+    DORA = "DORA"
+    HIPAA = "HIPAA"
 
 
 class ComplianceStatus(str, Enum):
@@ -957,6 +959,117 @@ def _asd_ism_rules(finding: AssetFinding) -> list[ComplianceRule]:
     return rules
 
 
+def _dora_rules(finding: AssetFinding) -> list[ComplianceRule]:
+    rules: list[ComplianceRule] = []
+    alg = _normalise_alg(finding.algorithm)
+
+    broken = any(b in alg for b in ("des", "3des", "rc4", "md5", "sha1"))
+    rules.append(ComplianceRule(
+        framework=ComplianceFramework.DORA,
+        rule_id="DORA-ART9-3-CONTROLS",
+        rule_name="State-of-the-art cryptographic controls",
+        description="DORA Art. 9(3) requires state-of-the-art cryptography protecting confidentiality, integrity and authenticity.",
+        severity=Severity.CRITICAL,
+        status=ComplianceStatus.NON_COMPLIANT if broken else ComplianceStatus.COMPLIANT,
+        evidence=f"Algorithm: {finding.algorithm}",
+        recommendation="Replace the broken primitive; document the approved control set." if broken else "",
+    ))
+
+    abstracted = bool(finding.metadata.get("algorithm_abstracted") or finding.metadata.get("config_driven"))
+    pqc = any(p in alg for p in ("ml_kem", "mlkem", "ml_dsa", "mldsa", "slh_dsa", "slhdsa", "falcon"))
+    rules.append(ComplianceRule(
+        framework=ComplianceFramework.DORA,
+        rule_id="DORA-ART9-3D-AGILITY",
+        rule_name="Crypto-agility",
+        description="DORA Art. 9(3)(d) requires the ability to replace cryptographic primitives without material disruption.",
+        severity=Severity.HIGH,
+        status=ComplianceStatus.COMPLIANT if (abstracted or pqc) else ComplianceStatus.PARTIAL,
+        evidence=f"Abstraction evidence: {abstracted}; PQC primitive: {pqc}",
+        recommendation="Route the primitive through a provider abstraction and make the algorithm configuration-driven." if not (abstracted or pqc) else "",
+    ))
+
+    rules.append(ComplianceRule(
+        framework=ComplianceFramework.DORA,
+        rule_id="DORA-ART9-4-PQC",
+        rule_name="Quantum-threat readiness",
+        description="DORA requires assessing exposure to emerging threats, including quantum computing, and planning migration.",
+        severity=Severity.HIGH,
+        status=ComplianceStatus.COMPLIANT if pqc else ComplianceStatus.PARTIAL,
+        evidence=f"Algorithm: {finding.algorithm}",
+        recommendation="Adopt a dated PQC migration plan (ML-KEM / ML-DSA, hybrid first)." if not pqc else "",
+    ))
+
+    rules.append(ComplianceRule(
+        framework=ComplianceFramework.DORA,
+        rule_id="DORA-ART9-3E-KEYMGMT",
+        rule_name="Key lifecycle management",
+        description="DORA Art. 9(3)(e) requires protecting keys across generation, storage, rotation and destruction.",
+        severity=Severity.MEDIUM,
+        status=ComplianceStatus.PARTIAL,
+        evidence="Key lifecycle evidence is organisational and not inferable from algorithm metadata.",
+        recommendation="Attach HSM/KMS policy and rotation logs to the assurance evidence.",
+    ))
+    return rules
+
+
+def _hipaa_rules(finding: AssetFinding) -> list[ComplianceRule]:
+    rules: list[ComplianceRule] = []
+    alg = _normalise_alg(finding.algorithm)
+
+    if _is_symmetric(finding):
+        strong = any(a in alg for a in ("aes_128", "aes_192", "aes_256", "chacha20"))
+        broken = any(b in alg for b in ("des", "3des", "rc4"))
+        rules.append(ComplianceRule(
+            framework=ComplianceFramework.HIPAA,
+            rule_id="HIPAA-164-312-A-2-IV",
+            rule_name="Encryption at rest",
+            description="HIPAA 45 CFR 164.312(a)(2)(iv) addressable encryption of ePHI at rest.",
+            severity=Severity.HIGH,
+            status=ComplianceStatus.NON_COMPLIANT if broken else (ComplianceStatus.COMPLIANT if strong else ComplianceStatus.PARTIAL),
+            evidence=f"Symmetric algorithm: {finding.algorithm}",
+            recommendation="Encrypt ePHI at rest with AES-128+ or ChaCha20 and document the key custodian."
+            if not strong or broken else "",
+        ))
+
+    if _is_tls(finding):
+        tls_ok = any(t in alg for t in ("tls_1_3", "tls_1_2", "tlsv13", "tlsv12"))
+        rules.append(ComplianceRule(
+            framework=ComplianceFramework.HIPAA,
+            rule_id="HIPAA-164-312-E-2-II",
+            rule_name="Encryption in transit",
+            description="HIPAA 45 CFR 164.312(e)(2)(ii) addressable encryption of ePHI in transit.",
+            severity=Severity.HIGH,
+            status=ComplianceStatus.COMPLIANT if tls_ok else ComplianceStatus.NON_COMPLIANT,
+            evidence=f"TLS protocol: {finding.algorithm}",
+            recommendation="Enforce TLS 1.2+ on every ePHI endpoint." if not tls_ok else "",
+        ))
+
+    if _is_hash(finding):
+        weak = any(w in alg for w in ("md5", "sha1"))
+        rules.append(ComplianceRule(
+            framework=ComplianceFramework.HIPAA,
+            rule_id="HIPAA-164-312-C-1",
+            rule_name="Integrity controls",
+            description="HIPAA 45 CFR 164.312(c)(1) requires protecting ePHI from improper alteration.",
+            severity=Severity.HIGH,
+            status=ComplianceStatus.NON_COMPLIANT if weak else ComplianceStatus.COMPLIANT,
+            evidence=f"Hash algorithm: {finding.algorithm}",
+            recommendation="Replace MD5/SHA-1 with SHA-256+." if weak else "",
+        ))
+
+    rules.append(ComplianceRule(
+        framework=ComplianceFramework.HIPAA,
+        rule_id="HIPAA-164-312-A-2-IV-KEY",
+        rule_name="Key management",
+        description="HIPAA requires documented key custody for ePHI encryption.",
+        severity=Severity.MEDIUM,
+        status=ComplianceStatus.PARTIAL,
+        evidence="Key custody is an organisational control, not verifiable from algorithm metadata.",
+        recommendation="Attach the key-management policy and KMS/HSM configuration evidence.",
+    ))
+    return rules
+
+
 _FRAMEWORK_RULE_MAP: dict[
     ComplianceFramework,
     tuple[ComplianceFramework, ...],
@@ -992,6 +1105,8 @@ class ComplianceEngine:
         ComplianceFramework.BSI_TR_02102: _bsi_tr_02102_rules,
         ComplianceFramework.NCSC_UK: _ncsc_uk_rules,
         ComplianceFramework.ASD_ISM: _asd_ism_rules,
+        ComplianceFramework.DORA: _dora_rules,
+        ComplianceFramework.HIPAA: _hipaa_rules,
     }
 
     def __init__(self, frameworks: list[ComplianceFramework] | None = None):

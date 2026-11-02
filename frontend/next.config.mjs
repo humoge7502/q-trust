@@ -56,6 +56,12 @@ const nextConfig = {
         "https://api.web3modal.org",
         "https://*.web3modal.org",
         "https://verify.walletconnect.com",
+        // MetaMask SDK transport used by RainbowKit's branded MetaMask
+        // connector. Browser-extension users can also use the generic
+        // injected connector; this keeps the SDK path from being blocked by
+        // CSP when the extension is not directly injectable.
+        "https://metamask-sdk.api.cx.metamask.io",
+        "wss://metamask-sdk.api.cx.metamask.io",
         "https://ipfs.io",
       ].join(" "),
       "frame-src 'self' https://verify.walletconnect.com https://verify.walletconnect.org",

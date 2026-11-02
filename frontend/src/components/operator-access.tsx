@@ -97,8 +97,50 @@ function KeyField({ onSaved }: { onSaved?: () => void }) {
 }
 
 /** Collapsible settings panel, for pages that offer several privileged actions. */
-export function OperatorAccessPanel({ defaultOpen = false }: { defaultOpen?: boolean }) {
+export function OperatorAccessPanel({
+  defaultOpen = false,
+  variant = "card",
+}: {
+  defaultOpen?: boolean;
+  /**
+   * `card` — a full bordered block, for operator-facing pages where privileged
+   * actions are the point (`/dashboard`, `/vendors`).
+   *
+   * `strip` — a single 40px row with the explanation behind a disclosure, for
+   * the public surface. On `/scanner` the card variant sat *above* the tool and
+   * was the first thing a visitor saw, which read as "this product needs a key"
+   * when in fact nothing on the page does. The strip states the opposite —
+   * public surface, key optional — and still opens the same field.
+   */
+  variant?: "card" | "strip";
+}) {
   const current = useOperatorKey();
+
+  if (variant === "strip") {
+    return (
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-micro font-medium text-muted-foreground transition hover:border-slate-400 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 [&::-webkit-details-marker]:hidden">
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${current ? "bg-success" : "bg-slate-400"}`}
+            aria-hidden="true"
+          />
+          Operator access
+          <span aria-hidden="true">·</span>
+          <span className="font-normal">{current ? "key set" : "optional"}</span>
+        </summary>
+        <div className="mt-3 rounded-xl border border-border bg-white p-4">
+          <p className="max-w-prose text-micro leading-6 text-muted-foreground">
+            Only relayer submissions, workspace writes, webhook mutations and
+            credential issuance require the caller&rsquo;s own key. Scanning, the AI
+            planner, evidence records, GPU analysis, public verification, risk scoring
+            and compliance evaluation are open to every visitor and need no key.
+          </p>
+          <KeyField />
+        </div>
+      </details>
+    );
+  }
+
   return (
     <details
       open={defaultOpen}

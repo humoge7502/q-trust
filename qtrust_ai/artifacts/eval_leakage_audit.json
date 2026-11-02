@@ -1,0 +1,87 @@
+{
+  "eval_split": "corpus v3 digest split (seed 42): 2238 raw records, 1779 unique (source,path), 8 repos",
+  "eval_raw_records": 2238,
+  "eval_unique_paths": 1779,
+  "duplicate_path_records": 459,
+  "eval_repos": [
+    "Mbed-TLS/mbedtls",
+    "contracts/src",
+    "expressjs/express",
+    "numpy/numpy",
+    "pyca/cryptography",
+    "serde-rs/serde",
+    "sveltejs/svelte",
+    "wolfSSL/wolfssl"
+  ],
+  "checkpoints": {
+    "v1": {
+      "eval_files": 1779,
+      "exact_path_overlap_with_train": 1559,
+      "overlap_fraction": 0.8763,
+      "clean_heldout": false
+    },
+    "v3": {
+      "eval_files": 1779,
+      "exact_path_overlap_with_train": 1641,
+      "overlap_fraction": 0.9224,
+      "clean_heldout": false
+    },
+    "v4": {
+      "eval_files": 1779,
+      "exact_path_overlap_with_train": 0,
+      "overlap_fraction": 0.0,
+      "clean_heldout": true
+    }
+  },
+  "per_repo": {
+    "Mbed-TLS/mbedtls": {
+      "eval": 220,
+      "v1_overlap": 0,
+      "v3_overlap": 220,
+      "v4_overlap": 0
+    },
+    "contracts/src": {
+      "eval": 10,
+      "v1_overlap": 10,
+      "v3_overlap": 10,
+      "v4_overlap": 0
+    },
+    "expressjs/express": {
+      "eval": 6,
+      "v1_overlap": 6,
+      "v3_overlap": 6,
+      "v4_overlap": 0
+    },
+    "numpy/numpy": {
+      "eval": 482,
+      "v1_overlap": 482,
+      "v3_overlap": 482,
+      "v4_overlap": 0
+    },
+    "pyca/cryptography": {
+      "eval": 138,
+      "v1_overlap": 138,
+      "v3_overlap": 0,
+      "v4_overlap": 0
+    },
+    "serde-rs/serde": {
+      "eval": 42,
+      "v1_overlap": 42,
+      "v3_overlap": 42,
+      "v4_overlap": 0
+    },
+    "sveltejs/svelte": {
+      "eval": 230,
+      "v1_overlap": 230,
+      "v3_overlap": 230,
+      "v4_overlap": 0
+    },
+    "wolfSSL/wolfssl": {
+      "eval": 651,
+      "v1_overlap": 651,
+      "v3_overlap": 651,
+      "v4_overlap": 0
+    }
+  },
+  "conclusion": "v1 and v3 trained on the exact eval files (memorization) -> their scores on this split are invalid as held-out metrics. v4 is the only checkpoint with a zero-overlap held-out evaluation, so v4's F1 (0.8966 pinned / 0.9077 native) is the only trustworthy number here. A clean v1-vs-v4 comparison is impossible without retraining v1 on the v4 corpus with the same split. NOTE: the eval split carries 459 duplicate (source,path) records \u2014 a corpus-hygiene issue to de-duplicate before the next retrain."
+}

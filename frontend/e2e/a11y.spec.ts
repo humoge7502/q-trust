@@ -58,3 +58,37 @@ test.describe("verification page a11y", () => {
     expect(seriousViolations(violations)).toEqual([]);
   });
 });
+
+test.describe("certification page a11y", () => {
+  test("/certify has no critical or serious wcag2a/wcag2aa/best-practice violations", async ({ page }) => {
+    // The policy list is fetched server-side and may be absent when the
+    // backend is down; the verifier itself is client-side, so the route always
+    // has something to audit.
+    const response = await page.goto("/certify");
+    expect(response, "no response from /certify").not.toBeNull();
+    expect(response!.status(), "server error on /certify").toBeLessThan(500);
+
+    const violations = await auditPage(page);
+    expect(seriousViolations(violations)).toEqual([]);
+  });
+});
+
+test.describe("pricing page a11y", () => {
+  test("/pricing has no critical or serious wcag2a/wcag2aa/best-practice violations", async ({ page }) => {
+    // The page alternates a light document surface with a dark tier card and a
+    // dark band, so it exercises contrast in both directions. It also ships a
+    // native <details> disclosure for each FAQ row; this catches a summary that
+    // loses its accessible name or becomes unreachable by keyboard.
+    const response = await page.goto("/pricing");
+    expect(response, "no response from /pricing").not.toBeNull();
+    expect(response!.status(), "server error on /pricing").toBeLessThan(500);
+
+    const violations = await auditPage(page);
+    expect(seriousViolations(violations)).toEqual([]);
+
+    const firstSummary = page.locator("details summary").first();
+    await expect(firstSummary).toBeVisible();
+    await firstSummary.press("Enter");
+    await expect(page.locator("details").first()).toHaveAttribute("open", "");
+  });
+});

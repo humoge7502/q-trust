@@ -1,15 +1,29 @@
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, promises as fsp, readFileSync } from "node:fs";
+import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { Type } from "@sinclair/typebox";
-import type { FastifyInstance } from "fastify";
+import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import { requireApiKey } from "../middleware/auth.js";
+import { RepoScanError, scanGithubRepo } from "../services/repo-scan.js";
+import {
+  computeIntegrityHash,
+  evidenceStore,
+  verifyChain,
+  type LedgerEntry,
+} from "../services/evidence-store.js";
+import {
+  appendScanHistory,
+  hashScanTarget,
+  scanHistoryStore,
+  type ScanHistoryEntry,
+} from "../services/scan-history-store.js";
 import {
   ScanRequestSchema,
   ScanFullRequestSchema,
+  ScanRepoRequestSchema,
+  ScanRepoResponseSchema,
   ScanResponseSchema,
   ErrorResponseSchema,
   RiskScoreSchema,
@@ -51,17 +65,6 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
   if (!path.isAbsolute(rawDir)) {
     throw Object.assign(new Error("directory must be an absolute path"), { statusCode: 400 });
   }
-  // Resolve symlinks/.. segments so the allowed-roots check cannot be bypassed.
-  let resolved: string;
-  try {
-    resolved = await fsp.realpath(path.resolve(rawDir));
-  } catch {
-    throw Object.assign(new Error("directory does not exist"), { statusCode: 400 });
-  }
-  const stat = await fsp.stat(resolved).catch(() => null);
-  if (!stat?.isDirectory()) {
-    throw Object.assign(new Error("path is not a directory"), { statusCode: 400 });
-  }
   const allowedRootsRaw = process.env.QTRUST_SCAN_ALLOWED_ROOTS;
   if (!allowedRootsRaw && process.env.NODE_ENV === "production") {
     // Fail closed: in production an unset allowlist would let any caller scan
@@ -71,8 +74,18 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
       { statusCode: 503 },
     );
   }
+
+  // String-level normalization only — no filesystem call touches the
+  // caller-supplied path until it has passed the allowed-roots guard below.
+  const normalized = path.resolve(rawDir);
+  /** CodeQL-recognized containment guard: the canonical path.relative idiom. */
+  const isInsideRoot = (candidate: string, root: string): boolean => {
+    const rel = path.relative(root, candidate);
+    return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+  };
+  let roots: string[] = [];
   if (allowedRootsRaw) {
-    const roots = await Promise.all(
+    roots = await Promise.all(
       allowedRootsRaw
         .split(",")
         .map((r) => r.trim())
@@ -97,13 +110,31 @@ export async function validateScanDirectory(rawDir: string): Promise<string> {
           }
         }),
     );
-    const allowed = roots.some((root) => resolved === root || resolved.startsWith(root + path.sep));
-    if (!allowed) {
+    if (!roots.some((root) => isInsideRoot(normalized, root))) {
       throw Object.assign(
         new Error("directory is outside the configured scan roots"),
         { statusCode: 403 },
       );
     }
+  }
+
+  // The path is inside an allowed root: now resolve symlinks/.. segments and
+  // re-check, so a symlink inside an allowed root cannot point outside it.
+  let resolved: string;
+  try {
+    resolved = await fsp.realpath(normalized);
+  } catch {
+    throw Object.assign(new Error("directory does not exist"), { statusCode: 400 });
+  }
+  const stat = await fsp.stat(resolved).catch(() => null);
+  if (!stat?.isDirectory()) {
+    throw Object.assign(new Error("path is not a directory"), { statusCode: 400 });
+  }
+  if (roots.length > 0 && !roots.some((root) => isInsideRoot(resolved, root))) {
+    throw Object.assign(
+      new Error("directory is outside the configured scan roots"),
+      { statusCode: 403 },
+    );
   }
   return resolved;
 }
@@ -185,7 +216,91 @@ function classifyRisk(score: number): string {
   if (score > 0) return "LOW";
   return "NONE";
 }
+const LIBRARY_ALGORITHMS = new Set([
+  "HAZMAT", "OPENSSL", "BORINGSSL", "LIBGCRYPT", "LIBOQS", "WOLFSSL",
+  "CRYPTOGRAPHY", "CRYPTO", "NODEFORGE", "NODE-FORGE", "PYOPENSSL",
+]);
+const PROTOCOL_ALGORITHMS = new Set(["TLS", "JWT", "SSH"]);
+
+/**
+ * Not every finding's `algorithm` is an algorithm.
+ *
+ * The scanner emits library names (hazmat, OpenSSL, liboqs) and protocol
+ * markers (TLS, JWT) alongside real algorithms. Scoring those through
+ * ALGORITHM_VULNERABILITY_DB used to fall through to BROKEN/84 for every
+ * unknown name — a scan of a healthy estate reported fifteen criticals,
+ * including liboqs (a post-quantum library) and BoringSSL (ships ML-KEM).
+ *
+ * This branch keeps the score honest:
+ *   - library with supports_pqc=true   -> PQC_READY / 6  / LOW
+ *   - library with supports_pqc=false  -> WEAKENED  / 62 / HIGH
+ *   - library with no capability flag  -> INVENTORY / 18 / LOW
+ *   - dependency inventory             -> INVENTORY / 30 / MEDIUM
+ *   - TLS / JWT / SSH                  -> DEPENDENCY / 45 / MEDIUM
+ *
+ * `riskLevel` (not the classification string) drives the roadmap buckets, so
+ * the new labels are additive and do not change phase assignment.
+ */
+function _classifyNonAlgorithm(finding: any): Record<string, unknown> | null {
+  const algorithm = finding.algorithm || finding.name || "unknown";
+  const up = _normalizeAlg(algorithm);
+  const meta = finding.metadata ?? {};
+  const assetType = String(finding.asset_type ?? "");
+
+  if (assetType === "dependency_crypto_library") {
+    const score = meta.supports_pqc === true ? 8 : 30;
+    return _inventory(finding, algorithm, score,
+      meta.supports_pqc === true
+        ? `${algorithm} dependency ships post-quantum algorithms`
+        : `${algorithm} dependency — inventory only, inherited from the manifest`,
+      meta.supports_pqc === true ? "PQC_READY" : "INVENTORY");
+  }
+
+  const isLibrary =
+    LIBRARY_ALGORITHMS.has(up) ||
+    assetType === "binary_crypto_artifact" ||
+    Boolean(meta.library);
+  if (isLibrary) {
+    if (meta.supports_pqc === true) {
+      return _inventory(finding, algorithm, 6,
+        `${meta.library ?? algorithm} ships post-quantum algorithms (ML-KEM / ML-DSA)`, "PQC_READY");
+    }
+    if (meta.supports_pqc === false) {
+      return _inventory(finding, algorithm, 62,
+        `${meta.library ?? algorithm} is classical-only: no ML-KEM or ML-DSA support`, "WEAKENED");
+    }
+    return _inventory(finding, algorithm, 18,
+      `Crypto library inventory — resolve to the algorithms it provides`, "INVENTORY");
+  }
+
+  if (PROTOCOL_ALGORITHMS.has(up)) {
+    return _inventory(finding, algorithm, 45,
+      `${algorithm} usage — inherits the negotiated cipher suite`, "DEPENDENCY");
+  }
+  return null;
+}
+
+function _inventory(
+  finding: any, algorithm: string, score: number, message: string, classification: string,
+): Record<string, unknown> {
+  return {
+    ...finding,
+    algorithm,
+    algorithmClassification: classification,
+    quantumVulnerability: classification,
+    nist800131aCompliant: classification === "PQC_READY",
+    cnsa2Compliant: classification === "PQC_READY",
+    hndlExposureScore: 0,
+    riskScore: score,
+    overallRiskScore: score,
+    riskLevel: classifyRisk(score),
+    message,
+  };
+}
+
 function computeRiskFinding(finding: any) {
+  const inventory = _classifyNonAlgorithm(finding);
+  if (inventory) return inventory;
   const algorithm = finding.algorithm || finding.name || "unknown";
   const keySize = finding.key_size ?? finding.keySize ?? null;
   const vuln = _lookupVuln(algorithm, keySize);
@@ -228,195 +343,21 @@ function evaluateCNSACompliance(finding: any): { compliant: boolean; reason: str
   return { compliant:false, reason: `${alg} is not on the CNSA approved list` };
 }
 
-interface LedgerEntry {
-  version: string;
-  data: unknown;
-  integrityHash: string;
-  previousHash: string;
-  chainIndex: number;
-}
-
-const GENESIS_HASH = "0".repeat(64);
-
-/** Audit M-6: hard cap on in-memory chain length. Beyond this the oldest
- *  entries must be persisted externally; verify keeps working on recent
- *  history instead of growing without bound. */
-const MAX_EVIDENCE_CHAIN_LENGTH = 10_000;
-
-function pushEvidenceEntry(entry: LedgerEntry): void {
-  evidenceChain.push(entry);
-  if (evidenceChain.length > MAX_EVIDENCE_CHAIN_LENGTH) {
-    console.warn(
-      `Evidence chain exceeded ${MAX_EVIDENCE_CHAIN_LENGTH} entries — oldest entry evicted from memory (file log retains full history)`,
-    );
-    evidenceChain.shift();
-  }
-}
-
-// Evidence chain persistence: JSONL append-only log so the SHA-256 chain
-// survives restarts. Primary store is the file below; if persistence fails
-// (read-only fs, bad path) the chain degrades gracefully to in-memory only.
-const EVIDENCE_DB_PATH =
-  process.env.QTRUST_EVIDENCE_DB_PATH ||
-  path.join(process.env.QTRUST_DATA_DIR || "/var/lib/qtrust", "evidence_chain.jsonl");
-
-const evidenceChain: LedgerEntry[] = [];
-
-/** Keep request history bounded; the evidence ledger is the durable record. */
-const MAX_SCAN_HISTORY_LENGTH = 10_000;
-
-function recordScanHistory(
-  history: Array<{ targetHash: string; type: string; timestamp: string; count: number }>,
-  entry: { targetHash: string; type: string; timestamp: string; count: number },
-): void {
-  history.push(entry);
-  if (history.length > MAX_SCAN_HISTORY_LENGTH) {
-    history.shift();
-  }
-}
-
-/** Load persisted chain entries from the JSONL evidence log at module init. */
-function loadEvidenceChain(): void {
-  if (!existsSync(EVIDENCE_DB_PATH)) {
-    return;
-  }
-  let raw: string;
+/** A failed history write must never fail the scan that produced it. */
+async function recordScan(log: FastifyBaseLogger, entry: ScanHistoryEntry): Promise<void> {
   try {
-    raw = readFileSync(EVIDENCE_DB_PATH, "utf8");
+    await appendScanHistory(entry);
   } catch (err) {
-    console.warn(
-      "Evidence chain unreadable at",
-      EVIDENCE_DB_PATH,
-      "— starting empty:",
-      err instanceof Error ? err.message : err,
-    );
-    return;
+    log.warn({ err }, "scan history append failed");
   }
-  const lines = raw.split("\n");
-  while (lines.length > 0 && lines[lines.length - 1].trim() === "") {
-    lines.pop();
-  }
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    try {
-      const entry = JSON.parse(line) as LedgerEntry;
-      if (
-        typeof entry.chainIndex !== "number" ||
-        typeof entry.previousHash !== "string" ||
-        typeof entry.integrityHash !== "string"
-      ) {
-        throw new Error("entry missing chain metadata");
-      }
-      pushEvidenceEntry(entry);
-    } catch {
-      // A torn final write (crash mid-append) leaves a partial trailing line —
-      // skip it quietly-ish; corruption elsewhere is worth a louder warning.
-      if (i === lines.length - 1) {
-        console.warn(
-          `Evidence chain: skipping incomplete trailing line in ${EVIDENCE_DB_PATH}`,
-        );
-      } else {
-        console.warn(
-          `Evidence chain: skipping corrupt line ${i + 1} in ${EVIDENCE_DB_PATH}`,
-        );
-      }
-    }
-  }
-}
-
-loadEvidenceChain();
-
-/** Append one JSONL line per entry. Creates the directory on first write; never rewrites existing data. */
-function persistEvidenceEntry(entry: LedgerEntry): void {
-  try {
-    mkdirSync(path.dirname(EVIDENCE_DB_PATH), { recursive: true });
-    appendFileSync(EVIDENCE_DB_PATH, `${JSON.stringify(entry)}\n`, "utf8");
-  } catch (err) {
-    console.warn(
-      "Evidence chain persistence failed at",
-      EVIDENCE_DB_PATH,
-      "— continuing in memory only:",
-      err instanceof Error ? err.message : err,
-    );
-  }
-}
-
-function computeIntegrityHash(entry: Omit<LedgerEntry, "integrityHash">): string {
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        data: entry.data,
-        previousHash: entry.previousHash,
-        chainIndex: entry.chainIndex,
-      }),
-    )
-    .digest("hex");
-}
-
-function generateEvidenceLedger(data: {
-  scanResultHash: string;
-  scanTarget: string;
-  findingsCount: number;
-  riskSummary: object;
-  timestamp: string;
-}): LedgerEntry {
-  const last = evidenceChain.length ? evidenceChain[evidenceChain.length - 1] : null;
-  const entry: Omit<LedgerEntry, "integrityHash"> = {
-    version: "1.0",
-    data,
-    previousHash: last ? last.integrityHash : GENESIS_HASH,
-    chainIndex: last ? last.chainIndex + 1 : 0,
-  };
-  const full: LedgerEntry = { ...entry, integrityHash: computeIntegrityHash(entry) };
-  pushEvidenceEntry(full);
-  persistEvidenceEntry(full);
-  return full;
-}
-
-/** Re-compute every hash and validate the whole chain. Returns a reason on any mismatch/tamper. */
-function verifyEvidenceChain(entries: LedgerEntry[]): { valid: boolean; reason?: string; failedIndex?: number } {
-  if (entries.length === 0) return { valid: true };
-
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    if (typeof entry.chainIndex !== "number" || typeof entry.previousHash !== "string") {
-      return { valid: false, reason: "malformed_entry", failedIndex: entry.chainIndex ?? i };
-    }
-    // The in-memory view may intentionally start after an evicted prefix. The
-    // retained first entry must still point to a valid predecessor; its own
-    // predecessor is not available for local verification.
-    const expectedPrevious = i === 0
-      ? (entry.chainIndex === 0 ? GENESIS_HASH : entry.previousHash)
-      : entries[i - 1].integrityHash;
-    if (entry.previousHash !== expectedPrevious) {
-      return { valid: false, reason: "previous_hash_mismatch", failedIndex: entry.chainIndex };
-    }
-    if (i > 0 && entry.chainIndex !== entries[i - 1].chainIndex + 1) {
-      return { valid: false, reason: "chain_index_mismatch", failedIndex: entry.chainIndex };
-    }
-    const recomputed = computeIntegrityHash(entry);
-    if (recomputed !== entry.integrityHash) {
-      return { valid: false, reason: "integrity_hash_mismatch", failedIndex: entry.chainIndex };
-    }
-  }
-  return { valid: true };
-}
-
-/** Audit M-7: only a keyed hash of each scan target is retained for stats —
- *  never the raw absolute path. */
-function hashTarget(resolvedPath: string): string {
-  return createHash("sha256").update(resolvedPath).digest("hex").slice(0, 16);
 }
 
 /** Return a stable label without disclosing the host filesystem layout. */
 function publicScanTarget(resolvedPath: string): string {
-  return `scan-${hashTarget(resolvedPath)}`;
+  return `scan-${hashScanTarget(resolvedPath)}`;
 }
 
 export async function registerScannerRoutes(app: FastifyInstance): Promise<void> {
-  const scanHistory: any[] = [];
-
   app.get("/v1/health", async () => {
     return { status: "ok", version: "1.0.0", services: { scanner: true, risk: true, compliance: true } };
   });
@@ -450,8 +391,9 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
-    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedDir), type: "source", timestamp: new Date().toISOString(), count: findings.length });
-    return { directory: publicScanTarget(resolvedDir), findings, scanType: "source", timestamp: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    await recordScan(request.log, { targetHash: hashScanTarget(resolvedDir), type: "source", timestamp, count: findings.length });
+    return { directory: publicScanTarget(resolvedDir), findings, scanType: "source", timestamp };
   });
 
   app.post("/v1/scan/manifests", {
@@ -483,8 +425,9 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const findings = Array.isArray(result.findings) ? result.findings : [];
-    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedDir), type: "manifests", timestamp: new Date().toISOString(), count: findings.length });
-    return { directory: publicScanTarget(resolvedDir), findings, scanType: "manifests", timestamp: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    await recordScan(request.log, { targetHash: hashScanTarget(resolvedDir), type: "manifests", timestamp, count: findings.length });
+    return { directory: publicScanTarget(resolvedDir), findings, scanType: "manifests", timestamp };
   });
 
   app.post("/v1/scan/full", {
@@ -526,8 +469,60 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return { error: "Cryptographic scanner failed" };
     }
     const allFindings = Array.isArray(result.findings) ? result.findings : [];
-    recordScanHistory(scanHistory, { targetHash: hashTarget(resolvedTarget), type: "full", timestamp: new Date().toISOString(), count: allFindings.length });
-    return { target: publicScanTarget(resolvedTarget), findings: allFindings, scanType: "full", timestamp: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    await recordScan(request.log, { targetHash: hashScanTarget(resolvedTarget), type: "full", timestamp, count: allFindings.length });
+    return { target: publicScanTarget(resolvedTarget), findings: allFindings, scanType: "full", timestamp };
+  });
+
+  app.post("/v1/scan/repo", {
+    preHandler: requireApiKey,
+    config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    schema: {
+      body: ScanRepoRequestSchema,
+      response: {
+        200: ScanRepoResponseSchema,
+        400: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        413: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+        502: ErrorResponseSchema,
+        503: ErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { repo, ref, scanType = "full" } = request.body as {
+      repo: string;
+      ref?: string;
+      scanType?: "source" | "manifests" | "full";
+    };
+    try {
+      const result = await scanGithubRepo({ repo, ref, scanType, log: request.log });
+      const timestamp = new Date().toISOString();
+      await recordScan(request.log, {
+        targetHash: hashScanTarget(`repo:${result.repo}`),
+        type: scanType,
+        timestamp,
+        count: result.findings.length,
+      });
+      return {
+        repo: result.repo,
+        ...(result.ref ? { ref: result.ref } : {}),
+        findings: result.findings,
+        scanType,
+        ...(result.filesScanned !== undefined ? { filesScanned: result.filesScanned } : {}),
+        ...(result.detector ? { detector: result.detector } : {}),
+        timestamp,
+      };
+    } catch (err) {
+      if (err instanceof RepoScanError) {
+        request.log.warn({ err, statusCode: err.statusCode }, "Repository scan failed");
+        reply.code(err.statusCode);
+        return { error: err.message };
+      }
+      request.log.error(err, "Repository scan failed unexpectedly");
+      reply.code(503);
+      return { error: "Cryptographic scanner unavailable or failed" };
+    }
   });
 
   app.post("/v1/risk/score", {
@@ -613,31 +608,42 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
   });
 
   app.post("/v1/evidence/create", {
-    // Audit M-6: this route appends to the on-disk JSONL chain and grows an
-    // in-memory array — it must not be anonymous/unbounded.
+    // Appends to the shared SHA-256 chain, so it must not be anonymous or
+    // unbounded. Storage is Postgres when configured, JSONL for local dev.
     preHandler: requireApiKey,
     config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
-    schema: { body: EvidenceCreateSchema, response: { 200: EvidenceCreateResponseSchema } },
-  }, async (request) => {
+    schema: {
+      body: EvidenceCreateSchema,
+      response: { 200: EvidenceCreateResponseSchema, 503: ErrorResponseSchema },
+    },
+  }, async (request, reply) => {
     const { scanResultHash, scanTarget, findingsCount, riskSummary } = request.body as {
       scanResultHash: string;
       scanTarget: string;
       findingsCount: number;
       riskSummary: object;
     };
-    const ledger = generateEvidenceLedger({
-      scanResultHash,
-      scanTarget,
-      findingsCount,
-      riskSummary,
-      timestamp: new Date().toISOString(),
-    });
-    return { ledger };
+    try {
+      const ledger = await evidenceStore.append({
+        scanResultHash,
+        scanTarget,
+        findingsCount,
+        riskSummary,
+        timestamp: new Date().toISOString(),
+      });
+      return { ledger };
+    } catch (err) {
+      request.log.error({ err }, "evidence ledger append failed");
+      return reply.code(503).send({
+        error: "evidence ledger storage is unavailable",
+        code: "evidence_store_unavailable",
+      });
+    }
   });
 
   app.post("/v1/evidence/verify", {
     schema: { body: EvidenceVerifySchema },
-  }, async (request) => {
+  }, async (request, reply) => {
     const { ledger } = request.body as { ledger: any };
     if (typeof ledger.previousHash !== "string" || typeof ledger.chainIndex !== "number") {
       return {
@@ -660,8 +666,24 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       };
     }
 
-    // 2. Validate the whole in-memory chain (tamper detection across history).
-    const chainCheck = verifyEvidenceChain(evidenceChain);
+    let entries: LedgerEntry[];
+    let known: LedgerEntry | null;
+    try {
+      // 2. Validate the whole chain (tamper detection across history). With
+      //    Postgres this is the shared chain, so a ledger issued by any
+      //    instance verifies here — the old per-process array could not.
+      entries = await evidenceStore.list();
+      // 3. Confirm this entry still matches the chain record at its index.
+      known = await evidenceStore.find(ledger.chainIndex);
+    } catch (err) {
+      request.log.error({ err }, "evidence ledger read failed");
+      return reply.code(503).send({
+        error: "evidence ledger storage is unavailable",
+        code: "evidence_store_unavailable",
+      });
+    }
+
+    const chainCheck = verifyChain(entries);
     if (!chainCheck.valid) {
       return {
         valid: false,
@@ -670,9 +692,6 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       };
     }
 
-    // 3. If this entry was issued by this node, confirm it still matches the
-    //    chain entry at its index (detects tampering of historical entries).
-    const known = evidenceChain.find((entry) => entry.chainIndex === ledger.chainIndex);
     if (known && known.integrityHash !== ledger.integrityHash) {
       return {
         valid: false,
@@ -684,11 +703,11 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
       return {
         valid: false,
         reason: "unknown_chain_index",
-        detail: `No retained ledger entry exists at chainIndex ${ledger.chainIndex} on this node`,
+        detail: `No ledger entry exists at chainIndex ${ledger.chainIndex}`,
       };
     }
 
-    return { valid: true, expectedHash: recomputed, providedHash: ledger.integrityHash, chainLength: evidenceChain.length };
+    return { valid: true, expectedHash: recomputed, providedHash: ledger.integrityHash, chainLength: entries.length };
   });
 
   app.post("/v1/roadmap/generate", {
@@ -750,15 +769,26 @@ export async function registerScannerRoutes(app: FastifyInstance): Promise<void>
   });
 
   app.get("/v1/stats", {
-    // Audit M-7: scanHistory previously exposed absolute resolved filesystem
-    // paths of every scanned directory to unauthenticated callers.
+    // Audit M-7: only keyed target hashes are stored, never the absolute
+    // resolved filesystem paths of scanned directories.
     preHandler: requireApiKey,
-  }, async () => {
-    const totalScans = scanHistory.length;
-    const totalFindings = scanHistory.reduce((sum, s) => sum + s.count, 0);
+  }, async (request, reply) => {
+    let totals: { totalScans: number; totalFindings: number };
+    let scanHistory: ScanHistoryEntry[];
+    try {
+      [totals, scanHistory] = await Promise.all([
+        scanHistoryStore.stats(),
+        scanHistoryStore.list(500),
+      ]);
+    } catch (err) {
+      request.log.error({ err }, "scan history read failed");
+      reply.code(503);
+      return { error: "scan history storage is unavailable", code: "scan_history_unavailable" };
+    }
     return {
-      totalScans,
-      totalFindings,
+      totalScans: totals.totalScans,
+      totalFindings: totals.totalFindings,
+      historyPersistent: scanHistoryStore.mode === "postgres",
       riskLevels: { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, NONE: 0 },
       complianceScores: { NIST: 100, CNSA: 100 },
       scanHistory,

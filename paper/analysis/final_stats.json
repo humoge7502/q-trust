@@ -1,0 +1,1290 @@
+{
+  "ranking_42": {
+    "n_folds": 42,
+    "n_hosts": 277,
+    "sizes": {
+      "7": 37,
+      "3": 1,
+      "2": 1,
+      "4": 2,
+      "5": 1
+    },
+    "mean_model": 0.7167815714285715,
+    "mean_doctrine": 0.7210238095238095,
+    "mean_random": 0.030100880952380952,
+    "sd_model": 0.12575701143196608,
+    "sd_doctrine": 0.11592240869361145,
+    "median_model": 0.723747,
+    "median_doctrine": 0.723747,
+    "mean_ceiling": 0.7210237059980084,
+    "folds_at_ceiling": 41,
+    "total_pairs": 803,
+    "tied_pairs": 401,
+    "distinct_pairs": 402,
+    "total_inversions": 0.999963077737716,
+    "pooled_pair_accuracy": 0.9975125296573688,
+    "attainment": 0.9920635945828341,
+    "mean_tau_excl_small": 0.7098738048780487,
+    "mean_ceiling_excl_small": 0.7142194061443012,
+    "model_vs_doctrine": {
+      "mean_diff": -0.004242238095238097,
+      "sd_diff": 0.027492845076145772,
+      "ci95": [
+        -0.012726714285714289,
+        0.0
+      ],
+      "perm_p": 1.0,
+      "wins": 0,
+      "ties": 41,
+      "losses": 1,
+      "cohen_dz": -0.1543033499620919,
+      "mde_80": 0.011886751142857147
+    },
+    "model_vs_random": {
+      "mean_diff": 0.6866806904761905,
+      "sd_diff": 0.4416354808857026,
+      "ci95": [
+        0.5540671535714287,
+        0.8190400886904758
+      ],
+      "perm_p": 4.999750012499375e-05,
+      "wins": 36,
+      "ties": 6,
+      "losses": 0,
+      "cohen_dz": 1.5548585206493108,
+      "mde_80": 0.19094462732411885
+    },
+    "per_fold": {
+      "real_finance_0.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_finance_1.json": {
+        "n": 7,
+        "model": 0.534522,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 2.7154602286749707e-06
+      },
+      "real_finance_2.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_finance_3.json": {
+        "n": 3,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 2,
+        "inversions": -5.132566183174703e-07
+      },
+      "real_gov_edu_0.json": {
+        "n": 7,
+        "model": 0.534522,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 2.7154602286749707e-06
+      },
+      "real_gov_edu_1.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_gov_edu_2.json": {
+        "n": 7,
+        "model": 0.356348,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 1.0000018103068193
+      },
+      "real_gov_edu_3.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_gov_edu_4.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_gov_edu_5.json": {
+        "n": 7,
+        "model": 0.723747,
+        "doctrine": 0.723747,
+        "ceiling": 0.7237468644557459,
+        "distinct": 11,
+        "inversions": -1.0300471542379341e-06
+      },
+      "real_gov_edu_6.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_gov_edu_7.json": {
+        "n": 2,
+        "model": 1.0,
+        "doctrine": 1.0,
+        "ceiling": 1.0,
+        "distinct": 0,
+        "inversions": 0.0
+      },
+      "real_infra_0.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_infra_1.json": {
+        "n": 7,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 14,
+        "inversions": -3.5927963288884257e-06
+      },
+      "real_infra_2.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_media_0.json": {
+        "n": 7,
+        "model": 0.723747,
+        "doctrine": 0.723747,
+        "ceiling": 0.7237468644557459,
+        "distinct": 11,
+        "inversions": -1.0300471542379341e-06
+      },
+      "real_media_1.json": {
+        "n": 4,
+        "model": 1.0,
+        "doctrine": 1.0,
+        "ceiling": 1.0,
+        "distinct": 0,
+        "inversions": 0.0
+      },
+      "real_mixed_0.json": {
+        "n": 7,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 14,
+        "inversions": -3.5927963288884257e-06
+      },
+      "real_mixed_1.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_mixed_10.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_mixed_11.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_mixed_12.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_mixed_13.json": {
+        "n": 7,
+        "model": 0.845154,
+        "doctrine": 0.845154,
+        "ceiling": 0.8451542547285166,
+        "distinct": 15,
+        "inversions": 2.2604913407775484e-06
+      },
+      "real_mixed_14.json": {
+        "n": 4,
+        "model": 0.707107,
+        "doctrine": 0.707107,
+        "ceiling": 0.7071067811865476,
+        "distinct": 3,
+        "inversions": -4.641734281385368e-07
+      },
+      "real_mixed_2.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_mixed_3.json": {
+        "n": 7,
+        "model": 0.534522,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 2.7154602286749707e-06
+      },
+      "real_mixed_4.json": {
+        "n": 7,
+        "model": 0.534522,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 2.7154602286749707e-06
+      },
+      "real_mixed_5.json": {
+        "n": 7,
+        "model": 0.723747,
+        "doctrine": 0.723747,
+        "ceiling": 0.7237468644557459,
+        "distinct": 11,
+        "inversions": -1.0300471542379341e-06
+      },
+      "real_mixed_6.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_mixed_7.json": {
+        "n": 7,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 14,
+        "inversions": -3.5927963288884257e-06
+      },
+      "real_mixed_8.json": {
+        "n": 7,
+        "model": 0.534522,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 2.7154602286749707e-06
+      },
+      "real_mixed_9.json": {
+        "n": 7,
+        "model": 0.534522,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 2.7154602286749707e-06
+      },
+      "real_security_0.json": {
+        "n": 7,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 14,
+        "inversions": -3.5927963288884257e-06
+      },
+      "real_security_1.json": {
+        "n": 7,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 14,
+        "inversions": -3.5927963288884257e-06
+      },
+      "real_security_2.json": {
+        "n": 5,
+        "model": 0.774597,
+        "doctrine": 0.774597,
+        "ceiling": 0.7745966692414834,
+        "distinct": 6,
+        "inversions": -1.281022226518047e-06
+      },
+      "real_tech_0.json": {
+        "n": 7,
+        "model": 0.845154,
+        "doctrine": 0.845154,
+        "ceiling": 0.8451542547285166,
+        "distinct": 15,
+        "inversions": 2.2604913407775484e-06
+      },
+      "real_tech_1.json": {
+        "n": 7,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 14,
+        "inversions": -3.5927963288884257e-06
+      },
+      "real_tech_2.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_tech_3.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_tech_4.json": {
+        "n": 7,
+        "model": 0.690066,
+        "doctrine": 0.690066,
+        "ceiling": 0.6900655593423543,
+        "distinct": 10,
+        "inversions": -3.192867979784353e-06
+      },
+      "real_tech_5.json": {
+        "n": 7,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 12,
+        "inversions": -4.284652348474083e-07
+      },
+      "real_tech_6.json": {
+        "n": 7,
+        "model": 0.534522,
+        "doctrine": 0.534522,
+        "ceiling": 0.5345224838248488,
+        "distinct": 6,
+        "inversions": 2.7154602286749707e-06
+      }
+    }
+  },
+  "ranking_38": {
+    "n_folds": 38,
+    "n_hosts": 275,
+    "sizes": {
+      "8": 32,
+      "2": 1,
+      "5": 2,
+      "3": 2,
+      "1": 1
+    },
+    "mean_model": 0.7171302631578947,
+    "mean_doctrine": 0.7266322368421053,
+    "mean_random": -0.036053631578947365,
+    "sd_model": 0.14298931890457323,
+    "sd_doctrine": 0.12688979974689554,
+    "median_model": 0.731925,
+    "median_doctrine": 0.731925,
+    "mean_ceiling": 0.7266322004254605,
+    "folds_at_ceiling": 36,
+    "total_pairs": 923,
+    "tied_pairs": 462,
+    "distinct_pairs": 461,
+    "total_inversions": 2.9999964758346023,
+    "pooled_pair_accuracy": 0.993492415453721,
+    "attainment": 0.9837093402942821,
+    "mean_tau_excl_small": 0.7014152777777778,
+    "mean_ceiling_excl_small": 0.7114451004490973,
+    "model_vs_doctrine": {
+      "mean_diff": -0.009501973684210525,
+      "sd_diff": 0.04178331906426673,
+      "ci95": [
+        -0.02474652631578947,
+        0.0
+      ],
+      "perm_p": 0.5031748412579371,
+      "wins": 0,
+      "ties": 36,
+      "losses": 2,
+      "cohen_dz": -0.22741069634979413,
+      "mde_80": 0.018992374613659543
+    },
+    "model_vs_random": {
+      "mean_diff": 0.7531838947368421,
+      "sd_diff": 0.3563549937760432,
+      "ci95": [
+        0.6393914855263159,
+        0.8622920934210524
+      ],
+      "perm_p": 4.999750012499375e-05,
+      "wins": 34,
+      "ties": 4,
+      "losses": 0,
+      "cohen_dz": 2.1135774940485113,
+      "mde_80": 0.16197917467573733
+    },
+    "per_fold": {
+      "real_finance_0.json": {
+        "n": 8,
+        "model": 0.5,
+        "doctrine": 0.5,
+        "ceiling": 0.5,
+        "distinct": 7,
+        "inversions": 0.0
+      },
+      "real_finance_1.json": {
+        "n": 8,
+        "model": 0.654654,
+        "doctrine": 0.654654,
+        "ceiling": 0.6546536707079771,
+        "distinct": 12,
+        "inversions": -3.018011240030205e-06
+      },
+      "real_finance_2.json": {
+        "n": 8,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 16,
+        "inversions": -5.712869803886633e-07
+      },
+      "real_gov_edu_0.json": {
+        "n": 8,
+        "model": 0.436436,
+        "doctrine": 0.654654,
+        "ceiling": 0.6546536707079771,
+        "distinct": 12,
+        "inversions": 1.999997987992506
+      },
+      "real_gov_edu_1.json": {
+        "n": 8,
+        "model": 0.357143,
+        "doctrine": 0.5,
+        "ceiling": 0.5,
+        "distinct": 7,
+        "inversions": 0.9999989999999999
+      },
+      "real_gov_edu_2.json": {
+        "n": 8,
+        "model": 0.5,
+        "doctrine": 0.5,
+        "ceiling": 0.5,
+        "distinct": 7,
+        "inversions": 0.0
+      },
+      "real_gov_edu_3.json": {
+        "n": 8,
+        "model": 0.731925,
+        "doctrine": 0.731925,
+        "ceiling": 0.7319250547113999,
+        "distinct": 15,
+        "inversions": 5.606250210732355e-07
+      },
+      "real_gov_edu_4.json": {
+        "n": 8,
+        "model": 0.823754,
+        "doctrine": 0.823754,
+        "ceiling": 0.823754471047914,
+        "distinct": 19,
+        "inversions": 5.4323895533059385e-06
+      },
+      "real_gov_edu_5.json": {
+        "n": 8,
+        "model": 0.731925,
+        "doctrine": 0.731925,
+        "ceiling": 0.7319250547113999,
+        "distinct": 15,
+        "inversions": 5.606250210732355e-07
+      },
+      "real_gov_edu_6.json": {
+        "n": 2,
+        "model": 1.0,
+        "doctrine": 1.0,
+        "ceiling": 1.0,
+        "distinct": 0,
+        "inversions": 0.0
+      },
+      "real_infra_0.json": {
+        "n": 8,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 16,
+        "inversions": -5.712869803886633e-07
+      },
+      "real_infra_1.json": {
+        "n": 8,
+        "model": 0.779194,
+        "doctrine": 0.779194,
+        "ceiling": 0.7791937224739796,
+        "distinct": 17,
+        "inversions": -3.0274514610795222e-06
+      },
+      "real_infra_2.json": {
+        "n": 5,
+        "model": 0.632456,
+        "doctrine": 0.632456,
+        "ceiling": 0.6324555320336759,
+        "distinct": 4,
+        "inversions": -1.4798394527559822e-06
+      },
+      "real_media_0.json": {
+        "n": 8,
+        "model": 0.5,
+        "doctrine": 0.5,
+        "ceiling": 0.5,
+        "distinct": 7,
+        "inversions": 0.0
+      },
+      "real_media_1.json": {
+        "n": 3,
+        "model": 0.816497,
+        "doctrine": 0.816497,
+        "ceiling": 0.816496580927726,
+        "distinct": 2,
+        "inversions": -5.132566183174703e-07
+      },
+      "real_mixed_0.json": {
+        "n": 8,
+        "model": 0.731925,
+        "doctrine": 0.731925,
+        "ceiling": 0.7319250547113999,
+        "distinct": 15,
+        "inversions": 5.606250210732355e-07
+      },
+      "real_mixed_1.json": {
+        "n": 8,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 16,
+        "inversions": -5.712869803886633e-07
+      },
+      "real_mixed_10.json": {
+        "n": 8,
+        "model": 0.681385,
+        "doctrine": 0.681385,
+        "ceiling": 0.6813851438692469,
+        "distinct": 13,
+        "inversions": 1.3724251450852876e-06
+      },
+      "real_mixed_11.json": {
+        "n": 8,
+        "model": 0.731925,
+        "doctrine": 0.731925,
+        "ceiling": 0.7319250547113999,
+        "distinct": 15,
+        "inversions": 5.606250210732355e-07
+      },
+      "real_mixed_12.json": {
+        "n": 5,
+        "model": 0.83666,
+        "doctrine": 0.83666,
+        "ceiling": 0.8366600265340756,
+        "distinct": 7,
+        "inversions": 1.1100000207875382e-07
+      },
+      "real_mixed_2.json": {
+        "n": 8,
+        "model": 0.779194,
+        "doctrine": 0.779194,
+        "ceiling": 0.7791937224739796,
+        "distinct": 17,
+        "inversions": -3.0274514610795222e-06
+      },
+      "real_mixed_3.json": {
+        "n": 8,
+        "model": 0.779194,
+        "doctrine": 0.779194,
+        "ceiling": 0.7791937224739796,
+        "distinct": 17,
+        "inversions": -3.0274514610795222e-06
+      },
+      "real_mixed_4.json": {
+        "n": 8,
+        "model": 0.731925,
+        "doctrine": 0.731925,
+        "ceiling": 0.7319250547113999,
+        "distinct": 15,
+        "inversions": 5.606250210732355e-07
+      },
+      "real_mixed_5.json": {
+        "n": 8,
+        "model": 0.654654,
+        "doctrine": 0.654654,
+        "ceiling": 0.6546536707079771,
+        "distinct": 12,
+        "inversions": -3.018011240030205e-06
+      },
+      "real_mixed_6.json": {
+        "n": 8,
+        "model": 0.654654,
+        "doctrine": 0.654654,
+        "ceiling": 0.6546536707079771,
+        "distinct": 12,
+        "inversions": -3.018011240030205e-06
+      },
+      "real_mixed_7.json": {
+        "n": 8,
+        "model": 0.823754,
+        "doctrine": 0.823754,
+        "ceiling": 0.823754471047914,
+        "distinct": 19,
+        "inversions": 5.4323895533059385e-06
+      },
+      "real_mixed_8.json": {
+        "n": 8,
+        "model": 0.5,
+        "doctrine": 0.5,
+        "ceiling": 0.5,
+        "distinct": 7,
+        "inversions": 0.0
+      },
+      "real_mixed_9.json": {
+        "n": 8,
+        "model": 0.731925,
+        "doctrine": 0.731925,
+        "ceiling": 0.7319250547113999,
+        "distinct": 15,
+        "inversions": 5.606250210732355e-07
+      },
+      "real_security_0.json": {
+        "n": 8,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 16,
+        "inversions": -5.712869803886633e-07
+      },
+      "real_security_1.json": {
+        "n": 8,
+        "model": 0.823754,
+        "doctrine": 0.823754,
+        "ceiling": 0.823754471047914,
+        "distinct": 19,
+        "inversions": 5.4323895533059385e-06
+      },
+      "real_security_2.json": {
+        "n": 3,
+        "model": 1.0,
+        "doctrine": 1.0,
+        "ceiling": 1.0,
+        "distinct": 3,
+        "inversions": 0.0
+      },
+      "real_tech_0.json": {
+        "n": 8,
+        "model": 0.681385,
+        "doctrine": 0.681385,
+        "ceiling": 0.6813851438692469,
+        "distinct": 13,
+        "inversions": 1.3724251450852876e-06
+      },
+      "real_tech_1.json": {
+        "n": 8,
+        "model": 0.654654,
+        "doctrine": 0.654654,
+        "ceiling": 0.6546536707079771,
+        "distinct": 12,
+        "inversions": -3.018011240030205e-06
+      },
+      "real_tech_2.json": {
+        "n": 8,
+        "model": 0.654654,
+        "doctrine": 0.654654,
+        "ceiling": 0.6546536707079771,
+        "distinct": 12,
+        "inversions": -3.018011240030205e-06
+      },
+      "real_tech_3.json": {
+        "n": 8,
+        "model": 0.823754,
+        "doctrine": 0.823754,
+        "ceiling": 0.823754471047914,
+        "distinct": 19,
+        "inversions": 5.4323895533059385e-06
+      },
+      "real_tech_4.json": {
+        "n": 8,
+        "model": 0.755929,
+        "doctrine": 0.755929,
+        "ceiling": 0.7559289460184544,
+        "distinct": 16,
+        "inversions": -5.712869803886633e-07
+      },
+      "real_tech_5.json": {
+        "n": 8,
+        "model": 0.731925,
+        "doctrine": 0.731925,
+        "ceiling": 0.7319250547113999,
+        "distinct": 15,
+        "inversions": 5.606250210732355e-07
+      },
+      "real_tech_6.json": {
+        "n": 1,
+        "model": 1.0,
+        "doctrine": 1.0,
+        "ceiling": 1.0,
+        "distinct": 0,
+        "inversions": 0.0
+      }
+    }
+  },
+  "transparent_42": {
+    "logit_mean": 0.7210237059980085,
+    "ridge_mean": 0.7167814640628906,
+    "logit_folds_at_ceiling": 42,
+    "ridge_folds_at_ceiling": 41,
+    "ridge_exact_gnn_folds": 42,
+    "logit_exact_doctrine_folds": 42,
+    "ridge_fail_fold": [
+      "real_gov_edu_2.json"
+    ]
+  },
+  "zeroshot": {
+    "cohort_42": {
+      "model_mean": 0.604020334527855,
+      "doctrine_mean": 0.7210237059980085,
+      "keysize_mean": 0.7210237059980085,
+      "folds_model_equals_doctrine": 31,
+      "n": 42
+    },
+    "cohort_38": {
+      "model_mean": 0.49748511101678206,
+      "doctrine_mean": 0.7266322004254605,
+      "keysize_mean": 0.7266322004254605,
+      "folds_model_equals_doctrine": 21,
+      "n": 38
+    }
+  },
+  "field_audit": {
+    "cohort_42": {
+      "n_estates": 42,
+      "n_assets": 277,
+      "n_hosts": 277,
+      "edges": 0,
+      "mean_size": 6.595238095238095,
+      "mean_ceiling": 0.7210237059980084,
+      "sd_ceiling": 0.1159222333993453,
+      "estimator_ceiling": 0.7210237059980084,
+      "total_pairs": 803,
+      "total_tied_pairs": 401,
+      "total_distinct_pairs": 402,
+      "mean_distinct_share": 0.4853741496598639,
+      "mean_groups": 2.2142857142857144,
+      "estates_with_zero_edges": 42,
+      "estates_constant_criticality": 42,
+      "estates_constant_vendor": 42,
+      "estates_constant_deadline": 42,
+      "key_size_matches_doctrine": 42,
+      "size_hist": {
+        "7": 37,
+        "3": 1,
+        "2": 1,
+        "4": 2,
+        "5": 1
+      },
+      "groups_hist": {
+        "2": 29,
+        "3": 11,
+        "1": 2
+      },
+      "ablation_order_changes": {
+        "criticality": 0,
+        "vendor": 0,
+        "deadline": 0,
+        "dependency": 0,
+        "key_size": 37
+      },
+      "mean_model_tau": 0.7167815714285715,
+      "mean_doctrine_tau": 0.7210238095238095,
+      "max_ceiling_doctrine_gap": 4.838248487404329e-07,
+      "folds_model_at_ceiling": 41,
+      "folds_model_equals_doctrine": 41,
+      "total_model_inversions": 1.0,
+      "pooled_pair_accuracy": 0.9975125296573689,
+      "mean_attainment": 0.9920635945828341,
+      "mean_pair_accuracy": 0.9960317972914171
+    },
+    "cohort_38": {
+      "n_estates": 38,
+      "n_assets": 275,
+      "n_hosts": 275,
+      "edges": 0,
+      "mean_size": 7.2368421052631575,
+      "mean_ceiling": 0.7266322004254605,
+      "sd_ceiling": 0.12688985765575708,
+      "estimator_ceiling": 0.7266322004254605,
+      "total_pairs": 923,
+      "total_tied_pairs": 462,
+      "total_distinct_pairs": 461,
+      "mean_distinct_share": 0.5043114543114543,
+      "mean_groups": 2.236842105263158,
+      "estates_with_zero_edges": 38,
+      "estates_constant_criticality": 38,
+      "estates_constant_vendor": 38,
+      "estates_constant_deadline": 38,
+      "key_size_matches_doctrine": 38,
+      "size_hist": {
+        "8": 32,
+        "2": 1,
+        "5": 2,
+        "3": 2,
+        "1": 1
+      },
+      "groups_hist": {
+        "2": 25,
+        "3": 11,
+        "1": 2
+      },
+      "ablation_order_changes": {
+        "criticality": 0,
+        "vendor": 0,
+        "deadline": 0,
+        "dependency": 0,
+        "key_size": 36
+      }
+    }
+  },
+  "raw_composition": {
+    "algorithms": {
+      "SHA256WITHRSAENCRYPTION": 186,
+      "RSA-2048": 175,
+      "ECDSA-P256": 89,
+      "ECDSA-WITH-SHA384": 43,
+      "ECDSA-WITH-SHA256": 41,
+      "RSA-4096": 10,
+      "UNKNOWN": 3,
+      "SHA384WITHRSAENCRYPTION": 3,
+      "ECDSA-P384": 1,
+      "RSA-3072": 1
+    },
+    "criticality": {
+      "medium": 552
+    },
+    "pqc_ready": {
+      "None": 552
+    },
+    "not_after_dates": {
+      "2026-11-24": 12,
+      "2026-12-19": 12,
+      "2026-10-31": 11,
+      "2026-11-02": 10,
+      "2026-11-27": 10,
+      "2026-11-04": 8,
+      "2026-11-10": 8,
+      "2026-10-25": 8,
+      "2026-11-14": 7,
+      "2026-12-04": 7
+    },
+    "unique_hosts": 277,
+    "duplicate_host_records": 275,
+    "estate_sizes": {
+      "7": 37,
+      "3": 3,
+      "2": 2,
+      "4": 2,
+      "5": 3,
+      "8": 32,
+      "1": 1
+    }
+  },
+  "discovery": {
+    "n_files": 13973,
+    "n_repos": 38,
+    "n_train": 11558,
+    "n_eval": 2415,
+    "eval_prevalence": 0.767287784679089,
+    "corpus_prevalence": 0.5461962355972232,
+    "majority_f1": 0.8683223992502344,
+    "precision": 0.9278947368421052,
+    "recall": 0.9514301133297356,
+    "f1": 0.9395150546229682,
+    "accuracy": 0.9060041407867495,
+    "roc_auc": 0.9615589224360611,
+    "average_precision": 0.9890229283678813,
+    "brier": 0.0696537437625703,
+    "ece_10bin": 0.15565500122959688,
+    "macro_f1_lang_ge10": 0.6954543864639696,
+    "macro_f1_all_lang": 0.5563635091711757,
+    "per_language": [
+      {
+        "language": "c",
+        "n": 1688,
+        "pos": 1560,
+        "tp": 1520,
+        "fp": 57,
+        "fn": 40,
+        "tn": 71,
+        "precision": 0.963855421686747,
+        "recall": 0.9743589743589743,
+        "f1": 0.9690787376474339,
+        "recall_ci": [
+          0.9652734553801704,
+          0.9811139536771151
+        ]
+      },
+      {
+        "language": "cpp",
+        "n": 86,
+        "pos": 84,
+        "tp": 82,
+        "fp": 0,
+        "fn": 2,
+        "tn": 2,
+        "precision": 1.0,
+        "recall": 0.9761904761904762,
+        "f1": 0.9879518072289156,
+        "recall_ci": [
+          0.9172839887867145,
+          0.9934462347064822
+        ]
+      },
+      {
+        "language": "go",
+        "n": 71,
+        "pos": 50,
+        "tp": 36,
+        "fp": 5,
+        "fn": 14,
+        "tn": 16,
+        "precision": 0.8780487804878049,
+        "recall": 0.72,
+        "f1": 0.7912087912087912,
+        "recall_ci": [
+          0.5833461285401034,
+          0.8252598564231963
+        ]
+      },
+      {
+        "language": "java",
+        "n": 95,
+        "pos": 0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 95,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "recall_ci": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "language": "javascript",
+        "n": 1,
+        "pos": 0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "recall_ci": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "language": "python",
+        "n": 64,
+        "pos": 25,
+        "tp": 10,
+        "fp": 8,
+        "fn": 15,
+        "tn": 31,
+        "precision": 0.5555555555555556,
+        "recall": 0.4,
+        "f1": 0.46511627906976744,
+        "recall_ci": [
+          0.23403057664190918,
+          0.5926087221487266
+        ]
+      },
+      {
+        "language": "rust",
+        "n": 2,
+        "pos": 1,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "tn": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "recall_ci": [
+          0,
+          0.7934567085261071
+        ]
+      },
+      {
+        "language": "shell",
+        "n": 21,
+        "pos": 14,
+        "tp": 14,
+        "fp": 2,
+        "fn": 0,
+        "tn": 5,
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.9333333333333333,
+        "recall_ci": [
+          0.7846829880728186,
+          1
+        ]
+      },
+      {
+        "language": "solidity",
+        "n": 275,
+        "pos": 71,
+        "tp": 53,
+        "fp": 24,
+        "fn": 18,
+        "tn": 180,
+        "precision": 0.6883116883116883,
+        "recall": 0.7464788732394366,
+        "f1": 0.7162162162162162,
+        "recall_ci": [
+          0.6344585450983389,
+          0.8331958075611448
+        ]
+      },
+      {
+        "language": "swift",
+        "n": 112,
+        "pos": 48,
+        "tp": 48,
+        "fp": 41,
+        "fn": 0,
+        "tn": 23,
+        "precision": 0.5393258426966292,
+        "recall": 1.0,
+        "f1": 0.7007299270072993,
+        "recall_ci": [
+          0.9258973488472576,
+          0.9999999999999999
+        ]
+      }
+    ],
+    "risk_coverage": [
+      {
+        "coverage": 0.5,
+        "n": 1208,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "coverage": 0.6,
+        "n": 1449,
+        "precision": 0.9965373961218836,
+        "recall": 0.9986120749479528,
+        "f1": 0.9975736568457539
+      },
+      {
+        "coverage": 0.7,
+        "n": 1690,
+        "precision": 0.9750456482045039,
+        "recall": 0.994413407821229,
+        "f1": 0.9846342962507683
+      },
+      {
+        "coverage": 0.8,
+        "n": 1932,
+        "precision": 0.9670900692840647,
+        "recall": 0.9882005899705014,
+        "f1": 0.977531368543916
+      },
+      {
+        "coverage": 0.9,
+        "n": 2174,
+        "precision": 0.9529607083563918,
+        "recall": 0.9739819004524887,
+        "f1": 0.9633566433566434
+      },
+      {
+        "coverage": 0.95,
+        "n": 2294,
+        "precision": 0.9437229437229437,
+        "recall": 0.9630038652678078,
+        "f1": 0.9532659196501776
+      },
+      {
+        "coverage": 0.99,
+        "n": 2391,
+        "precision": 0.9326259946949602,
+        "recall": 0.9533622559652929,
+        "f1": 0.9428801287208367
+      },
+      {
+        "coverage": 1.0,
+        "n": 2415,
+        "precision": 0.9278947368421052,
+        "recall": 0.9514301133297356,
+        "f1": 0.9395150546229682
+      }
+    ],
+    "contamination_corrected": {
+      "exact_dup": {
+        "n": 2397,
+        "precision": 0.9285336156696665,
+        "recall": 0.9511930585683297,
+        "f1": 0.9397267613179748,
+        "excluded": 18,
+        "excluded_pos": 9
+      },
+      "near_dup_0.8": {
+        "n": 2383,
+        "precision": 0.9280767181672882,
+        "recall": 0.9508733624454149,
+        "f1": 0.9393367484497169,
+        "excluded": 32,
+        "excluded_pos": 21
+      }
+    },
+    "exact_dup_eval_count": 11,
+    "near_dup_counts": {
+      "0.3": 119,
+      "0.5": 67,
+      "0.7": 35,
+      "0.8": 25,
+      "0.9": 16,
+      "0.95": 12,
+      "1.0": 11
+    },
+    "near_dup_p99": 0.8043,
+    "confusion": {
+      "tp": 1763,
+      "fp": 137,
+      "fn": 90,
+      "tn": 425
+    },
+    "f1_cluster_bootstrap_95": [
+      0.719689872169585,
+      0.9794958230470403
+    ]
+  },
+  "positive_control": {
+    "gnn": {
+      "mean": 0.8802633460218587,
+      "sd": 0.0011973066682187726
+    },
+    "doctrine": {
+      "mean": 0.9173299675085391,
+      "sd": 0.0
+    },
+    "keysize": {
+      "mean": 0.18968198004298462,
+      "sd": 0.0
+    },
+    "ceiling": {
+      "mean": 0.9991635381958692,
+      "sd": 0.0
+    },
+    "gnn_minus_doctrine": {
+      "mean": -0.037761939285265736,
+      "sd": 0.030008374075619154,
+      "wilcoxon_p": 5.231967989188721e-10,
+      "wins": 4,
+      "ties": 1,
+      "losses": 55
+    }
+  },
+  "rl": {
+    "protocol": "real-CBOM greedy rollout (40 host-disjoint real CBOMs, scan-derived criticality)",
+    "n_envs": 40,
+    "agent_mean_reward": 140.343,
+    "agent_std": 8.126,
+    "agent_min": 123.84,
+    "agent_max": 165.534,
+    "packing": {
+      "protocol": "pack_graph_cboms (train_real_models.py)",
+      "n_packs": 40,
+      "pack_seed": 99,
+      "env_sizes": [
+        6,
+        6,
+        6,
+        8,
+        8,
+        8,
+        9,
+        9,
+        11,
+        11,
+        11,
+        12,
+        12,
+        13,
+        14,
+        14,
+        14,
+        15,
+        15,
+        15,
+        16,
+        16,
+        18,
+        18,
+        18,
+        19,
+        20,
+        20,
+        20,
+        21,
+        21,
+        22,
+        22,
+        23,
+        23,
+        23,
+        24,
+        24,
+        25,
+        26
+      ]
+    },
+    "criticality": "risk_criticality_from_scan (train_real_models.py): RSA-1024 -> critical, RSA<3072 -> high, expired/self-signed/near-expiry raise class; real TLS findings carry no explicit criticality (previous all-medium default made the benchmark degenerate)",
+    "agent_completion_rate": 1.0,
+    "heuristic_mean_reward": 140.622,
+    "heuristic_completion_rate": 1.0,
+    "random_baseline_mean_reward": 136.838,
+    "random_baseline_completion_rate": 1.0,
+    "agent_vs_heuristic": -0.279,
+    "agent_vs_random": 3.505,
+    "agent_beats_heuristic_on": "2/40 envs (+27 ties, 11 losses)",
+    "device": "cuda",
+    "trained_on": "PPO, 64 vectorized envs, packed real-CBOM estates with scan-derived risk labels (retrain_rl_real_cbom.py, seed 42)",
+    "model": "planner/rl_agent_real.pt",
+    "env_seeds": "from_cbom(cbom, seed=i) for i in range(n_envs)",
+    "generated_at": "2026-09-02T08:19:28Z"
+  }
+}

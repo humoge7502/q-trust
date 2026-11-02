@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-10-23T17:05:38Z",
+  "purpose": "TD-02: machine-checkable lineage for shipped model checkpoints; flags any raw-state-dict artifact",
+  "checkpoints": [
+    {
+      "file": "model_ddp_v3.pt",
+      "bytes": 975981,
+      "lineage_status": "missing",
+      "note": "raw state dict without a metadata wrapper \u2014 cannot prove which script/config produced it",
+      "n_tensors": 56,
+      "sha256": "2f2f9c8abcc813adeba4c7c2ad656c87aafedae26b912e9b22b95f127b6b51ec"
+    },
+    {
+      "file": "model_gpu_v3.pt",
+      "bytes": 966921,
+      "lineage_status": "present",
+      "model_config": {
+        "input_features": 6,
+        "hidden_dim": 256,
+        "embedding_dim": 128,
+        "heads": 8,
+        "dropout": 0.15,
+        "variant": "hybrid",
+        "norm": "layer"
+      },
+      "seed": 42,
+      "data_hash": "5a327acaab9e85b0",
+      "epochs": 173,
+      "total_epochs": 173,
+      "init_from": null,
+      "norm": "layer",
+      "n_graphs": 100000,
+      "n_real_graphs": 40,
+      "learning_rate": 0.001,
+      "val_split": 0.1,
+      "best_val_kendall": 0.9728872535490785,
+      "sha256": "eaba1e60817df522b8adc654a084cd633e69c5c2aae878c185bcc3d147bf4d02"
+    },
+    {
+      "file": "model_real_v3.pt",
+      "bytes": 966131,
+      "lineage_status": "present",
+      "model_config": {
+        "input_features": 6,
+        "hidden_dim": 256,
+        "embedding_dim": 128,
+        "heads": 8,
+        "dropout": 0.15,
+        "variant": "hybrid",
+        "norm": "layer"
+      },
+      "seed": 42,
+      "data_hash": "0af83ab3b9187e8c",
+      "epochs": 1,
+      "total_epochs": 1,
+      "init_from": null,
+      "norm": "layer",
+      "n_graphs": 2000,
+      "n_real_graphs": 39,
+      "learning_rate": 0.0004,
+      "val_split": 0.1,
+      "best_val_kendall": 0.9651316100529967,
+      "lineage": "Real-data campaign model (docs/CHANGELOG): synthetic 100K-graph base, then successive fine-tunes on 39 real TLS-derived enterprise CBOMs (corrected X.509 encoding, tie-aware tau-b eval). Canonical default; best on every benchmark suite.",
+      "sha256": "20978344fc06f72f74f11723ed1de21d7ec9df2abb60332cf9083347d7b0ef2a"
+    },
+    {
+      "file": "rl_agent.pt",
+      "bytes": 74047,
+      "lineage_status": "missing",
+      "note": "raw state dict without a metadata wrapper \u2014 cannot prove which script/config produced it",
+      "n_tensors": 8,
+      "sha256": "cffd9383b0cfa3ddd0ceec0926e09a6682a142ae4f13b79355bc8925422f6ecd"
+    }
+  ]
+}

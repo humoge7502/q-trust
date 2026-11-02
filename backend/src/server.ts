@@ -11,17 +11,21 @@ import { fileURLToPath } from "node:url";
 import * as dotenv from "dotenv";
 import { Redis } from "ioredis";
 import { startIndexer, stopIndexer, pool as pgPool } from "./services/indexer.js";
+import { fetchWithRetry } from "./services/upstream.js";
+import { appendScanHistory, hashScanTarget } from "./services/scan-history-store.js";
 import { registerScannerRoutes } from "./routes/scanner.js";
 import { registerRelayRoutes } from "./routes/relay.js";
 import { registerGPURoutes } from "./services/gpu-service.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerReadRoutes } from "./routes/read.js";
 import { registerWriteRoutes } from "./routes/write.js";
+import { registerCertifyRoutes } from "./routes/certify.js";
+import { registerAssuranceRoutes } from "./routes/assurance.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 import { gracefulShutdown, requireApiKey } from "./middleware/auth.js";
 import { initSentry, registerSentryHooks } from "./plugins/sentry.js";
 import { registerMetrics } from "./plugins/metrics.js";
-import { CORS_ORIGINS } from "./config.js";
+import { CORS_ORIGINS, CONTRACTS, allContractsConfigured } from "./config.js";
 
 dotenv.config({ quiet: true });
 initSentry();
@@ -152,11 +156,12 @@ export async function buildServer(): Promise<FastifyInstance> {
     });
   }
 
-  // Hosted deployments keep the Python inspector, the persistent evidence
-  // chain and the ML model server on the operator machine. When
-  // QTRUST_SCANNER_PROXY_URL is set, the scanner, evidence and GPU routes are
-  // transparently forwarded there (the caller's API key is preserved so the
-  // upstream enforces the same policy).
+  // Hosted deployments keep the Python inspector and the ML model server on
+  // the operator machine. When QTRUST_SCANNER_PROXY_URL is set, the scanner
+  // and GPU routes are transparently forwarded there (the caller's API key is
+  // preserved so the upstream enforces the same policy). The evidence ledger
+  // is NOT proxied: it lives in Postgres and runs in-process on every
+  // instance, so a ledger created anywhere verifies everywhere.
   //
   // Guard: only proxy from a hosted runtime. The local Docker API shares the
   // same .env (which carries the public tunnel URL for the Vercel deploy), so
@@ -170,9 +175,13 @@ export async function buildServer(): Promise<FastifyInstance> {
   if (scannerProxy) {
     server.addHook("preHandler", async (request, reply) => {
       const path = request.url.split("?")[0] ?? "";
+      // Repository ingestion is served by the hosted scanner service (or the
+      // local archive fallback), never by the operator tunnel.
+      if (path === "/v1/scan/repo") {
+        return;
+      }
       if (
         !path.startsWith("/v1/scan/") &&
-        !path.startsWith("/v1/evidence/") &&
         !path.startsWith("/v1/gpu/")
       ) {
         return;
@@ -181,16 +190,55 @@ export async function buildServer(): Promise<FastifyInstance> {
         const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
         const key = request.headers["x-api-key"];
         if (typeof key === "string" && key) headers["x-api-key"] = key;
-        const upstream = await fetch(`${scannerProxy}${request.url}`, {
+        const upstream = await fetchWithRetry(`${scannerProxy}${request.url}`, {
           method: request.method,
           headers,
           body: request.body === undefined ? undefined : JSON.stringify(request.body),
-          signal: AbortSignal.timeout(55_000),
+        }, {
+          attempts: 3,
+          timeoutMs: 45_000,
+          onRetry: ({ attempt, status }) =>
+            server.log.warn({ attempt, status, path }, "Scanner proxy retrying after tunnel failure"),
         });
         const body = Buffer.from(await upstream.arrayBuffer());
+        const upstreamType = upstream.headers.get("content-type") ?? "";
+        // A dead quick tunnel answers 502/530 with a Cloudflare HTML page. Pass
+        // that through and the browser renders "Error 1033" inside the scanner;
+        // report a typed outage instead so the UI can show a retry state.
+        const tunnelDown =
+          (upstream.status >= 520 && upstream.status <= 530) ||
+          upstream.status === 502 || upstream.status === 503 || upstream.status === 504 ||
+          (upstream.status !== 200 && upstreamType.includes("text/html"));
+        if (tunnelDown) {
+          server.log.warn({ status: upstream.status, type: upstreamType }, "Scanner proxy upstream unavailable");
+          return reply.code(503).send({
+            error: "Local compute bridge is offline — the scanner and GPU routes run on the operator machine and its tunnel is not reachable right now.",
+            code: "scanner_unavailable",
+            upstream_status: upstream.status,
+          });
+        }
+        // Proxied scans never reach the in-process route body, so record them
+        // here; otherwise /v1/stats would only count the scans that run on
+        // this instance and the production totals would undercount.
+        if (request.method === "POST" && path.startsWith("/v1/scan/") && upstream.status === 200) {
+          try {
+            const parsed = JSON.parse(body.toString("utf8")) as { findings?: unknown };
+            const findings = Array.isArray(parsed?.findings) ? parsed.findings.length : 0;
+            const target = (request.body as { target?: unknown; directory?: unknown } | undefined)?.target
+              ?? (request.body as { directory?: unknown } | undefined)?.directory;
+            await appendScanHistory({
+              targetHash: hashScanTarget(typeof target === "string" ? target : path),
+              type: path.slice("/v1/scan/".length),
+              timestamp: new Date().toISOString(),
+              count: findings,
+            });
+          } catch (err) {
+            server.log.warn({ err, path }, "proxied scan history append failed");
+          }
+        }
         reply
           .code(upstream.status)
-          .header("content-type", upstream.headers.get("content-type") ?? "application/json")
+          .header("content-type", upstreamType || "application/json")
           .send(body);
         return reply;
       } catch (err) {
@@ -204,6 +252,8 @@ export async function buildServer(): Promise<FastifyInstance> {
   await registerHealthRoutes(server);
   await registerReadRoutes(server);
   await registerWriteRoutes(server);
+  await registerCertifyRoutes(server);
+  await registerAssuranceRoutes(server);
   await registerRelayRoutes(server);
   registerScannerRoutes(server);
   await server.register(registerGPURoutes);
@@ -223,6 +273,11 @@ if (isStandalone) {
         process.exit(1);
       }
       await startIndexer();
+      if (!allContractsConfigured()) {
+        server.log.warn(
+          "Contract addresses are NOT configured (0x0). On-chain read/write and the indexer are DISABLED — scans/plans still work against local data. Run deploy-contracts.ps1 or set the QTRUST_*_ADDRESS env vars to enable on-chain features."
+        );
+      }
       await server.listen({ port: Number(process.env.PORT) || 3001, host: "0.0.0.0" });
       console.log(`Server listening on ${JSON.stringify(server.server.address())}`);
       gracefulShutdown(server, "SIGTERM", async () => {
@@ -234,3 +289,10 @@ if (isStandalone) {
   };
   await start();
 }
+
+// The Vercel project carries the Fastify framework preset, whose lambda wraps
+// this module and requires a default function/server export (it receives no
+// traffic — routes send /api/* to api/index.mjs — but an invalid export fails
+// the whole deployment at boot). Under serverless the IS_SERVERLESS guard
+// above keeps this module from ever binding a port.
+export default buildServer;

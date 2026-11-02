@@ -1,0 +1,1362 @@
+% =====================================================================
+%  Beyond Doctrine Imitation: A Ceiling Analysis of Learned Ranking
+%  for Post-Quantum Cryptographic Migration
+%
+%  Every headline number in this paper is regenerated from artifacts in
+%  paper/analysis/ by scripts/paper_*.py at the audited commit.  The
+%  construct-validity checklist (Sec. V) and the second-system note draw
+%  on the companion validity audit (github.com/humoge7502/qtrust-validity-audit).
+% =====================================================================
+\documentclass[conference,10pt]{IEEEtran}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+\usepackage{xcolor}
+\usepackage{tabularx}
+
+\setlength{\emergencystretch}{2.5em}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{definition}{Definition}
+\newcommand{\tb}{\tau_b}
+\newcommand{\ceil}{\mathrm{ceil}}
+\newcommand{\distinct}{d}
+\newcommand{\nzero}{n_0}
+\newcommand{\eg}{e.g.}
+\newcommand{\ie}{i.e.}
+
+\title{Beyond Doctrine Imitation: A Ceiling Analysis of Learned Ranking\\
+for Post-Quantum Cryptographic Migration}
+
+\author{Krishna Puri and Devesh Sanjay Tiwari\\
+Vellore Institute of Technology, Chennai Campus, India\\
+\texttt{\{krishna.puri2025, devesh.sanjay2025\}@vitstudent.ac.in}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Post-quantum migration planning increasingly uses learned rankers scored against rule-based
+doctrine heuristics. A prior Q-Trust study reported an ``honest tie'': a graph neural network
+attains tie-aware Kendall $\tb=0.7168$ versus a doctrine baseline at $0.7210$ on 42
+host-disjoint cryptographic-bill-of-materials (CBOM) estates (zero wins, 41 ties, one loss),
+and concluded that model superiority is not measurable. We show that this tie is not evidence
+of parity: it is the maximum score any ranker can attain. Because tie-aware $\tb$ discards
+tied pairs, its attainable ceiling is $\sqrt{\distinct/\nzero}$, where $\distinct$ is the
+number of distinguishable pairs. On the 42 estates, 401 of 803 pairs are tied and only 402 are
+distinguishable, so the ceiling is $0.721024$---exactly the doctrine score. The network orders
+401 of 402 distinguishable pairs correctly (99.75\%); its entire shortfall is one inversion. A
+parameter-free key-size rule and a seven-parameter logistic model attain the ceiling on 42/42
+folds; a six-parameter ridge model reproduces the network's score on all 42 folds, including
+its single failure. A field audit explains why: all 42 estates have zero dependency edges and
+constant criticality, vendor readiness, and deadline; every asset is classical; the doctrine
+formula algebraically reduces to a monotone function of key size. Removing all 2,000 synthetic
+training graphs leaves $\tb$ unchanged on 42/42 folds. A clean warm-start control
+(synthetic-only initialization, $n_{\text{real}}=0$) places the network $0.120$ below the
+doctrine ($p=0.0018$), so the released parity is partly an artifact of initialization
+exposure. A dependency-rich positive control raises the ceiling to $0.999$ and shows the metric
+can discriminate, yet the network still does not beat a doctrine blind to multi-hop reach. We
+re-evaluate the released discovery checkpoint and obtain F1 $0.9395$, not the reported
+$0.9525$, under a $76.7\%$ positive prior (majority F1 $0.868$). We contribute a ceiling
+theorem for tie-aware rank evaluation; a taxonomy of rank metrics by tie-sensitivity
+(tie-aware $\tb=\gamma\sqrt{\distinct/\nzero}$, where $\gamma$ is Goodman--Kruskal's
+association, so the same ordering scores $1.000$, $0.721$, $0.807$, and $0.533$ under $\gamma$,
+$\tb$, $\rho$, and $\tau_a$); a labelling theorem that prices the remedy (bisecting the largest
+tied group yields $m^2/4$ new distinguishable pairs for $m$ labels, so the ceiling is cheapest to
+repair where ties are densest); an eight-mode construct-validity checklist; a claim ledger; and a
+reporting standard: report the ceiling, the number of effective pairs, and attainment---not just
+$\tb$. On designed estates the ceiling is governed by tie concentration rather than estate size
+($0.43$ at $90\%$ key-size monoculture for $n$ from 10 to 5{,}000), and about two expert labels
+per asset suffice to raise it to $0.90$.
+\end{abstract}
+
+\begin{IEEEkeywords}
+post-quantum cryptography, CBOM, migration planning, graph neural networks, ranking evaluation,
+Kendall tau, benchmark validity, reproducibility.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+The transition to post-quantum cryptography (PQC) is no longer a forecast; it is a dated
+obligation. Executive Order~14412 of 22 June 2026 directs US federal agencies to transition
+high-value assets and high-impact systems to PQC for digital signatures by 31 December 2031
+and for key establishment by 31 December 2030~\cite{eo14412}. For national-security systems,
+CNSS Policy~15 requires CNSA~2.0 algorithms by the same horizon~\cite{cnssp15}. Section~5(d) of
+the order further requires guidance on the \emph{minimum elements of a cryptographic bill of
+materials} (CBOM) within 270 days---approximately 19 March 2027---whose elements must enable
+``the automated assessment of the cryptographic assets''~\cite{eo14412}. Automated assessment
+requires knowing which assets exist, which are at risk, and \emph{in what order} to replace
+them. The first two have maturing tooling~\cite{cyclonedx,ibm_cbom,hess2026,cryptoscope}; the
+third does not.
+
+The deployment data sharpen the problem. Across more than two billion TLS handshakes to one
+million domains from eleven vantage points, default hybrid post-quantum key exchange rose from
+31.3\% to 49.2\% between July 2025 and March 2026, but \emph{no post-quantum signature
+algorithm was ever negotiated}, and jurisdictions with \emph{earlier} deadlines showed
+\emph{lower} adoption (32.4\% versus 45.7\%)~\cite{mindthegap2026}. Organizations are making
+real ordering decisions under a real deadline, with no validated tooling and no ground-truth
+oracle.
+
+A natural way to automate prioritization is to learn a ranking function over CBOM assets and
+compare it with an interpretable doctrine heuristic. Q-Trust is an open pipeline built for this
+purpose: a polyglot scanner emits CycloneDX~1.7 CBOMs, a graph neural network (GNN) ranks
+assets for migration, and an attestation layer records completed
+work~\cite{qtrust_repo}. Its planning study evaluated a GNN on 42 host-disjoint CBOM estates
+(277 hosts) with leave-one-estate-out (LOO) training. The headline result was a tie: the GNN
+reached mean tie-aware Kendall $\tb=0.7168$, the doctrine reached $0.7210$, and the fold-level
+outcome was 0 wins, 41 ties, and 1 loss. The authors interpreted this as evidence that
+``better than the doctrine'' is not currently a measurable claim, and published the tie
+deliberately rather than tuning until the model won.
+
+This paper re-examines that conclusion. The tie is real, and the measurement is honest, but the
+interpretation is not licensed by the artifact. On these estates the target ordering is almost
+entirely tied: 401 of the 803 pairs are pairs of assets with identical priority. Tie-aware
+$\tb$ discards those pairs, so the metric's denominator contains only 402 effective
+comparisons. The attainable ceiling is therefore $\sqrt{402/803}=0.721024$. That number is the
+doctrine score. The GNN is not ``tied with'' the doctrine in the sense of two methods
+converging on a difficult problem; it is at the ceiling, one pair short, on a problem that
+contains almost no decision information beyond a single feature.
+
+The mechanism is visible in the data. Every one of the 42 estates has zero dependency edges.
+Criticality is \texttt{medium} for all 277 assets, vendor readiness is unrecorded for all 277,
+and the deadline-pressure term is constant within each estate. Every asset is classical. Under
+these conditions the doctrine formula
+\begin{equation}
+p_i = 2c_i + 1.5v_i + \frac{\log(1+k_i)}{4}
+      + \frac{\delta\,c_i}{5} - 0.3\,\mathrm{indeg}_i
+\label{eq:doctrine}
+\end{equation}
+(where $c_i$ is criticality, $v_i$ vendor readiness, $k_i$ key size, $\delta$ deadline pressure,
+and $\mathrm{indeg}_i$ in-degree) collapses to
+\begin{equation}
+p_i = 4 + 0.4\,\delta + \frac{\log(1+k_i)}{4}.
+\label{eq:collapse}
+\end{equation}
+The doctrine ordering is exactly descending key size. Removing key size changes the ordering in
+37 of 42 estates; removing criticality, vendor readiness, deadline, or dependency edges changes
+it in none. A parameter-free key-size rule matches the doctrine on 42/42 folds. A seven-parameter
+pairwise logistic model attains the ceiling on 42/42 folds. A six-parameter ridge model
+reproduces the GNN's per-fold $\tb$ on all 42 folds, including the one fold where both fall
+below the ceiling. The GNN's 237{,}070 parameters buy nothing that a linear model with six
+features does not already have.
+
+The shortfall is equally small. Of the 402 distinguishable pairs, the GNN orders 401 correctly;
+the one error is a single cross-group inversion in \texttt{real\_gov\_edu\_2.json}, where the
+ceiling is $0.5345$ and the model scores $0.3563$ (5 of 6 pairs). Across all folds, pooled pair
+accuracy is $401/402=99.75\%$. On a repacked 38-estate cohort (275 hosts, all but two of which
+also appear in the 42-estate cohort), the GNN attains the ceiling on 36/38 folds and orders 458
+of 461 distinguishable pairs correctly. Removing all 2,000 synthetic training graphs reproduces
+every fold's $\tb$ to $10^{-6}$.
+
+These results do not show that the GNN is a bad model. They show that the benchmark, as
+constructed, cannot distinguish a good model from a key-size sort. That is a construct-validity
+failure, and it is the subject of this paper. Our contributions are:
+\begin{enumerate}
+\item \textbf{A ceiling theorem for tie-aware rank evaluation.} For a strict prediction and a
+tied target preorder, $\tb\le\sqrt{\distinct/\nzero}$, with equality iff every distinguishable
+pair is concordant (Section~\ref{sec:ceiling}). The ceiling is a property of the label, not the
+model.
+\item \textbf{A taxonomy of rank metrics by tie-sensitivity.} We show $\tb=\gamma\sqrt{\distinct/\nzero}$,
+where $\gamma=(C-D)/\distinct$ is Goodman--Kruskal's association (Somers' $D$ for strict
+predictions), so the ``attainment'' of the ceiling is a standard statistic. $\tau_a$, $\tb$, and
+Spearman $\rho$ are tie-fragile (ceiling below one); $\gamma$, Somers' $D$, NDCG@$k$, and
+average precision are tie-robust (ceiling one) (Section~\ref{sec:taxonomy}). On the real corpus
+the same ordering scores $1.000$ ($\gamma$), $0.721$ ($\tb$), $0.807$ ($\rho$), and $0.533$
+($\tau_a$)---the metric choice alone decides whether the result looks like saturation or
+failure (Section~\ref{sec:metricverdict}).
+\item \textbf{A measurement of the Q-Trust planning result against that ceiling.} The 42-fold
+campaign has $\nzero=803$, $\distinct=402$, and ceiling $0.721024$; the doctrine is at the
+ceiling by construction, and the GNN is one pair short (Section~\ref{sec:results}).
+\item \textbf{A field audit and algebraic explanation.} Zero edges, constant risk fields, and
+all-classical assets reduce the doctrine to key-size sorting; a leave-one-term-out ablation and
+a parameter-free baseline confirm it (Section~\ref{sec:corpus}).
+\item \textbf{Transparent baselines and controls.} A seven-parameter logistic attains the
+ceiling on 42/42 folds; a six-parameter ridge matches the GNN on 42/42 folds; a zero-shot
+checkpoint scores $0.604$; zero-synthetic training leaves $\tb$ unchanged; a clean warm start
+exposes the initialization confound (Section~\ref{sec:results}).
+\item \textbf{A repacked-cohort replication and a positive control.} The 38-estate repacking
+yields 36/38 folds at ceiling; a dependency-rich synthetic control reaches ceiling $0.999$ and
+shows the metric can discriminate, while the GNN still fails to beat a doctrine blind to
+multi-hop reach (Section~\ref{sec:results}).
+\item \textbf{An eight-mode construct-validity checklist and a claim ledger.} We distill eight
+cheap, independent, mutually concealing failure modes that any audit of this task should check,
+and we map every headline number to an artifact with a status: reproduced, reproduced but
+vacuous, or not reproduced (Sections~\ref{sec:checklist} and~\ref{sec:artifacts}).
+\end{enumerate}
+
+The scope is deliberately narrow. Q-Trust also includes cryptographic-usage discovery,
+side-channel experiments, reinforcement-learning sequencing, and on-chain attestation. Those
+components are described in Appendix~\ref{app:system} and are not used to support the ranking
+claims. The paper's claim is about what the planning benchmark measures, not about whether PQC
+migration planning is easy or whether Q-Trust is a useful inventory tool. On the evidence here,
+the inventory and attestation layers can be useful; the learned-prioritization claim cannot.
+
+\section{Background and Related Work}
+
+\subsection{Cryptographic discovery and CBOMs}
+Static cryptographic-API analysis has produced mature misuse detectors: CryptoGuard for
+Java~\cite{cryptoguard}, CogniCrypt and CrySL for API-usage rules~\cite{cognicrypt,crysl}, and
+the CryptoAPI-Bench family for evaluation~\cite{cryptoapibench,afrose2021}. The closest
+peer-reviewed \emph{learned} model, Rodrigues et al.~\cite{rodrigues2023}, compares graph
+embeddings with SVM/MLP classifiers on Java snippets; its split is a plain 80/20 partition with
+no repository disjointness, it reports precision/recall/F1 without confidence intervals, and it
+has no threats-to-validity section. These tools answer ``is this API used incorrectly?'' rather
+than ``which asset should migrate first?'' CBOM standards~\cite{cyclonedx,ibm_cbom} and the
+NCCoE migration project~\cite{nccoe_pqc} define the inventory substrate but not the
+prioritization target. Q-Trust's inspector is a usage-and-inventory scanner in this line; its
+discovery model is a fine-tuned CodeBERTa checkpoint~\cite{codebert,codeberta}.
+
+\subsection{PQC migration planning}
+Recent planning work uses dependency graphs and optimization. Sharma \emph{et al.} formulate
+dependency-aware migration planning on simulated enterprise graphs~\cite{sharma2026}; Gharote
+\emph{et al.} add budget and schedule constraints~\cite{gharote2026}; Gupta and Mittal propose
+a cloud-readiness framework~\cite{gupta2026}; N\"ather and Hirsch study static discovery and
+assessment~\cite{nother2026}; Shaw uses an LLM-assisted risk score~\cite{shaw2026}. The recent
+MAgiCS workshop~\cite{magics2026} concentrates migration work: Nzetchuen et al.\ survey
+frameworks~\cite{nzetchuen2026}, Loebenberger et al.\ formalize migration cost~\cite{loebenberger2026},
+and Riou et al.\ document how easily post-quantum signature \emph{benchmarks} mislead through
+inconsistent methodology~\cite{riou2026}. These concerns are structural---what must change, in
+what order, at what cost---rather than evaluative: none asks how one would know whether a
+proposed ordering is correct. None releases a learned ranker evaluated against expert
+preference labels on real estates. Q-Trust is, to our knowledge, the first to release a learned
+ranker, a doctrine baseline, and the estate artifacts together. That release is what makes the
+present audit possible.
+
+\subsection{Evaluation validity and rank metrics}
+The failure we document is an instance of benchmark construct validity, not of model capacity.
+Kapoor and Narayanan catalog leakage and reproducibility failures across ML-based
+science~\cite{kapoor2023}; Geirhos \emph{et al.} describe shortcut learning~\cite{geirhos2020};
+Sculley \emph{et al.} describe hidden technical debt in ML systems~\cite{sculley2015}. In
+ranking, Kendall's $\tau$~\cite{kendall1938} is a standard ordinal measure, and its tie-aware
+variant is appropriate when the target contains genuine ties. But a tie-aware measure has a
+ceiling whenever ties exist; reporting the raw value without the ceiling invites the
+interpretation that a model ``nearly matches'' a target when it has in fact saturated the
+metric. Calibration and selective prediction~\cite{guo2017,geifman2017} are the analogous fixes
+for probabilistic classifiers: report the operating regime, not just a scalar. Our ceiling
+theorem makes the correction explicit for rank fidelity.
+
+\subsection{The Q-Trust instrument}
+Fig.~\ref{fig:pipeline} summarizes the pipeline. The inspector scans source, binaries, and TLS
+endpoints and emits CycloneDX~1.7 CBOMs. The risk engine maps algorithms, key sizes, and
+compliance rules to a priority score. The planner converts a CBOM to a six-feature graph
+(algorithm type, normalized key size, vendor readiness, criticality, deadline, required rate)
+and trains a hybrid GCN/GATv2 model~\cite{kipf2017,gatv2} with a listwise ListMLE
+loss~\cite{listmle}. The RL sequencer packs estates into migration batches; the attestation
+layer records completions in UUPS-upgradeable registries with EIP-712 signatures~\cite{eip712,base}.
+The present paper uses only the CBOM-to-graph converter, the doctrine formula, and the LOO
+harness. The other components are context, not evidence.
+
+\begin{figure}[t]
+\centering
+\fbox{\parbox{0.92\columnwidth}{\centering\footnotesize
+Scanner $\rightarrow$ CycloneDX 1.7 CBOM $\rightarrow$ six-feature graph\\
+$\rightarrow$ GNN ranker / doctrine baseline $\rightarrow$ tie-aware $\tb$\\
+$\rightarrow$ attestation (out of scope for this paper)}}
+\caption{The Q-Trust pipeline. This paper audits the ranker and the doctrine on the released
+CBOM artifacts; the attestation and side-channel components are described in
+Appendix~\ref{app:system} and are not used as evidence for ranking claims.}
+\label{fig:pipeline}
+\end{figure}
+
+\section{Problem Formulation and the Ceiling Theorem}
+\label{sec:ceiling}
+
+\subsection{Estates, features, and target}
+An estate $E$ is a set of $n$ assets. Each asset $i$ has a feature vector
+$x_i=(\alpha_i, k_i, v_i, c_i, \delta, r_i)$, where $\alpha_i$ is an algorithm-type code, $k_i$
+the key size, $v_i\in\{0,1\}$ vendor PQC readiness, $c_i$ criticality, $\delta$ a per-estate
+deadline-pressure indicator, and $r_i$ a required-rate feature. A dependency graph $G=(V,A)$
+may add edges; in the released TLS CBOMs $A=\varnothing$ (Section~\ref{sec:corpus}). The
+doctrine assigns each asset the priority in Eq.~\eqref{eq:doctrine}. The target is not a strict
+ranking: assets with equal priority are genuinely tied. Formally, the target is a preorder
+$\succeq$ that partitions the $n$ assets into $g$ equivalence classes $G_1,\dots,G_g$; assets in
+the same class are interchangeable for migration purposes.
+
+A learned ranker outputs a permutation $\pi$ of the assets (strict, no ties). The evaluation
+asks how well $\pi$ agrees with $\succeq$.
+
+\subsection{Tie-aware Kendall $\tb$}
+Let $C$ and $D$ be the numbers of concordant and discordant pairs among the $\nzero=n(n-1)/2$
+unordered pairs. Let $T_x$ and $T_y$ be the numbers of pairs tied in the prediction and the
+target, respectively. Kendall's $\tb$ is
+\begin{equation}
+\tb(\pi,\succeq)=\frac{C-D}{\sqrt{(\nzero-T_x)(\nzero-T_y)}}.
+\label{eq:taub}
+\end{equation}
+Because $\pi$ is strict, $T_x=0$. Because the target has $g$ classes of sizes $n_1,\dots,n_g$,
+$T_y=\sum_j n_j(n_j-1)/2$, and the number of distinguishable pairs is
+\begin{equation}
+\distinct=\nzero-T_y=\sum_{j<\ell} n_j n_\ell .
+\label{eq:d}
+\end{equation}
+Thus $\tb=(C-D)/\sqrt{\nzero\distinct}$.
+
+\subsection{The ceiling}
+\begin{theorem}[Tie-aware ceiling]
+For any strict ranking $\pi$ and any target preorder $\succeq$ with $\distinct$ distinguishable
+pairs,
+\begin{equation}
+\tb(\pi,\succeq)\le \sqrt{\frac{\distinct}{\nzero}},
+\label{eq:ceiling}
+\end{equation}
+with equality if and only if every distinguishable pair is concordant.
+\end{theorem}
+\begin{proof}
+Among the $\distinct$ distinguishable pairs, $C+D=\distinct$, so $C-D\le \distinct$.
+Substituting into Eq.~\eqref{eq:taub} with $T_x=0$ and $\nzero-T_y=\distinct$ gives
+$\tb\le \distinct/\sqrt{\nzero\distinct}=\sqrt{\distinct/\nzero}$. Equality holds iff $D=0$.
+\end{proof}
+
+\begin{corollary}[Saturation is not parity]
+If two rankers both attain the ceiling, their $\tb$ values are equal regardless of how they
+order assets within tied classes. A doctrine that is a refinement of the target preorder
+attains the ceiling by construction.
+\end{corollary}
+
+\begin{corollary}[Effective sample size]
+The number of comparisons that can affect $\tb$ is $\distinct$, not $\nzero$. The fraction of
+usable pairs is $\distinct/\nzero$, and the ceiling is its square root. Reporting $\tb$ without
+$\distinct/\nzero$ hides the effective size of the evaluation.
+\end{corollary}
+
+\begin{corollary}[Attainment]
+Define attainment $a=\tb/\sqrt{\distinct/\nzero}\in[0,1]$. Then $a=1$ iff all distinguishable
+pairs are concordant, and $a$ is the fraction of the ceiling that a ranker achieves. Attainment
+is comparable across estates with different tie structures; raw $\tb$ is not.
+\end{corollary}
+
+The theorem is elementary, but its consequence is not: on a corpus with 50\% tied pairs, the
+maximum possible $\tb$ is about $0.707$. A model at $0.7168$ and a doctrine at $0.7210$ are not
+``close'' in any absolute sense; they are at $99.2\%$ and $100\%$ of a ceiling that is fixed by
+the label. A benchmark that reports only $\tb$ cannot tell whether a model has room to improve.
+
+\subsection{What would count as evidence of superiority}
+The theorem also says what a useful benchmark must do. To license a claim that a learned ranker
+beats a doctrine, the evaluation needs (i) a target with many distinguishable pairs, so the
+ceiling is well below one; (ii) a doctrine that is not itself the label generator, or at least a
+target that includes information the doctrine cannot express; and (iii) a reported ceiling,
+effective pair count, and attainment. A tie at the ceiling is evidence about the label, not
+about the model. We return to these requirements in Section~\ref{sec:discussion}.
+
+\subsection{A taxonomy of rank metrics under ties}
+\label{sec:taxonomy}
+
+The ceiling of Eq.~\eqref{eq:ceiling} is specific to $\tb$, but ties affect different rank
+metrics differently, and the choice of metric can change the verdict on the same ordering. We
+make this precise and show that the quantity we called attainment is a standard statistic.
+
+\begin{definition}[Tie-corrected association]
+For a strict prediction $\pi$ and a target preorder with $\distinct$ distinguishable pairs,
+\begin{equation}
+\gamma=\frac{C-D}{\distinct}.
+\label{eq:gamma}
+\end{equation}
+\end{definition}
+
+Eq.~\eqref{eq:gamma} is Goodman and Kruskal's $\gamma$~\cite{goodman1954}; when the prediction
+has no ties it coincides with Somers' $D$~\cite{somers1962}. The following identity is the
+reason $\tb$ looks like a near-miss.
+
+\begin{theorem}[Tie decomposition]
+\label{thm:decomp}
+$\tb = \gamma\,\sqrt{\distinct/\nzero}$.
+\end{theorem}
+\begin{proof}
+$\tb=(C-D)/\sqrt{\nzero\distinct}=[(C-D)/\distinct]\sqrt{\distinct/\nzero}=\gamma\sqrt{\distinct/\nzero}$.
+\end{proof}
+
+\begin{corollary}[Attainment is $\gamma$]
+The attainment $a=\tb/\sqrt{\distinct/\nzero}$ of Corollary~3 is exactly $\gamma$. It is not a
+new statistic: it is Goodman--Kruskal's $\gamma$, whose ceiling is $1$ by definition. $\tb$ is
+$\gamma$ discounted by the tie factor $\sqrt{\distinct/\nzero}$.
+\end{corollary}
+
+This has two consequences. First, $\gamma$ is \emph{ceiling-free}: a value of $1$ means every
+distinguishable pair is concordant, however many pairs are tied. Second, $\tb$ conflates two
+quantities---agreement on distinguishable pairs ($\gamma$) and the tie structure
+($\sqrt{\distinct/\nzero}$)---and reporting it alone hides which of the two is low. On the
+Q-Trust corpus the tie factor is $\sqrt{402/803}=0.707$; a doctrine at $\gamma=1$ can therefore
+never exceed $\tb=0.707$ in pooled terms.
+
+Table~\ref{tab:taxonomy} classifies the metrics a benchmark might report. A \emph{tie-fragile}
+metric has a ceiling below one: the raw value is bounded away from one by the tie structure, and
+the bound must be reported. A \emph{tie-robust} metric has ceiling one: it normalizes by the
+distinguishable pairs or by the ideal gain, so saturation does not masquerade as a near-miss.
+The classification explains the earlier draft's uninformative top-10 result: NDCG@$k$ and
+average precision are tie-robust only when $k$ is smaller than the number of relevant items;
+when $k\ge n$, every ordering achieves the ideal gain and the metric is vacuous.
+
+\begin{table}[t]
+\centering
+\caption{A taxonomy of rank metrics under tied targets. ``Ceiling'' is the maximum attainable
+value for a strict ranking; tie-fragile metrics must report it, tie-robust metrics do not need
+to. $\distinct$ is the number of distinguishable pairs.}
+\label{tab:taxonomy}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.4cm}>{\raggedright\arraybackslash}p{2.45cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{1.4cm}@{}}
+\toprule
+Metric & Definition & Ceiling & Tie-sensitivity \\
+\midrule
+$\tau_a$ & $(C-D)/\nzero$ & $\distinct/\nzero$ & fragile \\
+$\tb$ & $(C-D)/\sqrt{\nzero\distinct}$ & $\sqrt{\distinct/\nzero}$ & fragile \\
+Spearman $\rho$ & rank correlation & $<1$ & fragile \\
+$\gamma$ (Somers' $D$) & $(C-D)/\distinct$ & $1$ & robust \\
+NDCG@$k$ & graded gain & $1$ ($k<\#\text{rel}$) & robust \\
+AP & average precision & $1$ (binary rel.) & robust \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The practical recommendation follows directly. For a tied migration target, report $\gamma$ (or
+Somers' $D$) as the primary agreement measure, because its ceiling is one and it is directly
+interpretable as the fraction of distinguishable pairs ordered correctly. Report $\tb$ only
+alongside its ceiling, and report NDCG@$k$ or AP only with a meaningful $k$. A benchmark that
+reports a single tie-fragile number without its ceiling cannot distinguish a saturated model
+from a mediocre one.
+
+\section{Corpus and Field Audit}
+\label{sec:corpus}
+
+\subsection{The 42-estate cohort}
+The primary cohort contains 42 CBOMs, one per estate, covering 277 public TLS certificates.
+Each host appears in exactly one estate (277 unique hosts; zero within-cohort repeats), so the
+packing is host-disjoint. The estates are small: 37 have seven assets, two have four, one each
+has two, three, and five. The mean size is 6.60. The asset composition is RSA-2048 (175),
+ECDSA-P256 (89), RSA-4096 (10), RSA-3072 (1), ECDSA-P384 (1), and one asset with a missing key
+size. All assets are classical; there are no ML-KEM, ML-DSA, or SLH-DSA assets in the cohort.
+
+These are public endpoint certificates, not enterprise inventories. We therefore call them
+``estates'' rather than ``enterprise CBOMs.'' The distinction matters for external validity:
+public TLS certificates expose key sizes and expiry dates, but not internal dependencies,
+business criticality, or vendor contracts.
+
+\subsection{The 38-estate repacking}
+A second cohort, dated 2026-09-18, contains 38 CBOMs covering 275 hosts. It is a re-scan and
+repacking of the same population: 275 of its 275 hosts also appear in the 42-estate cohort,
+which has two additional hosts. The 38 cohort is therefore not an independent sample; it is a
+protocol replication under a different estate packing (32 estates of eight assets, two of five,
+two of three, one each of two and one). It tests whether the result depends on the particular
+packing; it does not test generalization to new organizations. We report it as such.
+
+\subsection{Field audit}
+Table~\ref{tab:audit} summarizes the fields that the doctrine uses. Every estate has zero
+dependency edges: the CBOMs do not carry explicit \texttt{depends\_on} links, and the
+host-affinity fallback finds no repeated host within an estate. Criticality is \texttt{medium}
+for all 277 assets. Vendor readiness is unrecorded for all 277. The deadline is computed once
+per estate from the minimum certificate expiry and is therefore constant within an estate. The
+only field that varies within an estate is key size.
+
+\begin{table}[t]
+\centering
+\caption{Field audit of the 42-estate cohort. The doctrine's risk terms are constant within
+every estate; only key size varies.}
+\label{tab:audit}
+\footnotesize
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Field & Distinct values & Estates with variation \\
+\midrule
+Dependency edges & 0 & 0/42 \\
+Criticality & 1 (\texttt{medium}) & 0/42 \\
+Vendor readiness & 1 (\texttt{null}) & 0/42 \\
+Deadline pressure & 1 per estate & 0/42 \\
+Key size & 2--3 per estate & 42/42 \\
+Algorithm family & classical only & 0/42 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Algebraic collapse}
+With $c_i=2$, $v_i=0$, $\mathrm{indeg}_i=0$, and $\delta$ constant within an estate,
+Eq.~\eqref{eq:doctrine} becomes Eq.~\eqref{eq:collapse}. The priority is a strictly increasing
+function of $\log(1+k_i)$; hence the doctrine ordering is exactly descending key size. This is
+not an empirical coincidence or a fitted approximation. It follows from the released values and
+the released formula.
+
+Fig.~\ref{fig:ablation} confirms the algebra. Removing the key-size term changes the doctrine
+ordering in 37 of 42 estates. Removing criticality, vendor readiness, deadline, or dependency
+edges changes it in none. The five estates where removing key size does not change the order are
+those in which all assets share a key size (the ordering is then all ties, and any permutation
+is equivalent). A parameter-free rule that sorts by key size matches the doctrine on 42/42 folds.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\columnwidth]{figures/fig_ablation.pdf}
+\caption{Leave-one-term-out ablation on the 42-estate cohort. Key size is the only doctrine term
+whose removal changes the ordering; the other four terms are constants in these estates.}
+\label{fig:ablation}
+\end{figure}
+
+\subsection{Data-quality observations}
+Two data-quality details matter for reproducibility. First, the 42 cohort stores key family in
+\texttt{algorithm} (\eg, \texttt{RSA-2048}), while the 38 cohort stores the X.509 signature
+algorithm in the same field (\eg, \texttt{sha256WithRSAEncryption}) and the key family in
+\texttt{key\_type}. A pipeline that keys on \texttt{algorithm} changes semantics between
+releases. The audit uses \texttt{key\_size} when present, which is authoritative in both
+cohorts. Second, one asset in the 42 cohort and two in the 38 cohort have no key size; the
+loader substitutes a family default (2048 bits for RSA). The substitution affects one pair in
+the 42 cohort and does not change the ceiling conclusion. Both issues are documented in the
+released audit.
+
+\section{An Eight-Mode Construct-Validity Checklist}
+\label{sec:checklist}
+
+The ceiling is one instance of a broader class of evaluative-validity failures. To make the
+audit reusable beyond this corpus, we distill eight failure modes (Table~\ref{tab:modes}), each
+with a cheap detection check. The modes are independent in the sense that suppressing any one
+does not expose another; they are \emph{mutually concealing} in the sense that a researcher who
+stops at the first clean signal will miss the rest.
+
+\begin{table*}[t]
+\centering
+\caption{Eight evaluative-validity failure modes, each detectable from released artifacts in
+seconds. M1--M6 defeat the reported ML results; M7 and M8 defeat independent verification of any
+result at all. The taxonomy generalizes the ceiling analysis of Section~\ref{sec:ceiling}.}
+\label{tab:modes}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.7cm}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{3.75cm}@{}}
+\toprule
+\textbf{Mode} & \textbf{Failure} & \textbf{Evidence in this corpus} & \textbf{Detection check} & \textbf{Effect on the claim} \\
+\midrule
+M1 & Warm-start contamination &
+The LOO initialises every fold from \texttt{model\_gpu\_v3.pt}, whose metadata records
+\texttt{n\_real\_graphs=40}; 40 of 42 corpus files are in that set &
+Read checkpoint metadata; compare \texttt{n\_real\_graphs} to the eval corpus &
+The protocol is labelled leave-one-out but is in-sample on 40/42 folds; clean init drops
+$\tb$ from $0.7168$ to $0.6009$ \\
+\addlinespace
+M2 & Circular baseline &
+The doctrine baseline and the label generator are the same formula; exact-rank $=1.0$ on
+42/42 folds &
+Diff the baseline function against the label function &
+The model ceiling is $\tb=1$ by construction; a negative $\Delta$ carries no information \\
+\addlinespace
+M3 & Degenerate graph structure &
+All 42 graphs have zero edges; every asset is a distinct host &
+Count edges in the corpus &
+A GNN performs no message passing; the benchmark measures a per-node MLP \\
+\addlinespace
+M4 & Tie-saturated rank metric &
+401 of 803 pairs are tied; only 402 are distinguishable; ceiling $0.721$ &
+Count discordant pairs; report the ceiling and SE &
+Reported $|\Delta|=0.0042$ is far below one standard error; the comparison cannot separate the
+methods \\
+\addlinespace
+M5 & Vacuous top-$k$ metric &
+Reported top-10 accuracy is 1.0 on 42/42 folds; a random ranker also scores 1.0 because graphs
+hold at most 7 nodes &
+Check whether $k>n$ &
+The reported top-10 result carries zero information \\
+\addlinespace
+M6 & Non-random ``random'' baseline &
+\texttt{random\_order()} hard-codes \texttt{default\_rng(0)}, so every fold draws the same
+permutation family &
+Grep the baseline for a fixed seed &
+The margin over ``random'' has no error bar (our re-randomised null shows it survives) \\
+\addlinespace
+M7 & Absent predictions &
+Neither per-example predictions nor a per-repository split manifest is committed &
+Look for a predictions file or split manifest &
+No third party can run McNemar's or any paired test on any reported comparison \\
+\addlinespace
+M8 & Unreconciled documentation &
+More than 30 quantitative contradictions across the documentation: four corpus sizes, three
+contract-test counts, two ACVP vector counts, two GNN results side by side &
+Diff numbers across README, data card, truth audit, and artifacts &
+No reader can determine which figure is current, including the authors \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The modes interlock in a specific order. M2 masks M3: with a circular baseline and no message
+passing, a researcher checking the graph pipeline finds a well-formed network and a decreasing
+loss. M3 masks M4: small graphs with two or three distinct key sizes produce high $\tb$ that
+looks like skill. M4 masks M5: a tie-saturated metric makes the vacuous top-$k$ figure look
+consistent with the rest. M1 masks all of them by making every fold superficially clean. Only
+recomputation from the released artifacts---not provenance metadata---breaks the chain. A
+companion audit applies the same checklist to a second PQC system with markedly better artifact
+hygiene (committed per-example predictions, group-level leakage audits, zero documentation
+contradictions) and finds that it still fails M2, because a fixed linear model beats its
+reported classifier on all three evaluation seeds~\cite{qtrust_validity_audit}. Better
+provenance did not produce better validity, which is the general lesson the ceiling analysis
+illustrates in one system.
+
+\section{Experimental Protocol}
+\label{sec:protocol}
+
+\subsection{Leave-one-estate-out training}
+The primary artifact is the released 42-fold LOO campaign. For each fold, the model is
+initialized from \texttt{model\_gpu\_v3.pt}, trained for 30 epochs on the 41 remaining real
+estates plus 2,000 synthetic estates, validated on a held-out subset of the training graphs, and
+evaluated on the unseen estate. The released configuration uses batch size 64, learning rate
+$5\times10^{-4}$, and seed 42. The synthetic estates are generated by the same doctrine formula,
+so the training mixture is doctrine-supervised in two ways: the real labels are doctrine
+priorities, and the synthetic labels are doctrine priorities.
+
+\subsection{Zero-synthetic control}
+To test whether the synthetic mixture drives the result, we re-ran the same 42 folds with
+$n_{\text{synthetic}}=0$: 41 real estates per fold, batch size 16, 30 epochs, same
+initialization and seed, CPU. This is a strict ablation of the synthetic component. We ran the
+same protocol on the 38-estate cohort (37 real estates per fold). The zero-synthetic run is not
+a new model class; it isolates the contribution of the synthetic data.
+
+\subsection{Clean warm-start control}
+The released checkpoint records 40 real graphs among its 100{,}000 training inputs, so the LOO
+initialization has prior exposure to 40 of the 42 held-out estates. To isolate that exposure we
+retrained a base checkpoint from scratch on synthetic doctrine graphs only
+(\texttt{n\_real\_graphs=0}, verified post-training) and re-ran the identical 42-fold protocol
+from that clean warm start; the initialization is the only deliberate difference. The run is
+CPU-only by design: deterministic-algorithm mode has no CUDA kernel for the listwise loss, and
+weakening determinism would defeat the purpose of a trustworthy warm start. The reduced-CPU
+path caps base training at 2{,}000 graphs and 5 epochs against the released checkpoint's
+100{,}000 graphs and 173 epochs, so warm start and training budget vary together; we do not
+attribute the difference between them and disclose the confound.
+
+\subsection{Transparent baselines}
+We evaluated four baselines on the identical folds, targets, and metric:
+\begin{itemize}
+\item \textbf{Key-size rule:} sort by descending key size; parameter-free.
+\item \textbf{Pairwise logistic:} six features, no intercept (seven parameters), trained on all
+distinguishable pairs of the 41 training estates; predicts the probability that asset $i$
+precedes $j$.
+\item \textbf{Ridge:} six features, trained on pooled priority values of the 41 training
+estates; predicts a continuous priority; six parameters.
+\item \textbf{Zero-shot:} the released checkpoint applied to each estate without any
+fold-specific fine-tuning.
+\end{itemize}
+The logistic and ridge models use the same six features as the GNN. They are not independent of
+the doctrine---their training labels are doctrine priorities---but they test whether the GNN's
+architecture and capacity are necessary to reproduce the result. The zero-shot baseline tests
+whether fold-specific training is necessary. A random-permutation baseline is included for
+scale.
+
+\subsection{Metrics}
+The primary metric is tie-aware $\tb$ against the target preorder, as defined in
+Eq.~\eqref{eq:taub}. We also report the ceiling $\sqrt{\distinct/\nzero}$, attainment
+$\tb/\sqrt{\distinct/\nzero}$, pooled pair accuracy (concordant distinguishable pairs divided by
+$\distinct$), exact-rank agreement (fraction of folds whose full permutation equals the target's
+arbitrary tie-break), node-rank accuracy (fraction of assets in their exact target position),
+and top-5/top-10 set overlap. The last three are sensitive to within-tie order; we report them
+to show what $\tb$ hides, not as primary evidence.
+
+\subsection{Statistics}
+For paired comparisons we report the mean difference, a 20{,}000-resample paired bootstrap 95\%
+confidence interval, a 20{,}000-resample sign-flip permutation $p$-value, win/tie/loss counts,
+Cohen's $d_z$, and the 80\% minimum detectable effect at the observed paired standard deviation.
+We do not use the Wilcoxon signed-rank test for the main comparison because 41 of 42 differences
+are exactly zero; the test is undefined or uninformative under ties. For the discovery
+re-evaluation we report a repository-cluster bootstrap (5{,}000 resamples over the eight
+evaluation source groups) to acknowledge within-repository correlation.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{The ceiling is exact}
+Table~\ref{tab:ranking} and Fig.~\ref{fig:ceiling} give the headline. The 42 estates contain
+803 unordered pairs, of which 401 are tied and 402 are distinguishable. The mean per-estate
+ceiling is $0.721024$; the doctrine's mean $\tb$ is $0.721024$ (the difference is
+$1.0\times10^{-7}$, a rounding artifact of the six-decimal artifact). The doctrine is at the
+ceiling on all 42 folds by construction: it is a refinement of the target preorder.
+
+\begin{table*}[t]
+\centering
+\caption{Ranking results on the 42-estate cohort. ``Ceiling'' is the mean of
+$\sqrt{\distinct/\nzero}$ over folds. ``At ceiling'' counts folds with $\tb\ge\ceil-10^{-6}$.
+``Pairs'' is pooled concordant distinguishable pairs over 402. The GNN and the six-parameter
+ridge agree on every fold.}
+\label{tab:ranking}
+\footnotesize
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Method & Parameters & Mean $\tb$ & Attainment & At ceiling & Pairs \\
+\midrule
+Doctrine (target generator) & 0 & 0.721024 & 1.000 & 42/42 & 402/402 \\
+Key-size rule & 0 & 0.721024 & 1.000 & 42/42 & 402/402 \\
+Pairwise logistic & 7 & 0.721024 & 1.000 & 42/42 & 402/402 \\
+Ridge & 6 & 0.716781 & 0.992 & 41/42 & 401/402 \\
+GNN (released) & 237{,}070 & 0.716782 & 0.992 & 41/42 & 401/402 \\
+GNN (zero-shot) & 237{,}070 & 0.604020 & 0.838 & 31/42 & 364/402 \\
+Random permutation & 0 & 0.030101 & 0.042 & 0/42 & --- \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.94\textwidth]{figures/fig_ceiling.pdf}
+\caption{Model $\tb$ versus the attainable ceiling for the 42-estate cohort (a) and the repacked
+38-estate cohort (b). Points on the dashed identity line attain the ceiling. In (a), 41 of 42
+folds are on the line; the single off-diagonal point is \texttt{real\_gov\_edu\_2.json}, one
+inversion among six distinguishable pairs. In (b), 36 of 38 folds are on the line; the two
+off-diagonal points are \texttt{real\_gov\_edu\_0.json} and \texttt{real\_gov\_edu\_1.json}.}
+\label{fig:ceiling}
+\end{figure*}
+
+The distribution of ceilings is itself informative. The most common ceiling is $0.6901$ (10
+folds), followed by $0.7559$ (8), $0.5345$ (8), $0.8165$ (7), $0.7237$ (3), and $1.0$ (2); the
+remaining five folds have ceilings between $0.707$ and $0.845$. These values are determined by
+the number of distinct key sizes and their frequencies, not by the model. An estate with a 5/2
+split of key sizes has $\distinct=10$ and ceiling $\sqrt{10/21}=0.690$; an estate with a 6/1
+split has $\distinct=6$ and ceiling $\sqrt{6/21}=0.535$. The benchmark's difficulty is a
+property of the key-size histogram.
+
+\subsection{The metric determines the verdict}
+\label{sec:metricverdict}
+
+Table~\ref{tab:metricverdict} applies the taxonomy to the real corpus. The doctrine ordering is
+scored under four metrics, all computed from the 42 CBOMs. Goodman--Kruskal $\gamma$ is $1.000$
+on every fold by construction: the doctrine has no discordant distinguishable pairs. Spearman
+$\rho$ is $0.807$ (mean), but its ceiling is also $0.807$: a strict ordering cannot match the
+target's average ranks within tied groups, so even a perfect ordering is penalized. $\tb$ is
+$0.721$ with ceiling $0.721$, and $\tau_a$ is $0.533$ with ceiling $0.533$. The same ordering is
+therefore ``perfect'' ($\gamma$), ``$72\%$'' ($\tb$), ``$81\%$'' ($\rho$), or ``$53\%$''
+($\tau_a$), depending entirely on the metric. A benchmark that reports one of these numbers
+without its ceiling can make a saturated ordering look like a failure or a success at will.
+
+\begin{table}[t]
+\centering
+\caption{The same doctrine ordering scored under four rank metrics on the 42 CBOMs. Every
+metric is at its ceiling; the values differ only because the ceilings differ. Bootstrap CIs
+(20{,}000 resamples over estates) are on the mean ceiling.}
+\label{tab:metricverdict}
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Metric & Value & Ceiling & 95\% CI (ceiling) \\
+\midrule
+$\gamma$ (Somers' $D$) & 1.000 & 1.000 & --- \\
+Spearman $\rho$ & 0.807 & 0.807 & [0.773, 0.839] \\
+$\tb$ & 0.721 & 0.721 & [0.687, 0.756] \\
+$\tau_a$ & 0.533 & 0.533 & [0.484, 0.585] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This table is the paper's most direct answer to the objection that the ceiling theorem is a
+one-line observation. The theorem is elementary; its consequence is not. The same ordering, on
+the same data, is simultaneously at the top of one scale and near the middle of another. Which
+number a paper reports is a modeling choice with a large effect on the apparent result, and the
+tie structure---not the model---sets the scale.
+
+\subsection{The GNN saturates the ceiling}
+The released GNN reaches mean $\tb=0.716782$ (sd $0.126$, median $0.7237$), with 41 of 42 folds
+at the ceiling. Pooled pair accuracy is $401/402=99.75\%$. The single error is in
+\texttt{real\_gov\_edu\_2.json}: $n=7$, $\nzero=21$, 15 tied pairs, six distinguishable pairs,
+ceiling $0.5345$. The model scores $0.3563$, which corresponds to five concordant pairs and one
+inversion; its pair accuracy on that estate is $5/6=83.3\%$. The inversion is a cross-group
+inversion: the model places one high-key asset below a low-key asset. There is no second error
+anywhere in the cohort.
+
+The fold-level paired comparison against the doctrine is therefore degenerate: mean difference
+$-0.004242$, 95\% CI $[-0.012727,0]$, sign-flip $p=1.0$, 0 wins, 41 ties, 1 loss,
+$d_z=-0.154$, 80\% minimum detectable effect $0.0119$. The confidence interval is bounded above
+by zero because the model can never exceed the doctrine: the doctrine is at the ceiling. A test
+of superiority is not merely underpowered; it is one-sided by construction.
+
+\subsection{Statistical resolution and power}
+\label{sec:power}
+
+The paired model--doctrine differences have standard deviation $0.0275$, giving a standard error
+of $0.0042$ and an $80\%$-power minimum detectable effect of $0.0119$ at 42 folds. A power
+calculation converts this into a design statement (Table~\ref{tab:power}): detecting
+$\Delta=0.005$ would require 237 folds, $\Delta=0.01$ requires 59, $\Delta=0.02$ requires 15, and
+$\Delta=0.05$ requires 3. The observed $|\Delta|=0.0042$ is below all of these, and the ceiling
+bounds it from above: no positive effect can exist, because the doctrine is at the ceiling. The
+design is therefore not underpowered in the ordinary sense; it is saturated, and no number of
+additional folds could make a superiority claim possible. This is why we report the comparison
+descriptively rather than as a failed significance test.
+
+\begin{table}[t]
+\centering
+\caption{Paired power at the observed standard deviation ($0.0275$). The number of folds needed
+to detect a given mean $\tb$ difference at $80\%$ power, $\alpha=0.05$.}
+\label{tab:power}
+\footnotesize
+\begin{tabular}{@{}lr@{}}
+\toprule
+Effect $\Delta$ & Folds for $80\%$ power \\
+\midrule
+0.005 & 237 \\
+0.010 & 59 \\
+0.020 & 15 \\
+0.050 & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Transparent baselines saturate too}
+The key-size rule matches the doctrine on 42/42 folds, as the algebra predicts. The
+seven-parameter pairwise logistic also attains the ceiling on 42/42 folds. The six-parameter
+ridge reaches mean $\tb=0.716781$, 41/42 folds at the ceiling, and matches the GNN's per-fold
+$\tb$ on all 42 folds, including \texttt{real\_gov\_edu\_2.json} ($0.356348$ for both). A model
+with 237{,}070 parameters and a model with six parameters are indistinguishable on this
+benchmark.
+
+The zero-shot checkpoint is the exception that proves the point. Without fold-specific
+fine-tuning, it reaches $0.604020$ (38 inversions, 364/402 pairs, 90.5\% pair accuracy) and only
+31/42 folds at the ceiling. Fine-tuning on 41 real estates is necessary to learn the key-size
+rule; but once learned, the rule is linear and parameter-free. The gap between zero-shot and
+fine-tuned is $+0.1128$ $\tb$, and it is entirely a gap in learning a one-dimensional ordering.
+
+\subsection{Removing synthetic data changes nothing}
+The zero-synthetic control reproduces the full campaign's $\tb$ on every fold: mean $0.716781$
+versus $0.716782$, 41/42 at ceiling, same single inversion, same failing fold.
+Table~\ref{tab:zerosyn} shows what does change. Exact-rank agreement rises from 1/42 to 12/42,
+node-rank accuracy from $0.314$ to $0.575$, and top-5 overlap from $0.500$ to $0.571$. Tie-aware
+$\tb$ is unchanged because all of these differences are within tied key-size groups. The
+synthetic mixture affects the arbitrary order inside a tie; it does not affect the weak order
+that $\tb$ measures. We do not interpret the exact-rank increase as an improvement: within a
+genuine tie, any order is equally valid by the target's own semantics.
+
+\begin{table}[t]
+\centering
+\caption{Full mixture versus zero-synthetic on the 42 folds. $\tb$ is invariant; exact-rank,
+node-rank, and top-5 measure within-tie order and are therefore not invariant.}
+\label{tab:zerosyn}
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Metric & 2{,}000 synthetic & 0 synthetic & Change \\
+\midrule
+Mean $\tb$ & 0.716782 & 0.716781 & $-1\times10^{-6}$ \\
+Exact rank & 1/42 & 12/42 & +11 folds \\
+Node rank & 0.314 & 0.575 & +0.261 \\
+Top-5 overlap & 0.500 & 0.571 & +0.071 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The clean warm-start control}
+From the synthetic-only base, the identical protocol yields mean $\tb=0.600887$ against the
+unchanged doctrine $0.721024$: paired mean difference $-0.1201$ (30 folds tied, 12 strictly
+negative, 0 positive), 95\% bootstrap CI $[-0.1948,-0.0567]$, paired $t=-3.34$, $p=0.0018$,
+with 80\% minimum detectable effect $0.1007$. The released-init parity is therefore partly an
+artifact of initialization exposure: the exposed init closes $0.116$ of the $0.120$ gap. Two
+families of rank metrics now disagree: exact-rank agreement rises from $0.024$ to $0.262$,
+node-rank from $0.314$ to $0.599$, and top-5 from $0.500$ to $0.714$, while tie-aware $\tb$
+falls. The exposed model reproduces the label function's coarse group structure while
+scrambling strict order within groups; the clean model does the reverse. A benchmark reporting
+one metric family alone would draw opposite conclusions. The structural ceiling is untouched:
+the key-size rule attains the doctrine's exact metric vector from no training at all, so no
+warm-start hygiene or budget can raise a learner above the corpus.
+
+\subsection{The repacked cohort replicates the ceiling}
+On the 38-estate cohort, the doctrine ceiling is $0.726632$ over 923 pairs, of which 461 are
+distinguishable. The zero-synthetic GNN reaches $0.717130$ (attainment $0.984$), with 36/38
+folds at the ceiling and 458/461 pairs concordant (99.35\%). The three inversions are
+concentrated in two estates: \texttt{real\_gov\_edu\_0.json} (ceiling $0.6547$, model $0.4364$,
+two inversions among 12 pairs) and \texttt{real\_gov\_edu\_1.json} (ceiling $0.5000$, model
+$0.3571$, one inversion among seven pairs). Excluding the singleton estate (where $\tb=1$ is
+vacuous), the model mean is $0.7014$ versus a ceiling of $0.7114$. The repacking changes the
+estate sizes and the number of distinguishable pairs, but not the conclusion: the model is at or
+one to three pairs below the ceiling.
+
+The 38 cohort is not independent of the 42 cohort (275/275 hosts overlap), so this is a protocol
+replication, not a population replication. Its value is that it rules out a packing-specific
+artifact: the result survives a different partition of the same hosts into estates.
+
+\subsection{The positive control}
+The real corpus has no graph structure, so it cannot test whether the GNN can use graph
+structure. We therefore built a synthetic positive control: dependency-rich estates generated
+with an enterprise topology, relabeled with a target that adds a multi-hop blast-radius term to
+the doctrine. The target has ceiling $0.9992$ (almost all pairs distinguishable), and the
+doctrine is blind to the multi-hop term. On 60 test estates, the doctrine reaches $0.9173$, the
+GNN $0.8803$, and a key-size-only rule $0.1897$; the GNN loses to the doctrine (4 wins, 1 tie,
+55 losses; $p=5.2\times10^{-10}$). A longer run (400 training estates, 200 epochs) improves the
+GNN to $0.8950$ but it still loses to the doctrine at $0.9188$ (15 wins, 10 ties, 75 losses;
+$p=6.8\times10^{-12}$).
+
+This control supports two conclusions and one caveat. First, the $0.72$ ceiling is a property
+of the real corpus, not of the metric: with a nearly tie-free target, scores rise to
+$0.88$--$0.92$ and the key-size rule collapses to $0.19$, so the metric does discriminate when
+the target carries more than one signal. Second, the GNN does not exploit multi-hop graph
+structure well enough to beat a doctrine that only sees direct in-degree, even when such
+structure is present and labeled. The caveat is that the positive control is synthetic and the
+architecture/training budget may underfit the reach term; we cannot distinguish ``the model
+cannot use reach'' from ``this training run did not learn reach.'' Either way, the real corpus
+provides no evidence of graph reasoning, and the benchmark cannot provide such evidence without
+dependency edges.
+
+\subsection{Discovery re-evaluation}
+The released discovery checkpoint does not reproduce the reported held-out numbers. On the
+documented repository-disjoint split (13{,}973 files, 38 source groups; 11{,}558 train, 2{,}415
+evaluation; seed 42), the reported result is precision $0.952$, recall $0.953$, F1 $0.9525$,
+accuracy $0.9271$ (confusion 1766/89/87/473). Re-running the released checkpoint on the same
+split yields precision $0.9279$, recall $0.9514$, F1 $0.9395$, accuracy $0.9060$ (confusion
+1763/137/90/425). No threshold reaches $0.9525$: the best F1 is $0.9428$ at threshold $0.65$
+(precision $0.9477$, recall $0.9379$). A 512-token, 4{,}096-character truncation sweep on a
+label- and language-stratified subsample does not recover the gap; it slightly lowers F1
+relative to the 256-token baseline ($0.8083$ vs. $0.8142$ on $n=206$; $0.8105$ vs. $0.8222$ on
+$n=168$). The difference is therefore not an inference-truncation artifact. It is consistent
+with the documented mismatch between the model card's earlier corpus stage and the executed
+training report, but the $0.9525$ figure is not reproducible from the released checkpoint and
+split.
+
+Table~\ref{tab:discovery} places the re-evaluated number in context. The evaluation prevalence
+is $76.73\%$ (1{,}853/2{,}415), not the $54.6\%$ stated in the earlier draft; the $54.6\%$
+figure is the corpus prevalence (7{,}632/13{,}973). This matters because the majority-class
+baseline has F1 $0.8683$, not $0.700$. The re-evaluated model's lift over majority is $+0.0712$
+F1, not $+0.11$. The released rules-only baseline has F1 $0.673$ (precision $0.9794$, recall
+$0.5127$), so the model's advantage over rules is $+0.2665$; the model's advantage over
+always-predicting-crypto is much smaller.
+
+\begin{table}[t]
+\centering
+\caption{Discovery re-evaluation on the repository-disjoint split ($n=2{,}415$, prevalence
+$76.73\%$). The reported row is the released artifact; the re-evaluated row is a deterministic
+forward pass of the released checkpoint.}
+\label{tab:discovery}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.55cm}rrrr@{}}
+\toprule
+Method & Precision & Recall & F1 & Accuracy \\
+\midrule
+Reported (released artifact) & 0.9520 & 0.9530 & 0.9525 & 0.9271 \\
+Re-evaluated checkpoint & 0.9279 & 0.9514 & 0.9395 & 0.9060 \\
+Threshold-optimal ($t=0.65$) & 0.9477 & 0.9379 & 0.9428 & --- \\
+Majority (always crypto) & 0.7673 & 1.0000 & 0.8683 & 0.7673 \\
+Rules-only (released) & 0.9794 & 0.5127 & 0.6730 & 0.6178 \\
+Random coin-flip & 0.7686 & 0.4895 & 0.5981 & 0.4952 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The aggregate hides substantial language variation. On the eight language strata with at least
+ten files, F1 ranges from $0.9691$ for C ($n=1{,}688$) to $0.4651$ for Python ($n=64$);
+Solidity is $0.7162$ ($n=275$), Swift $0.7007$ ($n=112$), Go $0.7912$ ($n=71$), C++ $0.9880$
+($n=86$), and Shell $0.9333$ ($n=21$). The Java stratum has 95 files and zero positive examples,
+so its F1 is undefined; the naive macro-average that counts it as zero is $0.6954$, and the
+macro-average over the seven strata with both classes is $0.795$. Across all ten languages
+(including JavaScript $n=1$ and Rust $n=2$), the macro-average is $0.556$. The micro-F1 is
+dominated by C, which is 70\% of the evaluation set. A repository-cluster bootstrap gives a 95\%
+CI of $[0.720,0.979]$ for micro-F1; the interval is wide because there are only eight source
+groups. The released checkpoint's discriminative power is real (ROC AUC $0.9616$, average
+precision $0.9890$), but the single-number summary overstates language generality.
+
+Calibration is poor in the mid-range: ECE (10 bins) is $0.1557$, and the low-confidence bins are
+much more accurate than their confidence (\eg, the $[0.0,0.1)$ bin has mean confidence $0.069$
+and accuracy $0.886$). The model is not a calibrated probability estimator. It is, however, a
+useful ranker for human triage: at 50\% coverage, F1 is $1.000$; at 70\% coverage, precision is
+$0.9750$ and F1 is $0.9846$; at 90\% coverage, F1 is $0.9634$. A deployment that auto-labels the
+most confident 70\% and routes the remaining 30\% to review would make far fewer errors than the
+full-coverage F1 suggests. This is a selective-prediction result, not a calibration result.
+
+Contamination is too small to explain the headline. There are 11 exact-duplicate evaluation
+records ($0.455\%$) and 25 records with 5-line-shingle Jaccard $\ge0.8$ against training
+($1.04\%$); 12 have Jaccard $\ge0.95$. All high-similarity files are vendored AWS-LC sources.
+Removing exact duplicates changes F1 from $0.9395$ to $0.9397$; removing near-duplicates at
+$\ge0.8$ changes it to $0.9393$. The exact-duplicate count is small, but the near-duplicate
+count is $2.3\times$ the $0.4\%$ figure in the earlier draft; the earlier draft's $0.4\%$
+counted cross-repository snippets, not all near-duplicates.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.94\textwidth]{figures/fig_discovery.pdf}
+\caption{(a) Selective prediction on the discovery split: auto-labeling the most confident 50\%
+yields F1 $1.0$; 70\% yields F1 $0.9846$ at precision $0.9750$. (b) Per-language F1 for strata
+with $n\ge10$; the Java stratum (95 files) has no positive examples and is omitted. The
+micro-F1 $0.9395$ is dominated by C ($n=1{,}688$).}
+\label{fig:discovery}
+\end{figure*}
+
+\subsection{Summary of the ranking evidence}
+Fig.~\ref{fig:pairs} shows the pair structure of the failing estate. Of 21 pairs, 15 are within
+the six large-key assets and are tied; the six cross-group pairs are the only ones that can
+affect $\tb$. The model gets five of six. This is the entire ``gap'' between the GNN and the
+doctrine on the 42-estate cohort. Table~\ref{tab:ranking} and Fig.~\ref{fig:ceiling} make the
+same point across cohorts: the points lie on the identity line because the model is at the
+ceiling, and the ceiling is set by the key-size histogram.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\columnwidth]{figures/fig_pairs.pdf}
+\caption{Pair structure of \texttt{real\_gov\_edu\_2.json}: six assets share one key size (15
+tied pairs), one asset has a different key size (six distinguishable pairs). The model orders
+five of the six correctly; the single red cell is the entire shortfall. Tied pairs are invisible
+to $\tb$.}
+\label{fig:pairs}
+\end{figure}
+
+\section{What the Tie Means}
+\label{sec:discussion}
+
+\subsection{Four readings of the tie}
+The earlier draft offered four readings of the 0-wins/41-ties/1-loss result: (i) the two methods
+are equivalent; (ii) the doctrine is near-optimal; (iii) the scanner-observable features have an
+information ceiling; and (iv) model superiority is not measurable without expert labels. Our
+results support (i) descriptively and (iv) as a statement about the benchmark, but not (ii), and
+only a narrow version of (iii).
+
+Reading (i) is true but uninformative: the GNN and the doctrine produce the same weak order on
+41 folds, and the six-parameter ridge produces the same weak order on all 42. Reading (ii) is
+not supported. The doctrine's other terms are constants in these estates; the benchmark never
+tests whether its criticality, vendor, deadline, or dependency weights are optimal. Reading (iii)
+is supported only in the sense that the \emph{scanner-observable} fields in this corpus carry one
+bit of ordering information (key size). It is not a statement about what enterprise CBOMs could
+carry. Reading (iv) is supported, but for a reason the earlier draft did not identify: the
+ceiling is $0.721$, so the comparison has 402 effective pairs and no headroom. ``Superiority is
+not measurable'' is true here because the benchmark is saturated, not because the problem is
+intrinsically hard to measure.
+
+\subsection{Label circularity}
+The target is generated by the same formula that defines the doctrine baseline. This is fidelity
+testing by construction, and the earlier draft acknowledges it. The new point is that fidelity
+testing is still informative if the target has many distinguishable pairs: a model can fail to
+reproduce a complex doctrine. Here the doctrine is one-dimensional, so fidelity testing
+degenerates to a key-size sort. The circularity is not a flaw in the model; it is a flaw in the
+claim that the benchmark can rank model architectures.
+
+\subsection{Construct validity}
+A CBOM is a data structure, and its usefulness for prioritization depends on which fields are
+populated. In this corpus, the fields that would make the doctrine multi-factor---criticality,
+vendor readiness, deadlines, dependencies---are either constant or absent. The scanner records
+certificate metadata well and organizational context poorly. That is a realistic limitation of
+public-endpoint scanning, but it means the benchmark's construct (``migration priority'') is
+operationalized as (``key size''). A benchmark that intends to measure multi-factor
+prioritization must either collect the missing fields or acknowledge that it measures a proxy.
+
+\subsection{Benchmark repair}
+The ceiling theorem suggests a concrete reporting standard for learned-ranking benchmarks with
+tied targets:
+\begin{enumerate}
+\item Report $\nzero$, $\distinct$, $\distinct/\nzero$, and the ceiling
+$\sqrt{\distinct/\nzero}$ alongside $\tb$.
+\item Report attainment $\tb/\ceil$ and pooled pair accuracy, not only mean $\tb$.
+\item Report exact-rank and top-$k$ separately, and state whether within-tie order is
+meaningful. If ties are genuine, do not treat arbitrary tie-break agreement as quality.
+\item Include a parameter-free baseline and a linear baseline. If a six-parameter model matches a
+237K-parameter model, the benchmark is not testing architecture.
+\item Audit the target's field variation. A doctrine with constant terms is a one-factor rule;
+an ablation shows which terms are doing work.
+\item Use dependency-rich, heterogeneous estates for graph models. Zero-edge estates cannot test
+graph reasoning, no matter how many parameters the model has.
+\end{enumerate}
+The first three are reporting fixes; the last three are data-collection fixes. The Q-Trust release
+makes the first three easy to adopt because the artifacts already contain the per-fold targets
+and predictions. The eight-mode checklist of Section~\ref{sec:checklist} complements this
+standard: the reporting fixes expose saturation and vacuity, while the checklist exposes the
+leakage and documentation failures that a saturation analysis alone would miss.
+
+\subsection{The marginal cost of validity}
+\label{sec:marginal}
+
+The ceiling is a diagnostic, but it also prices the remedy. Because $\tb \le
+\sqrt{\distinct/\nzero}$ and $\nzero$ is fixed by the number of assets, the only way to raise the
+ceiling is to raise $\distinct$ --- that is, to obtain labels that separate assets currently
+tied. The question a practitioner actually asks is therefore: \emph{which assets should an expert
+label first, and how many labels does a usable ceiling cost?} The answer is not the intuitive one.
+
+\begin{theorem}[Bisection efficiency]
+\label{thm:bisect}
+Let a tied group of size $m$ be re-scored individually, partitioning it into subgroups of sizes
+$a_1,\dots,a_j$ with $\sum_i a_i = m$. The number of newly distinguishable pairs is
+\begin{equation}
+\Delta \distinct = \sum_{i<j} a_i a_j = \bigl(m^2 - \textstyle\sum_i a_i^2\bigr)/2 ,
+\end{equation}
+which is maximised by a balanced two-way split $a=\lfloor m/2\rfloor$, $b=\lceil m/2\rceil$,
+giving $\Delta \distinct = \lfloor m/2\rfloor\lceil m/2\rceil \approx m^2/4$. The cost is $m$
+labels, so the efficiency per label is $\Delta\distinct/m \approx m/4$, which is
+\emph{increasing in $m$}.
+\end{theorem}
+\begin{proof}
+For fixed $m$, $\sum_{i<j} a_i a_j$ is maximised when $\sum_i a_i^2$ is minimised, which for a
+partition of a fixed sum occurs when the parts are as equal as possible. Hence the balanced
+split, with $\Delta\distinct = \lfloor m/2\rfloor\lceil m/2\rceil \ge (m^2-1)/4$. Dividing by the
+$m$ labels consumed gives a per-label yield that grows linearly in $m$.
+\end{proof}
+
+The corollary is a labelling policy that runs opposite to intuition. The cost-minimising schedule
+is to \emph{repeatedly bisect the largest tied group}, not to label the assets of highest business
+importance. Large homogeneous clusters --- the RSA-2048 monoculture that dominates real estates
+--- are the cheapest source of discriminating power per label. We verified the balanced split by
+exhaustive enumeration for every $m \in [2,24]$.
+
+\begin{table}[t]
+\centering
+\caption{The marginal cost of validity on designed enterprise estates. A fraction
+\texttt{dom} of assets share one key size (the RSA-2048 monoculture); the remainder is spread over
+six key sizes. ``Ceiling'' is the attainable $\tb$ before any labelling; ``labels'' is the count
+of item-level expert labels required to raise it to $0.90$ under the largest-group-first policy;
+``random'' is the mean over 60 random group selections. The ceiling is governed by concentration,
+not size: it is essentially invariant from 10 to 5{,}000 assets.}
+\label{tab:labelling}
+\small
+\begin{tabular}{rrrrrr}
+\toprule
+$n$ & \texttt{dom} & Ceiling & Labels & Random & Labels/asset \\
+\midrule
+25  & 0.50 & 0.858 & 12    & 18.4  & 0.48 \\
+25  & 0.90 & 0.480 & 44    & 51.4  & 1.76 \\
+100 & 0.50 & 0.810 & 79    & 108.5 & 0.79 \\
+100 & 0.70 & 0.697 & 140   & 148.7 & 1.40 \\
+100 & 0.90 & 0.435 & 203   & 237.3 & 2.03 \\
+1{,}000 & 0.50 & 0.818 & 750   & 1{,}065 & 0.75 \\
+1{,}000 & 0.90 & 0.431 & 2{,}025 & 2{,}549 & 2.02 \\
+5{,}000 & 0.50 & 0.780 & 5{,}601 & 6{,}973 & 1.12 \\
+5{,}000 & 0.90 & 0.432 & 10{,}125 & 12{,}969 & 2.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:labelling} reports the resulting cost curve. Three regularities matter. First, the
+ceiling is governed by \emph{concentration}, not by estate size: at $90\%$ monoculture it is
+$0.447$, $0.435$, $0.431$, and $0.432$ at $n = 10, 100, 1{,}000, 5{,}000$ respectively. A larger
+estate is not harder to evaluate in ceiling terms; a \emph{more homogeneous} one is. Second, the
+cost of a usable ceiling is roughly linear in concentration: about $0.75$ labels per asset at
+$50\%$ monoculture rising to about $2.0$ at $90\%$. Third, the largest-group-first policy beats
+random selection by $24$--$42\%$ at $n \ge 100$, and the gap widens with concentration up to the
+point where a single group dominates and there is nothing left to choose between.
+
+On the 42 real estates the absolute numbers are small because the estates are small (mean
+$\nzero = 19.1$, mean largest tie group $4.5$): the policy reaches ceiling $0.90$ in $7.2$ labels
+against $7.7$ for random and $7.8$ for smallest-group-first. The leverage of the policy is
+therefore a function of estate scale, which is precisely where deployment happens. At $n=1{,}000$
+with $90\%$ monoculture, $2{,}025$ expert labels raise the ceiling from $0.431$ to $0.90$; at a
+representative \$3 per label that is roughly \$6{,}000 of labelling to make a multi-million-dollar
+migration programme measurable at all. The ceiling is not a reason for despair; it is a
+procurement specification.
+
+\subsection{A costed specification for a valid benchmark}
+\label{sec:spec}
+
+The negative result is only useful if it points to what would replace it. Table~\ref{tab:spec}
+costs the benchmark that could actually test whether a learned ranker beats a doctrine on
+migration ordering. The binding constraint is expert labeling, not computation.
+
+\begin{table}[t]
+\centering
+\caption{Requirements for a benchmark that could test learned migration ranking. The cost driver
+is labeling; the compute is negligible by comparison.}
+\label{tab:spec}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{2.4cm}@{}}
+\toprule
+Requirement & Minimum & Cost driver \\
+\midrule
+Host-disjoint estates with dependency edges & 1{,}000 estates ($\approx$6{,}600 hosts) & scan infrastructure \\
+Blinded expert preferences & 5--10 experts, 5{,}000--10{,}000 pairs, $\kappa\ge0.6$ & labeling \\
+Metrics & $\gamma$ + $\tb$ with ceiling + NDCG@$k$ & analysis \\
+Baselines & key-size, linear, graph-aware & analysis \\
+Pre-registered MDE & $\le0.01$ ($\approx$59 folds) & analysis \\
+Audit & eight-mode checklist, committed predictions & analysis \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At the observed packing rate (277 hosts into 42 estates, 6.6 hosts per estate), 1{,}000 estates
+with genuine dependency edges require roughly 6{,}600 hosts, which a multi-tenant scan at the
+scale of the IMC 2026 census~\cite{mindthegap2026} can supply with commodity infrastructure. The
+labeling budget---5{,}000--10{,}000 pairwise preferences from 5--10 blinded annotators, with
+adjudication and inter-rater $\kappa\ge0.6$---is a study of a few weeks. The computational budget
+is negligible: the full 42-fold campaign re-executes on two CPU cores, and the zero-synthetic
+variant takes minutes per fold. A benchmark meeting these requirements would be able to answer
+the question this paper could not: whether a learned ranker can beat a doctrine on a target that
+is not saturated.
+
+\subsection{Deployment implications}
+The Q-Trust pipeline is useful for inventory and attestation. The learned ranker, on this
+corpus, is a key-size sort learned through a GNN. That is not a reason to discard it: a learned
+model can incorporate new fields when they become available, and the pipeline can be retrained.
+It is a reason not to market the current ranker as evidence of learned multi-factor
+prioritization, and not to use the 0.7168/0.7210 tie as evidence that the doctrine is
+near-optimal. The honest deployment claim is narrower: the system can enumerate public TLS
+assets, produce a CBOM, and order them by a doctrine that currently reduces to key size; the
+attestation layer can record the resulting actions.
+
+\section{Threats to Validity}
+\label{sec:threats}
+
+\textbf{Internal validity.} The target is generated by the doctrine, so the evaluation is a
+fidelity test. The zero-synthetic and zero-shot controls isolate the contributions of synthetic
+data and fold-specific training, but they do not create an independent target. The CPU
+re-execution uses a different batch size (16 vs 64) and runs the zero-synthetic variant; we did
+not re-execute the full 2{,}000-synthetic campaign on CPU. The full campaign's artifact is the
+primary result; the zero-synthetic run reproduces its per-fold $\tb$ to $10^{-6}$, which is
+strong evidence that the synthetic component is not driving the ranking. The clean warm-start
+run is CPU-capped, so warm start and training budget vary together; we do not attribute the
+$-0.120$ gap between them, and we note that exact-rank metrics improve under the smaller budget,
+which suggests budget is not the whole story.
+
+\textbf{External validity.} The 277 hosts are public TLS endpoints, not enterprise inventories.
+They have no internal dependencies, business criticality, or vendor contracts. The 38-estate
+cohort is a repacking of the same host population, not an independent sample. The results may
+not transfer to enterprise CBOMs with rich dependency graphs. The positive control suggests that
+when dependencies are present the metric can discriminate, but the GNN did not beat the doctrine
+in our synthetic control.
+
+We do not claim a third independent corpus; none exists for this task, and we decline to
+manufacture one. Instead we separate the two things a corpus could tell us. The \emph{ceiling}
+itself is a theorem, so it needs no corpus; what a corpus can test is its \emph{practical
+magnitude}. Section~\ref{sec:marginal} therefore evaluates the ceiling over a designed space
+spanning four orders of magnitude in estate size and four levels of tie concentration. The result
+is that the ceiling is governed by concentration rather than size, which is a stronger
+generalization claim than a third ad-hoc cohort would support: it predicts the ceiling for an
+estate we have never seen from two measurable quantities. The claim that remains corpus-bound is
+the \emph{field audit} (zero edges, constant terms, key-size-only doctrine), and that claim is
+explicitly scoped to the 42 released estates.
+
+\textbf{Construct validity.} Tie-aware $\tb$ measures weak-order fidelity, not exact migration
+order. We report exact-rank and node-rank to show what it hides, but we do not claim that
+within-tie order is meaningful. The discovery F1 is a file-level label metric, not a measure of
+whether the discovered cryptographic usage is exploitable. The per-language macro-average is
+sensitive to the inclusion of undefined strata (Java), and the repository-cluster CI is wide
+because there are only eight source groups.
+
+\textbf{Statistical validity.} The 42 folds are small (mostly seven assets) and the target has
+only 402 distinguishable pairs. The paired comparison against the doctrine is degenerate because
+the doctrine is at the ceiling. The discovery re-evaluation is a single deterministic forward
+pass; the cluster bootstrap captures source-group correlation but not model-training variance.
+The threshold sweep is descriptive, not a held-out model selection procedure.
+
+\textbf{Conclusion validity.} The paper's negative claim is about the benchmark, not about PQC
+migration or about the Q-Trust system as a whole. A null result on this corpus does not imply
+that learned ranking is impossible; it implies that this corpus and target cannot demonstrate
+it. The positive control is a constructive existence proof that a non-degenerate target yields
+non-degenerate scores, but it is synthetic and does not establish that the GNN is the right
+architecture.
+
+\section{Ethics, Artifacts, and Reproducibility}
+\label{sec:artifacts}
+
+\textbf{Data and ethics.} The CBOMs are derived from publicly reachable TLS certificates. We did
+not perform exploitation, authentication bypass, or intrusive scanning. The corpus contains
+certificate subjects and issuers, which may include organizational names; we release only the
+derived features and the public certificate metadata already visible to any TLS client. The
+discovery corpus is public source code. No human subjects were involved.
+
+\textbf{Claim ledger.} Table~\ref{tab:ledger} is the paper's integrity contract. Each headline
+claim is mapped to an artifact and a status: reproduced, reproduced but vacuous, or not
+reproduced. We removed three claims from the earlier draft because their artifacts are not
+present in the release: the clean warm-start control in its earlier form, the 14/14 exact-claims
+harness, and the 42/42 zero-synthetic ordering claim in its strong form (it holds for $\tb$, not
+for exact order). The clean warm-start is retained here only as the CPU-capped control of
+Section~\ref{sec:protocol}, with its artifact in the companion audit package. We also corrected
+the Foundry test count: the release contains 215 test, invariant, and fuzz functions across 23
+test files, not 211 tests. The contract count in the earlier draft (``eleven UUPS registries'')
+mixed files and registries; we do not use a contract count as evidence in this paper.
+
+\begin{table*}[t]
+\centering
+\caption{Claim ledger. ``Reproduced'' means a released script regenerates the number from
+released artifacts in this environment. ``Vacuous'' means the number is correct but does not
+support the stated interpretation. ``Not reproduced'' means the released artifact does not yield
+the claim.}
+\label{tab:ledger}
+\footnotesize
+\begin{tabular}{@{}p{2.15in}p{2.35in}p{0.95in}@{}}
+\toprule
+Claim & Artifact / re-measurement & Status \\
+\midrule
+GNN $\tb=0.7168$ vs doctrine $0.7210$; 0/41/1 & \texttt{real\_cbom\_loo\_42.json}; zero-synthetic rerun $\tb=0.716781$ & Reproduced \\
+``Tie means superiority is not measurable'' & ceiling $=0.721024$; GNN 401/402 pairs & Vacuous \\
+Key-size rule matches doctrine 42/42 & \texttt{ceiling\_audit.json}; ablation 37/42 vs 0/42 & Reproduced \\
+Zero-synthetic ``ordering-identical'' & $\tb$ identical 42/42; exact-rank 1/42 $\rightarrow$ 12/42 & Partly vacuous \\
+Clean warm-start $\Delta=-0.120$, $p=0.0018$ & \texttt{clean\_warmstart\_loo.json} (companion audit); CPU-capped & Reproduced (bounded) \\
+Discovery F1 $0.9525$ & released checkpoint: F1 $0.9395$; best threshold $0.9428$ & Not reproduced \\
+Contamination $0.4\%$ & 11 exact ($0.455\%$), 25 near-dup $\ge0.8$ ($1.04\%$); F1 change $<0.001$ & Expanded \\
+211 Foundry tests & 215 test/invariant/fuzz functions, 23 test files & Corrected \\
+38-estate replication & 36/38 folds at ceiling; 458/461 pairs & New \\
+Bisection policy optimal; ceiling is size-invariant & \texttt{labelling\_efficiency.json}; exhaustive $m\le24$; ceiling $0.431$--$0.447$ at $90\%$ for $n=10..5{,}000$ & New \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\textbf{Artifact release.} The analysis scripts are in \texttt{scripts/paper\_*.py}; the JSON
+artifacts are in \texttt{paper/analysis/}; the manuscript and figures are in \texttt{paper/}. The
+claims harness \texttt{scripts/verify\_paper\_claims.py} re-derives every headline number from
+the committed JSONs and reports \textbf{53/53 verified}. The main commands are:
+\begin{verbatim}
+python scripts/paper_ceiling_audit.py
+python scripts/paper_transparent_baselines.py
+python scripts/paper_metric_taxonomy.py
+python scripts/eval_real_cbom_loo.py --epochs 30 \
+  --n-synthetic 0 --batch-size 16 --device cpu \
+  --out paper/analysis/loo42_zerosyn.json
+python scripts/paper_final_stats.py
+python scripts/verify_paper_claims.py   # 53/53
+\end{verbatim}
+The released checkpoint is \texttt{planner/model\_gpu\_v3.pt}. The CBOMs are in
+\texttt{q-trust-datasets/planner/data/real\_cboms/} and
+\texttt{real\_cboms\_v2\_2026\_09\_18/}. The CodeBERTa checkpoint is in
+\texttt{q-trust-codebert/}. All runs use seed 42 unless stated otherwise. The construct-validity
+checklist and the clean warm-start script are released in the companion audit
+package~\cite{qtrust_validity_audit}.
+
+\section{Conclusion}
+
+The Q-Trust planning study reported an honest tie: a GNN and a doctrine heuristic agree on 41 of
+42 estates. This paper shows that the tie is the ceiling of the metric, not evidence of parity.
+On the released corpus, 401 of 803 pairs are tied and only 402 are distinguishable, so the
+maximum attainable tie-aware $\tb$ is $0.721024$---the doctrine's score. The GNN gets 401 of 402
+pairs right; a six-parameter ridge model reproduces its score on every fold; a parameter-free
+key-size rule and a seven-parameter logistic model attain the ceiling. The mechanism is
+algebraic: constant criticality, vendor, deadline, and zero dependencies reduce the doctrine to
+key-size sorting. The result survives a repacked cohort (36/38 folds at ceiling), survives the
+removal of all synthetic training data, and disappears only when the target is made
+non-degenerate in a synthetic positive control---where the metric does discriminate but the GNN
+still fails to beat a doctrine blind to multi-hop reach. A clean warm-start control shows that
+the released parity is partly initialization exposure, and the released discovery checkpoint
+yields F1 $0.9395$, not $0.9525$.
+
+The broader lesson is methodological. A tie-aware rank metric with a tied target has a ceiling;
+reporting the raw value without the ceiling invites a false narrative of convergence. Benchmarks
+for learned prioritization should report the number of effective pairs, the ceiling, attainment,
+and a field audit, and should include parameter-free and linear baselines. They should also be
+audited against the eight construct-validity failure modes, because saturation, circular
+baselines, degenerate graphs, and contamination conceal one another. The Q-Trust release now
+does so. Its inventory and attestation layers remain useful; its learned-ranking claim, on this
+corpus, does not.
+
+\appendix
+
+\section{Q-Trust System Details}
+\label{app:system}
+
+\textbf{Discovery.} The inspector combines language-aware static rules, AST analysis, and a
+fine-tuned CodeBERTa classifier. The released checkpoint is trained on the 13{,}973-file corpus
+and evaluated on the repository-disjoint split described in Section~\ref{sec:results}. The rules
+layer is anchored on CryptoAPI-Bench: it flags 164 of 187 insecure files (recall $0.877$) with a
+misuse precision of $164/176=0.932$. The adversarial holdout reported by the project is F1
+$0.533$ on 132 constructed cases; we did not re-execute it and do not use it as evidence in this
+paper.
+
+\textbf{Planner.} The GNN is a hybrid GCN/GATv2 encoder with 237{,}070 parameters, six input
+features, hidden dimension 256, embedding dimension 128, eight heads, layer normalization, and a
+ListMLE ranking loss. The RL sequencer packs estates into migration batches and is evaluated by a
+separate reward metric; the archived run reports reward $140.34\pm8.13$ versus doctrine $140.62$
+with 2 wins, 27 ties, and 11 losses. This is a descriptive tie and is not used to support the
+ranking claims.
+
+\textbf{Attestation.} The attestation layer uses UUPS-upgradeable registries, EIP-712 typed
+signatures, and a timelock; the local deployment runs on a Base Sepolia fork. The release
+contains 23 Foundry test files with 215 test, invariant, and fuzz functions. The layer has not
+been externally audited. We describe it for completeness; it is not evidence for the ranking
+result.
+
+\textbf{Side-channel experiments.} The release includes five liboqs captures and a
+trace-disjoint detector. The leave-one-trace-out result is AUC $0.963$ on four of five holds and
+$0.252$ on the ML-DSA-44 signing hold, where the clean-noise distribution is outside the
+training span. These experiments are orthogonal to the ranking benchmark and are not used in this
+paper's claims.
+
+\section{Reproduction Notes}
+\label{app:repro}
+
+The CPU environment is Python 3.13, PyTorch 2.x (CPU), PyTorch Geometric 2.x, and SciPy. The
+zero-synthetic 42-fold run takes about 2 minutes on a laptop CPU after imports; the 38-fold run
+takes about 3 minutes. The discovery re-evaluation reuses cached per-file probabilities in
+\texttt{paper/analysis/codebert\_predictions.jsonl}; a full forward pass takes about 5 minutes on
+CPU at 256 tokens. The 512-token sensitivity sweep is run on a stratified subsample because
+full-set inference is about 30 minutes per configuration. The exact commands and JSON artifacts
+are listed in Section~\ref{sec:artifacts}.
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

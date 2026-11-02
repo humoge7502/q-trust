@@ -137,10 +137,12 @@ export default function QuantumThreatPanel() {
               {result.physical_qubits_needed.toLocaleString()}
             </dd>
           </div>
-          <div className="pt-1 text-micro text-muted-foreground">
-            Basis: {result.based_on}
-          </div>
         </dl>
+      )}
+      {result && (
+        <p className="mt-2 text-micro text-muted-foreground">
+          Basis: {result.based_on}
+        </p>
       )}
     </div>
   );

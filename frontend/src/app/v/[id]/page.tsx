@@ -20,6 +20,7 @@ import { CodeBlock } from "@/components/ui/code-block";
 
 import { fetchAsset, fetchAssetVerification, fetchIpfsJson, type AssetInfo, type AssetVerification } from "@/lib/api";
 import { parseAssetId } from "@/lib/config";
+import { BadgeEmbed } from "@/components/badge-embed";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -72,15 +73,19 @@ export default async function VerificationPage({ params }: Props) {
   }
 
   return (
-    <main className="flex-1 bg-canvas text-slate-900">
+    <main className="flex-1 bg-canvas text-foreground">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <header className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {/* Header — the unified app-layer treatment: mono eyebrow, display
+            title, muted lede, with the status badge as the header action. */}
+        <header className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <p className="font-mono text-micro font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Public verification
+            </p>
+            <h1 className="mt-3 font-display text-3xl font-semibold leading-[0.95] tracking-[-0.04em] text-foreground sm:text-4xl">
               Q-Trust Attestation
             </h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               Public verification of cryptographic asset provenance on {verification.chain_name}
             </p>
           </div>
@@ -88,8 +93,8 @@ export default async function VerificationPage({ params }: Props) {
         </header>
 
         {/* Asset ID + key facts */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-slate-800">Asset details</h2>
+        <section className="rounded-xl border border-border bg-canvas-raised p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Asset details</h2>
           <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <Field label="Asset ID" value={asset.asset_id} mono />
             <Field label="Status" value={status} />
@@ -98,7 +103,7 @@ export default async function VerificationPage({ params }: Props) {
             <Field
               label="Registered at"
               value={timestamp}
-              icon={<ClockIcon className="h-4 w-4 text-slate-500" />}
+              icon={<ClockIcon className="h-4 w-4 text-muted-foreground" />}
             />
             <Field label="Last updated" value={new Date(asset.last_updated * 1000).toISOString()} />
             <Field label="CBOM hash" value={asset.cbom_hash} mono colSpan2 />
@@ -107,11 +112,11 @@ export default async function VerificationPage({ params }: Props) {
         </section>
 
         {/* Provenance graph */}
-        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-slate-800">
+        <section className="mt-6 rounded-xl border border-border bg-canvas-raised p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">
             Provenance graph
           </h2>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-4 text-sm text-muted-foreground">
             The chain of trust from source code scan to on-chain attestation.
           </p>
           <ProvenanceGraph asset={asset} verification={verification} />
@@ -119,13 +124,13 @@ export default async function VerificationPage({ params }: Props) {
 
         {/* IPFS metadata */}
         {ipfsMetadata && (
-          <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-slate-800">
+          <section className="mt-6 rounded-xl border border-border bg-canvas-raised p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               IPFS metadata
             </h2>
             <CodeBlock
               label="IPFS metadata JSON"
-              className="max-h-96 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100"
+              className="max-h-96 overflow-auto rounded-lg bg-night p-4 text-xs text-night-ink"
             >
               <code>{JSON.stringify(ipfsMetadata, null, 2)}</code>
             </CodeBlock>
@@ -133,15 +138,15 @@ export default async function VerificationPage({ params }: Props) {
         )}
 
         {/* Verify independently */}
-        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-slate-800">Verify independently</h2>
-          <p className="mb-3 text-sm text-slate-600">
+        <section className="mt-6 rounded-xl border border-border bg-canvas-raised p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Verify independently</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
             Anyone can verify this attestation without trusting Q-Trust. Run the CLI:
           </p>
           {safeAssetId ? (
             <CodeBlock
               label="Independent verification commands"
-              className="overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100"
+              className="overflow-auto rounded-lg bg-night p-4 text-xs text-night-ink"
             >
               <code>{`# Install the Q-Trust SDK
 pip install qtrust-sdk
@@ -153,19 +158,25 @@ python -c "from qtrust import QTrustClient; print(QTrustClient().verify_asset('$
 crypto-inspector verify ${safeAssetId}`}</code>
             </CodeBlock>
           ) : (
-            <p className="rounded-lg bg-amber-50 p-4 text-xs text-amber-800 ring-1 ring-inset ring-amber-600/20">
+            <p className="rounded-lg bg-warning-surface p-4 text-xs text-warning ring-1 ring-inset ring-warning-border">
               The asset ID for this record is not in the expected format, so the
               copy-paste verification commands are hidden. Copy the Asset ID from
               the table above and pass it to <code>crypto-inspector verify</code> manually.
             </p>
           )}
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             The CLI calls the AssetRegistry contract directly on {verification.chain_name} —
             no central server involved.
           </p>
         </section>
 
-        <footer className="mt-8 flex flex-col gap-2 text-center text-xs text-slate-500 sm:flex-row sm:justify-between">
+        {/* Shareable badge */}
+        <BadgeEmbed
+          assetId={safeAssetId ?? id}
+          badgePath={`/api/badge/${encodeURIComponent(safeAssetId ?? id)}`}
+        />
+
+        <footer className="mt-8 flex flex-col gap-2 text-center text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>
             Verified at {new Date(verification.verified_at * 1000).toISOString()}
           </span>
@@ -173,7 +184,7 @@ crypto-inspector verify ${safeAssetId}`}</code>
             href={`${verification.chain_id === 8453 ? "https://basescan.org" : "https://sepolia.basescan.org"}/address/${verification.org_did}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900"
+            className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
           >
             View on Basescan
             <ArrowTopRightOnSquareIcon className="h-3 w-3" />
@@ -196,33 +207,33 @@ crypto-inspector verify ${safeAssetId}`}</code>
  */
 function VerificationUnavailable({ assetId }: { assetId: string }) {
   return (
-    <main className="flex-1 bg-canvas text-slate-900">
+    <main className="flex-1 bg-canvas text-foreground">
       <div className="mx-auto max-w-2xl px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-risk-medium">
+        <p className="font-mono text-micro font-semibold uppercase tracking-[0.16em] text-risk-medium">
           Record unreachable
         </p>
-        <h1 className="mt-6 text-4xl font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-5xl">
+        <h1 className="mt-6 font-display text-3xl font-semibold leading-[0.95] tracking-[-0.04em] text-foreground sm:text-4xl">
           We could not read this attestation.
         </h1>
-        <p className="mt-5 text-sm leading-7 text-slate-600">
+        <p className="mt-5 text-sm leading-7 text-muted-foreground">
           The verification service is not responding. This is an availability
           failure on our side — it says nothing about whether the record is
           valid, so please do not read it as one.
         </p>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
+        <div className="mt-8 rounded-xl border border-border bg-canvas-raised p-5 shadow-sm">
+          <p className="font-mono text-label font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Asset ID
           </p>
-          <p className="mt-2 break-all font-mono text-xs text-slate-900">{assetId}</p>
+          <p className="mt-2 break-all font-mono text-xs text-foreground">{assetId}</p>
         </div>
 
-        <p className="mt-8 text-sm leading-7 text-slate-600">
+        <p className="mt-8 text-sm leading-7 text-muted-foreground">
           Retry in a moment, or verify the same record without this deployment:
         </p>
         <CodeBlock
           label="Independent verification command"
-          className="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100"
+          className="mt-4 overflow-x-auto rounded-xl border border-night-edge bg-night p-4 font-mono text-xs leading-6 text-night-ink"
         >
           <code>crypto-inspector verify {assetId}</code>
         </CodeBlock>
@@ -234,14 +245,14 @@ function VerificationUnavailable({ assetId }: { assetId: string }) {
 function StatusBadge({ status }: { status: "VALID" | "REVOKED" }) {
   if (status === "VALID") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+      <span className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-success-surface px-3 py-1.5 text-sm font-medium text-success ring-1 ring-inset ring-success-border sm:self-center">
         <ShieldCheckIcon className="h-4 w-4" />
         VALID
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+    <span className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-danger-surface px-3 py-1.5 text-sm font-medium text-danger ring-1 ring-inset ring-danger-border sm:self-center">
       <XCircleIcon className="h-4 w-4" />
       REVOKED
     </span>
@@ -263,10 +274,10 @@ function Field({
 }) {
   return (
     <div className={colSpan2 ? "sm:col-span-2" : ""}>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </dt>
-      <dd className={`mt-1 flex items-center gap-2 text-slate-900 ${mono ? "font-mono text-xs break-all" : ""}`}>
+      <dd className={`mt-1 flex items-center gap-2 text-foreground ${mono ? "font-mono text-xs break-all" : ""}`}>
         {icon}
         <span className="break-all">{value}</span>
       </dd>
