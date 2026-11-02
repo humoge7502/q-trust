@@ -193,10 +193,12 @@ function parseSitemap(xml) {
   const paths = new Set();
   const origins = new Set();
   for (const match of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)) {
+    // Decode the three legal XML entities in a single pass so a value such as
+    // `&amp;lt;` unescapes exactly once (`&lt;`), never twice.
     const decoded = match[1]
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
+      .replace(/&(?:amp|lt|gt);/g, (entity) =>
+        entity === "&amp;" ? "&" : entity === "&lt;" ? "<" : ">"
+      )
       .trim();
     try {
       const parsed = new URL(decoded);
