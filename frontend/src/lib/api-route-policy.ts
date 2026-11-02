@@ -94,6 +94,10 @@ export const ROUTE_POLICY: readonly RouteRule[] = [
   { prefix: "/v1/relay/nonce/", methods: GET, routeClass: "public-read" },
   { prefix: "/v1/relay/cbom-nonce/", methods: GET, routeClass: "public-read" },
   { prefix: "/v1/relay/audit-nonce/", methods: GET, routeClass: "public-read" },
+  { prefix: "/v1/certify/policies", methods: GET, routeClass: "public-read" },
+  // Which key the platform currently signs with — public so an auditor can pin
+  // a trust anchor before a bundle ever arrives (see docs/runbook).
+  { prefix: "/v1/certify/issuer", methods: GET, routeClass: "public-read" },
 
   // ---- Stateless compute (no writes, no filesystem) ----
   { prefix: "/v1/evaluate", methods: POST, routeClass: "public-compute" },
@@ -103,6 +107,8 @@ export const ROUTE_POLICY: readonly RouteRule[] = [
   { prefix: "/v1/compliance/full-report", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/credentials/verify", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/evidence/verify", methods: POST, routeClass: "public-compute" },
+  { prefix: "/v1/certify/verify", methods: POST, routeClass: "public-compute" },
+  { prefix: "/v1/assurance/report", methods: POST, routeClass: "public-compute" },
 
   // ---- Public demo surface: scanner, planner, evidence and GPU panels ----
   //
@@ -115,6 +121,11 @@ export const ROUTE_POLICY: readonly RouteRule[] = [
   { prefix: "/v1/scan/", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/evidence/create", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/roadmap/generate", methods: POST, routeClass: "public-compute" },
+  // GET is deliberately allowed here: a read-only liveness probe that reports
+  // which planner implementation is serving plans. `public-read` keeps it
+  // observable from a browser and from the production canary, and it exposes
+  // no plan data. POST stays on the compute class for planning itself.
+  { prefix: "/v1/planner/health", methods: GET, routeClass: "public-read" },
   { prefix: "/v1/plans", methods: POST, routeClass: "public-compute" },
   { prefix: "/v1/gpu/", methods: GET_POST, routeClass: "public-compute" },
 
@@ -123,6 +134,9 @@ export const ROUTE_POLICY: readonly RouteRule[] = [
   { prefix: "/v1/write/", methods: POST, routeClass: "operator" },
   { prefix: "/v1/webhooks/", methods: POST, routeClass: "operator" },
   { prefix: "/v1/credentials/issue", methods: POST, routeClass: "operator" },
+  // Issuance signs a platform-identity attestation, so anonymous visitors must
+  // not mint bundles. Verification (`/v1/certify/verify`, above) stays public.
+  { prefix: "/v1/certify", methods: POST, routeClass: "operator" },
 ];
 
 /**

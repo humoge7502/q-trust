@@ -114,16 +114,28 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
     if (!address || !url) {
       return reply.status(400).send({ error: "address and url are required" });
     }
-    const eventList = events && events.length ? events : ["*"];
+    // A subscription is stored under one key per event (`subscribers:<event>`),
+    // so an unsubscribe that omits `events` must sweep every bucket. Touching
+    // only the wildcard key left the real subscription behind and returned
+    // 200 with removed=0 — a silent no-op for any caller that did not echo the
+    // exact event list back.
+    let keys: string[];
+    try {
+      keys = events && events.length
+        ? events.map((event) => (event === "*" ? "subscribers:*" : `subscribers:${event}`))
+        : await storeKeys();
+    } catch (err) {
+      request.log.warn({ err }, "Webhook unsubscription storage failed");
+      return reply.status(503).send({ error: "Webhook storage unavailable" });
+    }
     let removed = 0;
     try {
-      for (const event of eventList) {
-        const key = event === "*" ? "subscribers:*" : `subscribers:${event}`;
+      for (const key of keys) {
         const records = await storeMembers(key);
         for (const raw of records) {
           try {
             const parsed = JSON.parse(raw) as { url?: string; address?: string };
-            if (parsed.url === url && parsed.address === address) {
+            if (parsed.url === url && parsed.address?.toLowerCase() === address.toLowerCase()) {
               removed += await storeRemove(key, raw);
             }
           } catch { continue; }
@@ -133,7 +145,7 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
       request.log.warn({ err }, "Webhook unsubscription storage failed");
       return reply.status(503).send({ error: "Webhook storage unavailable" });
     }
-    return { unsubscribed: true, removed };
+    return { unsubscribed: removed > 0, removed };
   });
 
   app.get("/v1/webhooks/subscribers", { preHandler: requireApiKey }, async () => {
@@ -144,15 +156,17 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
       app.log.warn({ err }, "Webhook subscriber listing failed");
       return { subscribers: [], error: "Webhook storage unavailable" };
     }
-    const byId = new Map<string, { id: string; url: string; events: string[] }>();
+    const byId = new Map<string, { id: string; url: string; address: string; events: string[] }>();
     for (const key of keys) {
       const event = key.replace("subscribers:", "");
       const records = await storeMembers(key);
       for (const raw of records) {
         let url = "";
+        let address = "";
         try {
           const parsed = JSON.parse(raw) as { url?: string; address?: string; secret?: string };
           url = typeof parsed.url === "string" ? parsed.url : "";
+          address = typeof parsed.address === "string" ? parsed.address : "";
         } catch { continue; }
         if (!url) continue;
         const id = createHash("sha256").update(url).digest("hex").slice(0, 16);
@@ -160,7 +174,7 @@ export async function registerWebhookRoutes(app: FastifyInstance, redis: Redis |
         if (existing) {
           if (!existing.events.includes(event)) existing.events.push(event);
         } else {
-          byId.set(id, { id, url, events: [event] });
+          byId.set(id, { id, url, address, events: [event] });
         }
       }
     }

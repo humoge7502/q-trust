@@ -139,6 +139,24 @@ def _load_trained_model(model_path: str) -> tuple[Any, dict[str, Any]]:
         cfg.setdefault("heads", 8)
         model = MigrationGNNv3(**cfg)
         model.load_state_dict(state_dict, strict=False)
+        # DEPRECATION / CORRECTNESS WARNING (2026-10-23, model_v3 AUDIT NOTE):
+        # v3 checkpoints trained with BatchNorm1d leak cross-graph statistics
+        # under PyG batching, making their numbers invalid for multi-estate
+        # batched inference. Retrain with norm="layer" before using these
+        # LOO / in-distribution results as validated claims.
+        if cfg.get("norm") == "batch":
+            logger.warning(
+                json.dumps({
+                    "event": "planner_legacy_batchnorm_checkpoint",
+                    "level": "WARNING",
+                    "message": "Loading a v3 checkpoint trained with BatchNorm1d "
+                               "(norm='batch'). Under PyG batching this leaks "
+                               "cross-graph statistics and is NOT valid for "
+                               "multi-estate inference. Retrain with norm='layer' "
+                               "(default) before trusting its LOO numbers.",
+                    "model_path": model_path,
+                })
+            )
     else:
         cfg = config if config else _DEFAULT_GNN_CONFIG
         model = MigrationGNN(**cfg)
@@ -154,13 +172,16 @@ def load_cbom(cbom_path: str) -> dict[str, Any]:
 
 
 def load_dependency_graph(
-    deps_path: str | dict[str, Any] | None, n_assets: int
+    deps: dict[str, Any] | None, n_assets: int
 ) -> list[list[int]]:
     """Load or synthesize a dependency graph.
 
     Args:
-        deps_path: Path to a deps.json file, an inline ``{"edges": [[src,
-            tgt], ...]}`` dict (as accepted by POST /plan), or None.
+        deps: Inline ``{"edges": [[src, tgt], ...]}`` dict (as accepted by
+            POST /plan), or None. Filesystem paths are deliberately NOT
+            accepted from callers (CodeQL py/path-injection): request data
+            must never address host files. Offline tooling that needs a file
+            reads the JSON itself and passes the dict.
         n_assets: Number of assets (used to synthesize a trivial graph).
 
     Returns:
@@ -169,8 +190,8 @@ def load_dependency_graph(
     """
     # Audit P-4: /plan used to stringify the inline deps dict and pass it as a
     # path — os.path.exists always failed and edges were silently dropped.
-    if isinstance(deps_path, dict):
-        raw_edges = deps_path.get("edges", [])
+    if isinstance(deps, dict):
+        raw_edges = deps.get("edges", [])
         parsed: list[list[int]] = []
         for e in raw_edges:
             try:
@@ -182,11 +203,6 @@ def load_dependency_graph(
         if parsed:
             return parsed
         # Fall through to synthesis when the dict carries no usable edges.
-
-    if isinstance(deps_path, str) and deps_path and os.path.exists(deps_path):
-        with open(deps_path, encoding="utf-8") as f:
-            deps_data = json.load(f)
-        return [[d["source"], d["target"]] for d in deps_data.get("dependencies", [])]
 
     # Synthesize a trivial graph: asset 0 is a root that everything depends on.
     # This is a sensible default for orgs without an explicit dependency map.
@@ -358,13 +374,20 @@ def predict_detailed(
     Args:
         cbom_path: Path to a CBOM JSON file.
         model_path: Path to the trained model checkpoint.
-        deps_path: Optional path to a dependency JSON file.
+        deps_path: Optional path to a dependency JSON file (CLI-only — this
+            function is offline tooling, not request-facing).
 
     Returns:
         A dict with: migration_order (list of dicts), total_assets, model_info.
     """
     cbom = load_cbom(cbom_path)
-    data, asset_records = cbom_to_graph(cbom, deps_path)
+    deps: dict[str, Any] | None = None
+    if deps_path:
+        # CLI boundary: read the file here so request-facing cbom_to_graph
+        # never accepts filesystem paths (CodeQL py/path-injection).
+        with open(deps_path, encoding="utf-8") as f:
+            deps = json.load(f)
+    data, asset_records = cbom_to_graph(cbom, deps)
 
     if not os.path.exists(model_path):
         _warn_heuristic_mode(f"model file not found at {model_path}")

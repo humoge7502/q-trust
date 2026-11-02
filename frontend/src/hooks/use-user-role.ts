@@ -10,7 +10,10 @@
  *
  * Detection:
  *   - org:    address has registered assets (backend read model)
- *   - vendor: address has issued attestations (backend read model)
+ *   - vendor: address is an active vendor on VendorRegistry, or has issued
+ *             attestations (backend read model). The on-chain registration
+ *             check matters: a newly approved vendor has no attestations yet,
+ *             but still needs the portal to publish their first one.
  *   - admin:  address holds DEFAULT_ADMIN_ROLE (bytes32 zero) on VendorRegistry,
  *             read on-chain via the wagmi public client. Runs alongside the
  *             org/vendor queries and takes precedence, since admins act across
@@ -49,6 +52,13 @@ const VENDOR_REGISTRY_ABI = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [{ name: "vendorDid", type: "address" }],
+    name: "isVendorActive",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
 
 export function isAdminRole(candidate: UserRole): boolean {
@@ -69,6 +79,26 @@ async function hasDefaultAdminRole(
       abi: VENDOR_REGISTRY_ABI,
       functionName: "hasRole",
       args: [DEFAULT_ADMIN_ROLE, address],
+    });
+  } catch {
+    return false;
+  }
+}
+
+async function isActiveVendor(
+  client: ReturnType<typeof usePublicClient>,
+  address: Address,
+): Promise<boolean> {
+  const registry = CONTRACTS.vendorRegistry;
+  if (!client || !registry || registry === "0x0") {
+    return false;
+  }
+  try {
+    return await client.readContract({
+      address: registry,
+      abi: VENDOR_REGISTRY_ABI,
+      functionName: "isVendorActive",
+      args: [address],
     });
   } catch {
     return false;
@@ -104,6 +134,14 @@ export function useUserRole(): UserRoleInfo {
     retry: false,
   });
 
+  const vendorActive = useQuery({
+    queryKey: ["vendor-active", address],
+    queryFn: () => isActiveVendor(publicClient, address!),
+    enabled: Boolean(address),
+    staleTime: 60_000,
+    retry: false,
+  });
+
   return useMemo(() => {
     if (walletLoading || !address) {
       return { role: "none" as const, isOrg: false, isVendor: false, isAuditor: false, isPrivileged: false, isLoading: walletLoading };
@@ -116,7 +154,10 @@ export function useUserRole(): UserRoleInfo {
     // permanently false (audit Critical #2). Use the array length.
     const orgTotal = Array.isArray(orgData) ? orgData.length : 0;
     const isOrg = orgTotal > 0;
-    const isVendor = Boolean(vendorData && "attestations" in vendorData && vendorData.attestations.length > 0);
+    const hasAttestations = Boolean(
+      vendorData && "attestations" in vendorData && vendorData.attestations.length > 0,
+    );
+    const isVendor = hasAttestations || vendorActive.data === true;
 
     let role: UserRole = "none";
     if (isOrg) role = "org";
@@ -129,7 +170,22 @@ export function useUserRole(): UserRoleInfo {
       isVendor,
       isAuditor: false,
       isPrivileged: isAdminRole(role),
-      isLoading: orgAssets.isLoading || vendorAttestations.isLoading || adminRole.isLoading,
+      isLoading:
+        orgAssets.isLoading ||
+        vendorAttestations.isLoading ||
+        adminRole.isLoading ||
+        vendorActive.isLoading,
     };
-  }, [address, walletLoading, orgAssets.data, vendorAttestations.data, orgAssets.isLoading, vendorAttestations.isLoading, adminRole.data, adminRole.isLoading]);
+  }, [
+    address,
+    walletLoading,
+    orgAssets.data,
+    vendorAttestations.data,
+    orgAssets.isLoading,
+    vendorAttestations.isLoading,
+    adminRole.data,
+    adminRole.isLoading,
+    vendorActive.data,
+    vendorActive.isLoading,
+  ]);
 }

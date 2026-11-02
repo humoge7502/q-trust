@@ -9,16 +9,47 @@ import { baseSepolia } from "viem/chains";
 
 const RPC_URL = process.env.NEXT_PUBLIC_QTRUST_BASE_SEPOLIA_RPC ??
   process.env.QTRUST_BASE_SEPOLIA_RPC ?? "https://sepolia.base.org";
-const USE_MAINNET = process.env.NEXT_PUBLIC_QTRUST_USE_MAINNET === "true" ||
-  process.env.QTRUST_USE_MAINNET === "true";
 
-export const CHAIN: Chain = USE_MAINNET ? {
-  id: 8453,
-  name: "Base",
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: { default: { http: [RPC_URL] } },
-  blockExplorers: { default: { name: "Basescan", url: "https://basescan.org" } },
-} : baseSepolia;
+/** The subset of env that decides which chain the app targets. */
+export type ChainEnv = {
+  NEXT_PUBLIC_QTRUST_USE_MAINNET?: string;
+  QTRUST_USE_MAINNET?: string;
+  NEXT_PUBLIC_QTRUST_BASE_SEPOLIA_RPC?: string;
+  QTRUST_BASE_SEPOLIA_RPC?: string;
+};
+
+/**
+ * Pure chain derivation — no module state, no `process.env` reads.
+ *
+ * Exposed so tests can assert the derivation directly instead of re-importing
+ * the module after mutating a global `process.env` (which raced across
+ * concurrent test files and produced an intermittent failure). `CHAIN` below
+ * is just `deriveChain(process.env)`.
+ */
+export function deriveChain(env: ChainEnv): Chain {
+  const rpc =
+    env.NEXT_PUBLIC_QTRUST_BASE_SEPOLIA_RPC ??
+    env.QTRUST_BASE_SEPOLIA_RPC ??
+    "https://sepolia.base.org";
+  const useMainnet =
+    env.NEXT_PUBLIC_QTRUST_USE_MAINNET === "true" || env.QTRUST_USE_MAINNET === "true";
+  return useMainnet
+    ? {
+        id: 8453,
+        name: "Base",
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        rpcUrls: { default: { http: [rpc] } },
+        blockExplorers: { default: { name: "Basescan", url: "https://basescan.org" } },
+      }
+    : baseSepolia;
+}
+
+export const CHAIN: Chain = deriveChain({
+  NEXT_PUBLIC_QTRUST_USE_MAINNET: process.env.NEXT_PUBLIC_QTRUST_USE_MAINNET,
+  QTRUST_USE_MAINNET: process.env.QTRUST_USE_MAINNET,
+  NEXT_PUBLIC_QTRUST_BASE_SEPOLIA_RPC: process.env.NEXT_PUBLIC_QTRUST_BASE_SEPOLIA_RPC,
+  QTRUST_BASE_SEPOLIA_RPC: process.env.QTRUST_BASE_SEPOLIA_RPC,
+});
 
 /** Read-only viem client — for view calls and event logs. */
 export const publicClient = createPublicClient({
@@ -31,6 +62,12 @@ export const publicClient = createPublicClient({
  * Client components only see NEXT_PUBLIC_* vars (Next.js inlines them into
  * the browser bundle); server-side env names are accepted as a fallback so
  * API routes / SSR still work without duplication (audit Critical #3).
+ *
+ * The `"0x0"` default is an explicit "NOT DEPLOYED / NOT CONFIGURED" sentinel —
+ * NOT a real address. `deploy-contracts.ps1` writes the real proxy addresses
+ * into `frontend/.env.local` at deploy time. Components must treat a `0x0`
+ * address as "on-chain features disabled" (e.g. `attestation-form.tsx` refuses
+ * to sign against an unconfigured contract).
  */
 export const CONTRACTS = {
   assetRegistry: (

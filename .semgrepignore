@@ -1,0 +1,3 @@
+# Semgrep path ignores. The job in .github/workflows/ci.yml runs
+# `semgrep scan --config auto --error` from the repo root, which auto-loads
+# this file.

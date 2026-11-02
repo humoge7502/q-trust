@@ -34,6 +34,23 @@ export class OperatorKeyRequiredError extends Error {
   }
 }
 
+/**
+ * Non-2xx backend response. Extends Error so existing `instanceof Error`
+ * handlers keep working, while UI can branch on `status` (e.g. 503 planner
+ * busy vs 422 bad CBOM) instead of pattern-matching the message.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly detail: string;
+
+  constructor(status: number, detail: string) {
+    super(`API ${status}: ${detail || "request failed"}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 /** Headers carrying the caller's operator key, when one is stored. */
 export function operatorHeaders(): Record<string, string> {
   const key = getOperatorKey();
@@ -78,7 +95,7 @@ async function handleResponse<T>(response: Response, path: string): Promise<T> {
   }
 
   const detail = await readErrorMessage(response);
-  throw new Error(`API ${response.status}: ${detail || "request failed"}`);
+  throw new ApiError(response.status, detail);
 }
 
 
@@ -314,16 +331,37 @@ export interface ProductSupportInfo {
  * because several of these are called from server components as well as from
  * the browser.
  */
+/**
+ * Read timeout for GET-style API calls.
+ *
+ * Without it a slow upstream blocked the server render of /v/[id] indefinitely:
+ * the navigation never settled, so the page could not reach its own
+ * "record could not be reached" state. Every route that goes through
+ * `apiFetch` is an indexer/RPC read, so a 15 s ceiling is generous; long
+ * compute calls go through `apiPostJson` and keep their own budget.
+ */
+const API_READ_TIMEOUT_MS = 15_000;
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const { url, headers } = resolveRequest(path);
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-      ...(init?.headers ?? {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      signal: init?.signal ?? AbortSignal.timeout(API_READ_TIMEOUT_MS),
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "";
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new Error(`Upstream timed out after ${API_READ_TIMEOUT_MS}ms: ${path}`);
+    }
+    throw err;
+  }
   return handleResponse<T>(response, path);
 }
 
@@ -476,6 +514,28 @@ export async function fetchMigrationPlan(payload: {
     } | null;
     total_assets: number;
   }>("/v1/plans", payload);
+}
+
+/**
+ * Scan a public GitHub repository (server-side archive ingestion).
+ *
+ * The backend only talks to codeload.github.com and caps the archive at 5 MB;
+ * this call is `public-compute`, so the proxy attaches the server key.
+ */
+export function scanRepository<TFinding = Record<string, unknown>>(payload: {
+  repo: string;
+  ref?: string;
+  scanType?: "source" | "manifests" | "full";
+}): Promise<{
+  repo: string;
+  ref?: string;
+  scanType: string;
+  timestamp: string;
+  filesScanned?: number;
+  detector?: Record<string, string>;
+  findings: TFinding[];
+}> {
+  return apiPostJson("/v1/scan/repo", payload);
 }
 
 /** Subscribe to webhook notifications. */

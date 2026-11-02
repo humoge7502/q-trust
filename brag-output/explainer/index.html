@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Q-Trust &mdash; Make trust verifiable.</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="assets/gsap.min.js"></script>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-width="1920"
+      data-height="1080"
+      data-duration="92.6"
+    >
+      <div class="paper-grid" aria-hidden="true"></div>
+
+      <header class="film-top" id="film-top">
+        <div class="brand">
+          <img src="assets/logo-rounded.png" alt="" />
+          <span>Q-TRUST</span>
+          <span class="sep">/</span>
+          <span class="thin">POST-QUANTUM ASSURANCE</span>
+        </div>
+        <div class="chain">
+          <span class="live"></span>
+          <span>BASE SEPOLIA</span>
+          <span class="dim">84532</span>
+        </div>
+      </header>
+
+      <!-- ============================================================ -->
+      <!-- 01 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â The deadline                                            -->
+      <!-- ============================================================ -->
+      <section id="s1" class="clip scene scene-dark" data-start="0" data-duration="9.6" data-track-index="0">
+        <div class="grain" aria-hidden="true"></div>
+
+        <div class="s1-window">
+          <div class="kicker anim" id="s1-kicker">
+            <span class="k-num">NIST</span>
+            <span class="k-line"></span>
+            <span>IR 8547 &middot; deprecation window</span>
+          </div>
+
+          <h1 class="s1-headline">
+            <span class="anim" id="s1-h1">Harvest now.</span><br />
+            <span class="anim later" id="s1-h2">Decrypt later.</span>
+          </h1>
+
+          <p class="s1-sub anim" id="s1-sub">
+            Attackers record today&rsquo;s encrypted traffic and wait for a quantum
+            computer to read it. <b>The data is already gone.</b>
+          </p>
+        </div>
+
+        <aside class="recorder anim" id="s1-rec" aria-label="Illustrative traffic recorder">
+          <div class="rec-head">
+            <span class="rec-live"><span class="rec-dot"></span> recording</span>
+            <span class="rec-timer" id="rec-timer">00:00:00</span>
+          </div>
+          <div class="rec-body">
+            <div class="rec-scan" id="rec-scan"></div>
+            <div class="rec-line"><b>18:42:07</b> <span>TLS 1.2 &middot; RSA-2048</span> 7b3e&hellip;c19a</div>
+            <div class="rec-line"><b>18:42:11</b> <span>GET /v1/accounts</span> 4f8d&hellip;02be</div>
+            <div class="rec-line"><b>18:42:16</b> <span>AES-128-GCM</span> a1c7&hellip;9d33</div>
+            <div class="rec-line"><b>18:42:23</b> <span>POST /v1/transfer</span> e0b2&hellip;7f41</div>
+            <div class="rec-line"><b>18:42:31</b> <span>ECDSA-P256 &middot; sign</span> 5c9e&hellip;44a0</div>
+            <div class="rec-line"><b>18:42:38</b> <span>GET /v1/statements</span> d7a4&hellip;61e8</div>
+            <div class="rec-line"><b>18:42:44</b> <span>TLS 1.2 &middot; RSA-2048</span> 92fb&hellip;0c5d</div>
+            <div class="rec-line"><b>18:42:52</b> <span>X25519 &middot; key exchange</span> 6e18&hellip;a7b2</div>
+            <div class="rec-line"><b>18:43:01</b> <span>POST /v1/login</span> 3d55&hellip;e9f0</div>
+          </div>
+          <div class="rec-foot">
+            <span>today&rsquo;s traffic</span>
+            <b>decrypted when RSA falls</b>
+          </div>
+        </aside>
+
+        <div class="s1-strip anim" id="s1-strip">
+          <div>
+            <div class="mono">NIST IR 8547 &middot; deadline</div>
+            <div class="s1-dates">
+              <span>2030</span>
+              <span class="to">&rarr;</span>
+              <span class="outline">2035</span>
+            </div>
+          </div>
+          <div class="s1-rule"></div>
+          <div style="text-align: right">
+            <div class="mono">RSA / ECC signatures disallowed</div>
+            <div class="mono" style="margin-top: 8px; color: #fda4af">the deadline is public. the proof usually isn&rsquo;t.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 02 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â The operating loop                                      -->
+      <!-- ============================================================ -->
+      <section id="s2" class="clip scene scene-dark" data-start="9.6" data-duration="10.3" data-track-index="1">
+        <div class="grain" aria-hidden="true"></div>
+
+        <div class="s2-copy">
+          <div class="kicker anim" id="s2-kicker">
+            <span class="k-num">01</span>
+            <span class="k-line"></span>
+            <span>the operating loop</span>
+          </div>
+          <h1 class="headline anim" id="s2-h">
+            One system.<br />
+            The whole migration.
+          </h1>
+          <p class="lede anim" id="s2-lede">
+            Scan the estate. Rank the exposure. Plan the move. Anchor the evidence.
+            Then let anyone verify it &mdash; without a wallet, or an account.
+          </p>
+        </div>
+
+        <div class="loop anim" id="s2-loop">
+          <div class="loop-title">
+            <span>Q-TRUST / operating loop</span>
+            <b>hash-only &middot; on-chain</b>
+          </div>
+
+          <div class="loop-nodes">
+            <div class="node" data-node>
+              <div class="n">01</div>
+              <div class="t">SCAN</div>
+              <div class="d">Source, manifests, certificates, binaries</div>
+              <div class="bar"></div>
+            </div>
+            <div class="conn"></div>
+            <div class="node" data-node>
+              <div class="n">02</div>
+              <div class="t">RANK</div>
+              <div class="d">HNDL exposure, NIST and CNSA status</div>
+              <div class="bar"></div>
+            </div>
+            <div class="conn"></div>
+            <div class="node" data-node>
+              <div class="n">03</div>
+              <div class="t">PLAN</div>
+              <div class="d">Ordered roadmap with cost and time</div>
+              <div class="bar"></div>
+            </div>
+            <div class="conn"></div>
+            <div class="node" data-node>
+              <div class="n">04</div>
+              <div class="t">ANCHOR</div>
+              <div class="d">Evidence hash written to Base</div>
+              <div class="bar"></div>
+            </div>
+            <div class="conn"></div>
+            <div class="node active" data-node>
+              <div class="n">05</div>
+              <div class="t">VERIFY</div>
+              <div class="d">Public read. No wallet required</div>
+              <div class="bar"></div>
+            </div>
+          </div>
+
+          <div class="loop-return">
+            <svg viewBox="0 0 1040 120" preserveAspectRatio="none" aria-hidden="true">
+              <path id="loop-path" d="M 980 6 C 980 96, 60 96, 60 6" />
+            </svg>
+            <span class="label">anyone can verify &middot; forever</span>
+          </div>
+        </div>
+
+        <div class="s2-foot anim" id="s2-foot">
+          <span class="tick"></span>
+          <span>evidence, not promises</span>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 03 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Scan                                                    -->
+      <!-- ============================================================ -->
+      <section id="s3" class="clip scene scene-light" data-start="19.9" data-duration="11.5" data-track-index="2">
+        <div class="s-inner" style="position: absolute; inset: 0; display: flex; align-items: center; gap: 70px; padding: 120px 110px 96px">
+          <div class="copy">
+            <div class="kicker anim" id="s3-kicker">
+              <span class="k-num">02</span>
+              <span class="k-line"></span>
+              <span>scan</span>
+            </div>
+            <h2 class="headline anim" id="s3-h">See every algorithm you run.</h2>
+            <p class="lede anim" id="s3-lede">
+              Source, dependency manifests, certificates and binaries. Q-Trust maps
+              the cryptography that is actually deployed &mdash; not the cryptography
+              the architecture diagram claims.
+            </p>
+            <div class="stats anim" id="s3-stats">
+              <div class="stat">
+                <div class="stat-num" data-count="20" data-at="21.6">0</div>
+                <div class="stat-label">findings</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num" data-count="3" data-at="21.8">0</div>
+                <div class="stat-label">services</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num accent">1</div>
+                <div class="stat-label">CBOM export</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="frame-wrap anim" id="s3-frame">
+            <div class="browser">
+              <div class="browser-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <span class="url">q-trust-nu.vercel.app/<b>scanner</b></span>
+              </div>
+              <div class="shot" data-layout-allow-overflow>
+                <img id="s3-img" src="assets/ui/scan.png" alt="Q-Trust scanner showing 20 cryptographic findings" />
+              </div>
+            </div>
+            <div class="anno anim" id="s3-anno-a" style="top: -22px; right: 34px">
+              <span class="anno-k">findings</span>
+              <span class="anno-v">20 <small>across 3 services</small></span>
+            </div>
+            <div class="anno anim" id="s3-anno-b" style="bottom: -34px; left: 42px">
+              <span class="anno-k">export</span>
+              <span class="anno-v">CycloneDX 1.6 <small>CBOM</small></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 04 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Rank                                                    -->
+      <!-- ============================================================ -->
+      <section id="s4" class="clip scene scene-light" data-start="31.4" data-duration="12.8" data-track-index="3">
+        <div class="s-inner" style="position: absolute; inset: 0; display: flex; align-items: center; gap: 70px; padding: 120px 110px 96px">
+          <div class="copy">
+            <div class="kicker anim" id="s4-kicker">
+              <span class="k-num">03</span>
+              <span class="k-line"></span>
+              <span>rank</span>
+            </div>
+            <h2 class="headline anim" id="s4-h">Score what an attacker can wait for.</h2>
+            <p class="lede anim" id="s4-lede">
+              Every finding gets a harvest-now-decrypt-later score, a NIST and CNSA
+              classification, and a migration priority. No black box.
+            </p>
+            <div class="stats anim" id="s4-stats">
+              <div class="stat">
+                <div class="stat-num" data-count="84" data-at="33.2">0</div>
+                <div class="stat-label">top risk score</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num" data-count="3" data-at="33.4">0</div>
+                <div class="stat-label">critical</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num accent" data-count="1" data-at="33.6">0</div>
+                <div class="stat-label">PQC-ready</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="frame-wrap anim" id="s4-frame">
+            <div class="browser">
+              <div class="browser-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <span class="url">q-trust-nu.vercel.app/scanner<b>#risk</b></span>
+              </div>
+              <div class="shot" data-layout-allow-overflow>
+                <img id="s4-img" src="assets/ui/risk.png" alt="Quantum risk scores for each finding" />
+              </div>
+            </div>
+            <div class="score-strip anim" id="s4-scores">
+              <div class="score critical">
+                <span class="algo">RSA</span>
+                <span class="val">84</span>
+                <span class="lvl">critical</span>
+              </div>
+              <div class="score critical">
+                <span class="algo">ECDSA</span>
+                <span class="val">84</span>
+                <span class="lvl">critical</span>
+              </div>
+              <div class="score low">
+                <span class="algo">ML-KEM-768</span>
+                <span class="val">10</span>
+                <span class="lvl">pqc-ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 05 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Plan                                                    -->
+      <!-- ============================================================ -->
+      <section id="s5" class="clip scene scene-light" data-start="44.2" data-duration="8.7" data-track-index="4">
+        <div class="s-inner" style="position: absolute; inset: 0; display: flex; align-items: center; gap: 70px; padding: 120px 110px 96px">
+          <div class="copy">
+            <div class="kicker anim" id="s5-kicker">
+              <span class="k-num">04</span>
+              <span class="k-line"></span>
+              <span>plan</span>
+            </div>
+            <h2 class="headline anim" id="s5-h">An order of operations, not a PDF.</h2>
+            <p class="lede anim" id="s5-lede">
+              The planner sequences the migration by risk, effort and dependency
+              &mdash; and states the evidence each step has to produce.
+            </p>
+            <div class="stats anim" id="s5-stats">
+              <div class="stat">
+                <div class="stat-num">4</div>
+                <div class="stat-label">phases</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num">$</div>
+                <div class="stat-label">costed, not guessed</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="frame-wrap anim" id="s5-frame">
+            <div class="browser">
+              <div class="browser-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <span class="url">q-trust-nu.vercel.app/scanner<b>#roadmap</b></span>
+              </div>
+              <div class="shot" data-layout-allow-overflow>
+                <img id="s5-img" src="assets/ui/roadmap.png" alt="Generated migration roadmap with phases and costs" />
+              </div>
+            </div>
+            <div class="anno anim" id="s5-anno" style="bottom: -34px; right: 36px">
+              <span class="anno-k">sequence</span>
+              <span class="anno-v">Critical &rarr; High <small>&rarr; Medium &rarr; Low</small></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 06 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Anchor                                                  -->
+      <!-- ============================================================ -->
+      <section id="s6" class="clip scene scene-light" data-start="52.9" data-duration="12.4" data-track-index="5">
+        <div class="s-inner" style="position: absolute; inset: 0; display: flex; align-items: center; gap: 70px; padding: 120px 110px 96px">
+          <div class="copy">
+            <div class="kicker anim" id="s6-kicker">
+              <span class="k-num">05</span>
+              <span class="k-line"></span>
+              <span>anchor</span>
+            </div>
+            <h2 class="headline anim" id="s6-h">Only the hash leaves the building.</h2>
+            <p class="lede anim" id="s6-lede">
+              The evidence bundle stays with the organization. Its SHA-256
+              fingerprint is written to Base Sepolia, so the record can be proven
+              without being exposed.
+            </p>
+            <div class="stats anim" id="s6-stats">
+              <div class="stat">
+                <div class="stat-num">0</div>
+                <div class="stat-label">bytes of evidence on-chain</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num accent">SHA-256</div>
+                <div class="stat-label">fingerprint</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="anchor">
+            <div class="af-card doc anim" id="s6-doc">
+              <span class="af-badge">private</span>
+              <div class="af-k">evidence bundle</div>
+              <div class="af-title">Asset attestation &middot; 0x125f&hellip;a349</div>
+              <div class="af-sub">CBOM + scan record &middot; stays off-chain</div>
+            </div>
+
+            <div class="af-link anim" id="s6-link">
+              <span class="line"></span>
+              <span class="hash" id="s6-hash">SHA-256 &middot; 0x54a1c1153e8e2ece&hellip;</span>
+            </div>
+
+            <div class="af-chain anim" id="s6-chain">
+              <div class="af-k">on-chain record &middot; Base Sepolia</div>
+              <div class="af-grid">
+                <div>
+                  <div class="af-k">registry</div>
+                  <div class="af-v">0xe5c7&hellip;287D</div>
+                </div>
+                <div>
+                  <div class="af-k">network</div>
+                  <div class="af-v">84532</div>
+                </div>
+                <div>
+                  <div class="af-k">transaction</div>
+                  <div class="af-v">0x2070&hellip;16ee</div>
+                </div>
+                <div>
+                  <div class="af-k">method</div>
+                  <div class="af-v">verifyMigration</div>
+                </div>
+              </div>
+              <div class="af-seal">
+                <span>hash anchored &middot; evidence withheld</span>
+                <b>VERIFIED</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 07 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Verify                                                  -->
+      <!-- ============================================================ -->
+      <section id="s7" class="clip scene scene-light" data-start="65.3" data-duration="10.7" data-track-index="6">
+        <div class="s-inner" style="position: absolute; inset: 0; display: flex; align-items: center; gap: 70px; padding: 120px 110px 96px">
+          <div class="copy">
+            <div class="kicker anim" id="s7-kicker">
+              <span class="k-num">06</span>
+              <span class="k-line"></span>
+              <span>verify</span>
+            </div>
+            <h2 class="headline anim" id="s7-h">Anyone can check. No one needs permission.</h2>
+            <p class="lede anim" id="s7-lede">
+              No wallet. No account. Paste an asset ID and Q-Trust reads the
+              registry directly, then walks the provenance chain from source code
+              to the chain.
+            </p>
+            <div class="stats anim" id="s7-stats">
+              <div class="stat">
+                <div class="stat-num">0</div>
+                <div class="stat-label">wallets required</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num accent">5</div>
+                <div class="stat-label">provenance steps</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="frame-wrap anim" id="s7-frame">
+            <div class="browser">
+              <div class="browser-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <span class="url">q-trust-nu.vercel.app/<b>v/0x125f&hellip;a349</b></span>
+              </div>
+              <div class="shot" data-layout-allow-overflow>
+                <img id="s7-img" src="assets/ui/verify.png" alt="Public attestation page with a valid seal and provenance graph" />
+              </div>
+            </div>
+            <div class="seal-ring anim" id="s7-ring" style="position: absolute; top: 44px; right: 185px; width: 108px; height: 44px; border: 2px solid rgba(4, 120, 87, 0.65); border-radius: 999px; box-shadow: 0 0 0 7px rgba(4, 120, 87, 0.1)"></div>
+            <div class="anno anim" id="s7-anno" style="bottom: -34px; right: 40px">
+              <span class="anno-k">verdict</span>
+              <span class="anno-v" style="color: var(--green)">VALID <small>&middot; read from the registry</small></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 08 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Attest                                                  -->
+      <!-- ============================================================ -->
+      <section id="s8" class="clip scene scene-light" data-start="76.0" data-duration="11.4" data-track-index="7">
+        <div class="s-inner" style="position: absolute; inset: 0; display: flex; align-items: center; gap: 70px; padding: 120px 110px 96px">
+          <div class="copy">
+            <div class="kicker anim" id="s8-kicker">
+              <span class="k-num">07</span>
+              <span class="k-line"></span>
+              <span>attest</span>
+            </div>
+            <h2 class="headline anim" id="s8-h">Vendors sign. The protocol relays.</h2>
+            <p class="lede anim" id="s8-lede">
+              A vendor connects a wallet, signs the claim off-chain with EIP-712,
+              and Q-Trust submits it. The signer must hold VENDOR_ROLE on-chain.
+              The vendor never pays gas.
+            </p>
+            <div class="stats anim" id="s8-stats">
+              <div class="stat">
+                <div class="stat-num" data-count="3" data-at="78.4">0</div>
+                <div class="stat-label">live attestations</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num accent">0</div>
+                <div class="stat-label">gas paid by vendor</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="frame-wrap anim" id="s8-frame">
+            <div class="browser">
+              <div class="browser-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <span class="url">q-trust-nu.vercel.app/<b>vendors</b></span>
+              </div>
+              <div class="shot" data-layout-allow-overflow>
+                <img id="s8-img" src="assets/ui/vendor.png" alt="Vendor portal with three attestations and a gasless attestation form" />
+              </div>
+            </div>
+            <div class="score-strip anim" id="s8-scores">
+              <div class="score">
+                <span class="algo">EIP-712</span>
+                <span class="lvl">signed off-chain</span>
+              </div>
+              <div class="score">
+                <span class="algo">VENDOR_ROLE</span>
+                <span class="lvl">checked on-chain</span>
+              </div>
+              <div class="score low">
+                <span class="algo">0 GAS</span>
+                <span class="lvl">relayed by protocol</span>
+              </div>
+            </div>
+
+            <div class="anno green anim" id="s8-wallet" style="top: 52px; right: 34px">
+              <span class="anno-k">wallet connected</span>
+              <span class="anno-v">0xE610&hellip;875C</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- 09 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Finale                                                  -->
+      <!-- ============================================================ -->
+      <section id="s9" class="clip scene" data-start="87.4" data-duration="5.2" data-track-index="8">
+        <div class="finale">
+          <div class="finale-inner">
+            <div class="kicker anim" id="s9-kicker">
+              <span class="k-num">Q</span>
+              <span class="k-line"></span>
+              <span>open source &middot; Base Sepolia</span>
+            </div>
+            <h1>
+              <span class="anim" id="s9-l1">Make trust</span><br />
+              <span class="anim" id="s9-l2"><em>verifiable.</em></span>
+            </h1>
+          </div>
+
+          <div class="finale-seal anim" id="s9-seal">
+            <div class="seal-mark" role="img" aria-label="Q-Trust"></div>
+          </div>
+
+          <div class="finale-meta anim" id="s9-meta">
+            <span class="meta-mark" aria-hidden="true"></span>
+            <span><b>Q-TRUST</b> &middot; scan &middot; rank &middot; plan &middot; anchor &middot; verify</span>
+          </div>
+
+          <div class="finale-url anim" id="s9-url">
+            <div class="u">q-trust-nu.vercel.app</div>
+            <div class="c">MIT licensed &middot; chain 84532</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- Captions                                                     -->
+      <!-- ============================================================ -->
+      <div id="captions" class="clip captions" data-start="0" data-duration="92.6" data-track-index="30">
+        <div class="caption-stage" id="caption-stage" data-layout-allow-overlap>
+          <!-- CAPTIONS:START -->
+          <div class="cue" data-in="0.35" data-out="2.73">The algorithms protecting most of today's data</div>
+          <div class="cue" data-in="2.78" data-out="4.56">are already <b>obsolete</b>.</div>
+          <div class="cue" data-in="4.61" data-out="6.81">Attackers are recording traffic now,</div>
+          <div class="cue" data-in="6.86" data-out="9.35">waiting for the day they can read it.</div>
+          <div class="cue" data-in="9.95" data-out="12.67">Q-Trust is the operating system for the migration.</div>
+          <div class="cue" data-in="12.72" data-out="13.95">Scan the estate.</div>
+          <div class="cue" data-in="14.00" data-out="15.33">Rank the exposure.</div>
+          <div class="cue" data-in="15.38" data-out="16.51">Plan the move.</div>
+          <div class="cue" data-in="16.56" data-out="17.99">Anchor the evidence.</div>
+          <div class="cue" data-in="18.04" data-out="19.53">Let <b>anyone</b> verify it.</div>
+          <div class="cue" data-in="20.25" data-out="22.03">It starts with a scan.</div>
+          <div class="cue" data-in="22.08" data-out="25.18">Q-Trust reads source code and dependency manifests,</div>
+          <div class="cue" data-in="25.23" data-out="27.58">and maps every algorithm in use.</div>
+          <div class="cue" data-in="27.63" data-out="30.79">Here: <b>twenty findings</b> across three services.</div>
+          <div class="cue" data-in="31.75" data-out="35.16">Each finding gets a harvest-now-decrypt-later score.</div>
+          <div class="cue" data-in="35.21" data-out="37.66">The gateway's RSA key: <b>eighty-four</b>.</div>
+          <div class="cue" data-in="37.71" data-out="39.69">The payments key, <b>the same</b>.</div>
+          <div class="cue" data-in="39.74" data-out="43.68">The mobile exchange uses <b>ML-KEM-768</b> &mdash; and scores ten.</div>
+          <div class="cue" data-in="44.55" data-out="47.86">The planner turns those scores into an ordered roadmap:</div>
+          <div class="cue" data-in="47.91" data-out="49.41">what to migrate first,</div>
+          <div class="cue" data-in="49.46" data-out="52.49">and which evidence each step must produce.</div>
+          <div class="cue" data-in="53.25" data-out="55.67">Every step writes an evidence record.</div>
+          <div class="cue" data-in="55.72" data-out="58.44"><b>Only its hash</b> goes on chain, to Base Sepolia.</div>
+          <div class="cue" data-in="58.49" data-out="61.25">The evidence never leaves the organization.</div>
+          <div class="cue" data-in="61.30" data-out="63.15">Anyone can check the hash.</div>
+          <div class="cue" data-in="63.20" data-out="64.99">No one can read the file.</div>
+          <div class="cue" data-in="65.65" data-out="69.59">Paste an asset ID, and Q-Trust reads the registry directly.</div>
+          <div class="cue" data-in="69.64" data-out="71.55"><b>No wallet. No account.</b></div>
+          <div class="cue" data-in="71.60" data-out="73.19">The record is verified,</div>
+          <div class="cue" data-in="73.24" data-out="75.66">and the transaction is public.</div>
+          <div class="cue" data-in="76.35" data-out="78.63">Vendors publish the same way.</div>
+          <div class="cue" data-in="78.68" data-out="81.48">Connect a wallet, sign the claim with EIP-712,</div>
+          <div class="cue" data-in="81.53" data-out="84.00">and Q-Trust relays it gaslessly.</div>
+          <div class="cue" data-in="84.05" data-out="87.22">But only for wallets holding the <b>vendor role</b>.</div>
+          <!-- CAPTIONS:END -->
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Audio                                                        -->
+      <!-- ============================================================ -->
+      <audio
+        id="music-bed"
+        src="assets/music/bed.mp3"
+        data-start="0"
+        data-duration="87.6"
+        data-track-index="40"
+        data-volume="0.3"
+        data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0},{"t":1.2,"v":0.30},{"t":84.6,"v":0.28},{"t":87.4,"v":0}]}]}'
+      ></audio>
+
+      <audio id="vo-01" src="vo/vo-01.mp3" data-start="0.35" data-duration="9.00" data-track-index="41"></audio>
+      <audio id="vo-02" src="vo/vo-02.mp3" data-start="9.95" data-duration="9.58" data-track-index="42"></audio>
+      <audio id="vo-03" src="vo/vo-03.mp3" data-start="20.25" data-duration="10.54" data-track-index="43"></audio>
+      <audio id="vo-04" src="vo/vo-04.mp3" data-start="31.75" data-duration="11.93" data-track-index="44"></audio>
+      <audio id="vo-05" src="vo/vo-05.mp3" data-start="44.55" data-duration="7.94" data-track-index="45"></audio>
+      <audio id="vo-06" src="vo/vo-06.mp3" data-start="53.25" data-duration="11.74" data-track-index="46"></audio>
+      <audio id="vo-07" src="vo/vo-07.mp3" data-start="65.65" data-duration="10.01" data-track-index="47"></audio>
+      <audio id="vo-08" src="vo/vo-08.mp3" data-start="76.35" data-duration="10.87" data-track-index="48"></audio>
+      <audio id="vo-09" src="vo/vo-09.mp3" data-start="87.75" data-duration="2.86" data-track-index="49"></audio>
+
+      <audio id="sfx-open" src="assets/sfx/impact-soft.ogg" data-start="0.5" data-duration="0.18" data-track-index="50" data-volume="0.3"></audio>
+      <audio id="sfx-loop" src="assets/sfx/impact-soft.ogg" data-start="9.6" data-duration="0.18" data-track-index="51" data-volume="0.24"></audio>
+      <audio id="sfx-product" src="assets/sfx/impact-heavy.ogg" data-start="19.9" data-duration="0.54" data-track-index="52" data-volume="0.28"></audio>
+      <audio id="sfx-scan" src="assets/sfx/click.ogg" data-start="20.55" data-duration="0.01" data-track-index="53" data-volume="0.34"></audio>
+      <audio id="sfx-scan-done" src="assets/sfx/impact-soft.ogg" data-start="22.1" data-duration="0.18" data-track-index="54" data-volume="0.26"></audio>
+      <audio id="sfx-rank" src="assets/sfx/rollover.ogg" data-start="33.2" data-duration="0.05" data-track-index="55" data-volume="0.24"></audio>
+      <audio id="sfx-plan" src="assets/sfx/click.ogg" data-start="45.4" data-duration="0.01" data-track-index="56" data-volume="0.3"></audio>
+      <audio id="sfx-anchor" src="assets/sfx/bong.ogg" data-start="57.4" data-duration="0.12" data-track-index="57" data-volume="0.3"></audio>
+      <audio id="sfx-verify" src="assets/sfx/bell.ogg" data-start="67.1" data-duration="0.65" data-track-index="58" data-volume="0.4"></audio>
+      <audio id="sfx-vendor" src="assets/sfx/impact-soft.ogg" data-start="76.0" data-duration="0.18" data-track-index="59" data-volume="0.24"></audio>
+      <audio id="sfx-relay" src="assets/sfx/rollover.ogg" data-start="81.6" data-duration="0.05" data-track-index="60" data-volume="0.22"></audio>
+      <audio id="sfx-final" src="assets/sfx/impact-heavy.ogg" data-start="87.4" data-duration="0.54" data-track-index="61" data-volume="0.34"></audio>
+      <audio id="sfx-final-bell" src="assets/sfx/bell.ogg" data-start="87.62" data-duration="0.65" data-track-index="62" data-volume="0.42"></audio>
+
+      <script>
+        const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+
+        /* Progress rail spans the whole film. */
+        tl.fromTo("#progress", { scaleX: 0 }, { scaleX: 1, duration: 92.6, ease: "none" }, 0);
+
+        /* The film chrome flips from night ink to paper ink when the product
+           tour starts. */
+        tl.to("#film-top", { color: "#4b5a70", duration: 0.6, ease: "power2.inOut" }, 19.9);
+
+        /* ---- 01 deadline ---- */
+        tl.to("#s1-kicker", { opacity: 1, duration: 0.7 }, 0.15);
+        tl.fromTo("#s1-kicker", { y: 16 }, { y: 0, duration: 0.7 }, 0.15);
+        tl.to("#s1-h1", { opacity: 1, duration: 0.85 }, 0.3);
+        tl.fromTo("#s1-h1", { y: 34 }, { y: 0, duration: 0.85 }, 0.3);
+        tl.to("#s1-h2", { opacity: 1, duration: 0.85 }, 0.52);
+        tl.fromTo("#s1-h2", { y: 34 }, { y: 0, duration: 0.85 }, 0.52);
+        tl.to("#s1-sub", { opacity: 1, duration: 0.8 }, 1.05);
+        tl.fromTo("#s1-sub", { y: 18 }, { y: 0, duration: 0.8 }, 1.05);
+        tl.to("#s1-rec", { opacity: 1, duration: 0.9 }, 1.15);
+        tl.fromTo("#s1-rec", { y: 26 }, { y: 0, duration: 0.9 }, 1.15);
+        tl.fromTo("#rec-scan", { y: 0 }, { y: 250, duration: 7.4, ease: "none" }, 1.3);
+        tl.to("#s1-strip", { opacity: 1, duration: 0.9 }, 5.5);
+        tl.fromTo("#s1-strip", { y: 22 }, { y: 0, duration: 0.9 }, 5.5);
+
+        const recTimer = document.getElementById("rec-timer");
+        const recClock = { t: 0 };
+        tl.to(recClock, {
+          t: 9.2, duration: 9.2, ease: "none",
+          onUpdate() {
+            const s = Math.floor(recClock.t);
+            recTimer.textContent = `00:00:${String(s).padStart(2, "0")}`;
+          },
+        }, 0.4);
+
+        /* ---- 02 loop ---- */
+        tl.to("#s2-kicker", { opacity: 1, duration: 0.6 }, 9.85);
+        tl.to("#s2-h", { opacity: 1, duration: 0.9 }, 10.0);
+        tl.fromTo("#s2-h", { y: 30 }, { y: 0, duration: 0.9 }, 10.0);
+        tl.to("#s2-lede", { opacity: 1, duration: 0.8 }, 10.55);
+        tl.fromTo("#s2-lede", { y: 18 }, { y: 0, duration: 0.8 }, 10.55);
+        tl.to("#s2-loop", { opacity: 1, duration: 0.9 }, 10.8);
+        tl.fromTo("#s2-loop", { y: 26, scale: 0.99 }, { y: 0, scale: 1, duration: 0.9 }, 10.8);
+        tl.to("[data-node]", { opacity: 1, duration: 0.55, stagger: 0.12 }, 11.25);
+        tl.fromTo("[data-node]", { y: 18 }, { y: 0, duration: 0.55, stagger: 0.12 }, 11.25);
+        tl.fromTo("#loop-path", { strokeDashoffset: 1300 }, { strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut" }, 12.6);
+        tl.to("#s2-foot", { opacity: 1, duration: 0.7 }, 13.8);
+
+        /* ---- 03 scan ---- */
+        tl.to("#s3-kicker", { opacity: 1, duration: 0.5 }, 20.05);
+        tl.to("#s3-h", { opacity: 1, duration: 0.85 }, 20.2);
+        tl.fromTo("#s3-h", { y: 26 }, { y: 0, duration: 0.85 }, 20.2);
+        tl.to("#s3-lede", { opacity: 1, duration: 0.8 }, 20.75);
+        tl.fromTo("#s3-lede", { y: 16 }, { y: 0, duration: 0.8 }, 20.75);
+        tl.to("#s3-stats", { opacity: 1, duration: 0.6 }, 21.5);
+        tl.to("#s3-frame", { opacity: 1, duration: 1.0 }, 20.55);
+        tl.fromTo("#s3-frame", { y: 30 }, { y: 0, duration: 1.0 }, 20.55);
+        tl.fromTo("#s3-img", { scale: 1.045 }, { scale: 1, duration: 10.2, ease: "none" }, 20.55);
+        tl.to("#s3-anno-a", { opacity: 1, duration: 0.55 }, 22.2);
+        tl.fromTo("#s3-anno-a", { y: 14 }, { y: 0, duration: 0.55 }, 22.2);
+        tl.to("#s3-anno-b", { opacity: 1, duration: 0.55 }, 24.4);
+        tl.fromTo("#s3-anno-b", { y: 14 }, { y: 0, duration: 0.55 }, 24.4);
+
+        /* ---- 04 rank ---- */
+        tl.to("#s4-kicker", { opacity: 1, duration: 0.5 }, 31.55);
+        tl.to("#s4-h", { opacity: 1, duration: 0.85 }, 31.7);
+        tl.fromTo("#s4-h", { y: 26 }, { y: 0, duration: 0.85 }, 31.7);
+        tl.to("#s4-lede", { opacity: 1, duration: 0.8 }, 32.2);
+        tl.fromTo("#s4-lede", { y: 16 }, { y: 0, duration: 0.8 }, 32.2);
+        tl.to("#s4-stats", { opacity: 1, duration: 0.6 }, 33.0);
+        tl.to("#s4-frame", { opacity: 1, duration: 0.9 }, 32.0);
+        tl.fromTo("#s4-frame", { y: 26 }, { y: 0, duration: 0.9 }, 32.0);
+        tl.fromTo("#s4-img", { scale: 1.04 }, { scale: 1, duration: 11.4, ease: "none" }, 32.0);
+        tl.to("#s4-scores", { opacity: 1, duration: 0.7 }, 35.6);
+        tl.fromTo("#s4-scores", { y: 18 }, { y: 0, duration: 0.7 }, 35.6);
+
+        /* ---- 05 plan ---- */
+        tl.to("#s5-kicker", { opacity: 1, duration: 0.5 }, 44.35);
+        tl.to("#s5-h", { opacity: 1, duration: 0.85 }, 44.5);
+        tl.fromTo("#s5-h", { y: 26 }, { y: 0, duration: 0.85 }, 44.5);
+        tl.to("#s5-lede", { opacity: 1, duration: 0.75 }, 44.95);
+        tl.fromTo("#s5-lede", { y: 16 }, { y: 0, duration: 0.75 }, 44.95);
+        tl.to("#s5-stats", { opacity: 1, duration: 0.6 }, 45.5);
+        tl.to("#s5-frame", { opacity: 1, duration: 0.9 }, 44.85);
+        tl.fromTo("#s5-frame", { y: 24 }, { y: 0, duration: 0.9 }, 44.85);
+        tl.fromTo("#s5-img", { scale: 1.035 }, { scale: 1, duration: 7.8, ease: "none" }, 44.85);
+        tl.to("#s5-anno", { opacity: 1, duration: 0.55 }, 46.6);
+        tl.fromTo("#s5-anno", { y: 12 }, { y: 0, duration: 0.55 }, 46.6);
+
+        /* ---- 06 anchor ---- */
+        tl.to("#s6-kicker", { opacity: 1, duration: 0.5 }, 53.05);
+        tl.to("#s6-h", { opacity: 1, duration: 0.85 }, 53.2);
+        tl.fromTo("#s6-h", { y: 26 }, { y: 0, duration: 0.85 }, 53.2);
+        tl.to("#s6-lede", { opacity: 1, duration: 0.8 }, 53.7);
+        tl.fromTo("#s6-lede", { y: 16 }, { y: 0, duration: 0.8 }, 53.7);
+        tl.to("#s6-stats", { opacity: 1, duration: 0.6 }, 54.3);
+        tl.to("#s6-doc", { opacity: 1, duration: 0.7 }, 54.2);
+        tl.fromTo("#s6-doc", { y: 22 }, { y: 0, duration: 0.7 }, 54.2);
+        tl.to("#s6-link", { opacity: 1, duration: 0.6 }, 55.6);
+        tl.to("#s6-chain", { opacity: 1, duration: 0.8 }, 57.2);
+        tl.fromTo("#s6-chain", { y: 24 }, { y: 0, duration: 0.8 }, 57.2);
+
+        /* ---- 07 verify ---- */
+        tl.to("#s7-kicker", { opacity: 1, duration: 0.5 }, 65.45);
+        tl.to("#s7-h", { opacity: 1, duration: 0.85 }, 65.6);
+        tl.fromTo("#s7-h", { y: 26 }, { y: 0, duration: 0.85 }, 65.6);
+        tl.to("#s7-lede", { opacity: 1, duration: 0.8 }, 66.1);
+        tl.fromTo("#s7-lede", { y: 16 }, { y: 0, duration: 0.8 }, 66.1);
+        tl.to("#s7-stats", { opacity: 1, duration: 0.6 }, 66.6);
+        tl.to("#s7-frame", { opacity: 1, duration: 0.9 }, 66.2);
+        tl.fromTo("#s7-frame", { y: 26 }, { y: 0, duration: 0.9 }, 66.2);
+        tl.fromTo("#s7-img", { scale: 1.04 }, { scale: 1, duration: 9.2, ease: "none" }, 66.2);
+        tl.to("#s7-anno", { opacity: 1, duration: 0.5 }, 67.3);
+        tl.fromTo("#s7-anno", { y: 12 }, { y: 0, duration: 0.5 }, 67.3);
+        tl.to("#s7-ring", { opacity: 1, duration: 0.5 }, 67.15);
+        tl.fromTo("#s7-ring", { scale: 1.25 }, { scale: 1, duration: 0.5 }, 67.15);
+
+        /* ---- 08 attest ---- */
+        tl.to("#s8-kicker", { opacity: 1, duration: 0.5 }, 76.15);
+        tl.to("#s8-h", { opacity: 1, duration: 0.85 }, 76.3);
+        tl.fromTo("#s8-h", { y: 26 }, { y: 0, duration: 0.85 }, 76.3);
+        tl.to("#s8-lede", { opacity: 1, duration: 0.8 }, 76.8);
+        tl.fromTo("#s8-lede", { y: 16 }, { y: 0, duration: 0.8 }, 76.8);
+        tl.to("#s8-stats", { opacity: 1, duration: 0.6 }, 77.6);
+        tl.to("#s8-frame", { opacity: 1, duration: 0.9 }, 76.9);
+        tl.fromTo("#s8-frame", { y: 26 }, { y: 0, duration: 0.9 }, 76.9);
+        tl.fromTo("#s8-img", { scale: 1.04 }, { scale: 1, duration: 10.0, ease: "none" }, 76.9);
+        tl.to("#s8-wallet", { opacity: 1, duration: 0.5 }, 78.1);
+        tl.fromTo("#s8-wallet", { y: 10 }, { y: 0, duration: 0.5 }, 78.1);
+        tl.to("#s8-scores", { opacity: 1, duration: 0.7 }, 79.4);
+        tl.fromTo("#s8-scores", { y: 16 }, { y: 0, duration: 0.7 }, 79.4);
+
+        /* ---- 09 finale ---- */
+        tl.to("#s9-kicker", { opacity: 1, duration: 0.5 }, 87.5);
+        tl.to("#s9-l1", { opacity: 1, duration: 0.85 }, 87.58);
+        tl.fromTo("#s9-l1", { y: 40 }, { y: 0, duration: 0.85 }, 87.58);
+        tl.to("#s9-l2", { opacity: 1, duration: 0.9 }, 87.84);
+        tl.fromTo("#s9-l2", { y: 40 }, { y: 0, duration: 0.9 }, 87.84);
+        tl.to("#s9-seal", { opacity: 1, duration: 1.1 }, 88.2);
+        tl.fromTo("#s9-seal", { scale: 0.9 }, { scale: 1, duration: 1.1 }, 88.2);
+        tl.to("#s9-meta", { opacity: 1, duration: 0.7 }, 88.8);
+        tl.to("#s9-url", { opacity: 1, duration: 0.7 }, 89.0);
+
+        /* Counters. */
+        document.querySelectorAll("[data-count]").forEach((el) => {
+          const target = Number(el.getAttribute("data-count"));
+          const at = Number(el.getAttribute("data-at") || "0");
+          const box = { v: 0 };
+          tl.to(box, {
+            v: target, duration: 1.0, ease: "power2.out",
+            onUpdate() { el.textContent = String(Math.round(box.v)); },
+          }, at);
+        });
+
+        /* Captions: every cue carries its absolute in/out time. */
+        document.querySelectorAll(".cue").forEach((el) => {
+          const start = Number(el.getAttribute("data-in"));
+          const end = Number(el.getAttribute("data-out"));
+          tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.14, ease: "power1.out" }, start);
+          tl.to(el, { opacity: 0, duration: 0.14, ease: "power1.in" }, end);
+        });
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      </script>
+    </div>
+  </body>
+</html>
+

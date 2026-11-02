@@ -1,0 +1,50 @@
+{
+  "method": "temperature_scaling",
+  "model": "huggingface/CodeBERTa-small-v1 fine-tune (crypto discovery)",
+  "transform": "p_cal = sigmoid(logit(p_raw) / T)",
+  "preserves_ranking": true,
+  "temperature": 1.214201,
+  "fitted": true,
+  "n_calibration": 2415,
+  "fit_nll_before": null,
+  "fit_nll_after": null,
+  "evaluation": {
+    "predictions_source": "paper\\analysis\\codebert_predictions.jsonl",
+    "n": 2415,
+    "model_selection": {
+      "cross_fitted_ece_after": {
+        "temperature": 0.138731,
+        "platt": 0.152463
+      },
+      "selected": "temperature"
+    },
+    "cross_fitted": {
+      "params_per_fold": [
+        {
+          "temperature": 1.237314
+        },
+        {
+          "temperature": 1.207693
+        },
+        {
+          "temperature": 1.205752
+        },
+        {
+          "temperature": 1.220303
+        },
+        {
+          "temperature": 1.214201
+        }
+      ],
+      "ece_10bin_before": 0.155655,
+      "ece_10bin_after": 0.138731,
+      "brier_before": 0.069654,
+      "brier_after": 0.069247
+    },
+    "shipped_params": {
+      "temperature": 1.214201
+    },
+    "ece_reduction_pct": 10.87,
+    "note": "Calibration is monotone: ranking, ROC-AUC, and precision/recall/F1 at any fixed threshold ranking are unchanged. Threshold choice may be revisited on calibrated values; defaults kept."
+  }
+}

@@ -1,0 +1,668 @@
+{
+  "checkpoint": "C:\\Users\\Devesh tiwari\\q-trust-projects\\q-trust\\planner\\model_gpu_v3.pt",
+  "prior_lineage": null,
+  "cohorts": {
+    "cohort_42": {
+      "n_estates": 42,
+      "n_assets": 277,
+      "model_mean": 0.604020334527855,
+      "doctrine_mean": 0.7210237059980085,
+      "keysize_mean": 0.7210237059980085,
+      "folds_model_equals_doctrine": 31,
+      "folds_model_equals_keysize": 31,
+      "folds": [
+        {
+          "name": "real_finance_0.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_finance_1.json",
+          "n": 7,
+          "model": 0.5345224838248489,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        },
+        {
+          "name": "real_finance_2.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_finance_3.json",
+          "n": 3,
+          "model": 0.816496580927726,
+          "doctrine": 0.816496580927726,
+          "keysize": 0.816496580927726,
+          "top1": 1.0
+        },
+        {
+          "name": "real_gov_edu_0.json",
+          "n": 7,
+          "model": 0.5345224838248489,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_1.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_2.json",
+          "n": 7,
+          "model": 0.35634832254989923,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_3.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_gov_edu_4.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_gov_edu_5.json",
+          "n": 7,
+          "model": 0.0657951694959769,
+          "doctrine": 0.7237468644557459,
+          "keysize": 0.7237468644557459,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_6.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_gov_edu_7.json",
+          "n": 2,
+          "model": 1.0,
+          "doctrine": 1.0,
+          "keysize": 1.0,
+          "top1": 1.0
+        },
+        {
+          "name": "real_infra_0.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_infra_1.json",
+          "n": 7,
+          "model": 0.3499271061118826,
+          "doctrine": 0.8164965809277261,
+          "keysize": 0.8164965809277261,
+          "top1": 1.0
+        },
+        {
+          "name": "real_infra_2.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_media_0.json",
+          "n": 7,
+          "model": 0.7237468644557459,
+          "doctrine": 0.7237468644557459,
+          "keysize": 0.7237468644557459,
+          "top1": 1.0
+        },
+        {
+          "name": "real_media_1.json",
+          "n": 4,
+          "model": 1.0,
+          "doctrine": 1.0,
+          "keysize": 1.0,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_0.json",
+          "n": 7,
+          "model": 0.5832118435198044,
+          "doctrine": 0.8164965809277261,
+          "keysize": 0.8164965809277261,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_1.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_10.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_11.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_12.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_13.json",
+          "n": 7,
+          "model": 0.50709255283711,
+          "doctrine": 0.8451542547285166,
+          "keysize": 0.8451542547285166,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_14.json",
+          "n": 4,
+          "model": 0.7071067811865477,
+          "doctrine": 0.7071067811865477,
+          "keysize": 0.7071067811865477,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_2.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_3.json",
+          "n": 7,
+          "model": -0.5345224838248489,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_4.json",
+          "n": 7,
+          "model": 0.5345224838248489,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_5.json",
+          "n": 7,
+          "model": 0.7237468644557459,
+          "doctrine": 0.7237468644557459,
+          "keysize": 0.7237468644557459,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_6.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_7.json",
+          "n": 7,
+          "model": 0.3499271061118826,
+          "doctrine": 0.8164965809277261,
+          "keysize": 0.8164965809277261,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_8.json",
+          "n": 7,
+          "model": 0.5345224838248489,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_9.json",
+          "n": 7,
+          "model": 0.5345224838248489,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        },
+        {
+          "name": "real_security_0.json",
+          "n": 7,
+          "model": 0.3499271061118826,
+          "doctrine": 0.8164965809277261,
+          "keysize": 0.8164965809277261,
+          "top1": 1.0
+        },
+        {
+          "name": "real_security_1.json",
+          "n": 7,
+          "model": 0.5832118435198044,
+          "doctrine": 0.8164965809277261,
+          "keysize": 0.8164965809277261,
+          "top1": 0.0
+        },
+        {
+          "name": "real_security_2.json",
+          "n": 5,
+          "model": 0.7745966692414834,
+          "doctrine": 0.7745966692414834,
+          "keysize": 0.7745966692414834,
+          "top1": 1.0
+        },
+        {
+          "name": "real_tech_0.json",
+          "n": 7,
+          "model": 0.50709255283711,
+          "doctrine": 0.8451542547285166,
+          "keysize": 0.8451542547285166,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_1.json",
+          "n": 7,
+          "model": 0.3499271061118826,
+          "doctrine": 0.8164965809277261,
+          "keysize": 0.8164965809277261,
+          "top1": 1.0
+        },
+        {
+          "name": "real_tech_2.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_3.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 1.0
+        },
+        {
+          "name": "real_tech_4.json",
+          "n": 7,
+          "model": 0.6900655593423543,
+          "doctrine": 0.6900655593423543,
+          "keysize": 0.6900655593423543,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_5.json",
+          "n": 7,
+          "model": 0.7559289460184545,
+          "doctrine": 0.7559289460184545,
+          "keysize": 0.7559289460184545,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_6.json",
+          "n": 7,
+          "model": 0.5345224838248489,
+          "doctrine": 0.5345224838248489,
+          "keysize": 0.5345224838248489,
+          "top1": 0.0
+        }
+      ]
+    },
+    "cohort_38": {
+      "n_estates": 38,
+      "n_assets": 275,
+      "model_mean": 0.49748511101678206,
+      "doctrine_mean": 0.7266322004254605,
+      "keysize_mean": 0.7266322004254605,
+      "folds_model_equals_doctrine": 21,
+      "folds_model_equals_keysize": 21,
+      "folds": [
+        {
+          "name": "real_finance_0.json",
+          "n": 8,
+          "model": 0.4999999999999999,
+          "doctrine": 0.4999999999999999,
+          "keysize": 0.4999999999999999,
+          "top1": 1.0
+        },
+        {
+          "name": "real_finance_1.json",
+          "n": 8,
+          "model": 0.6546536707079772,
+          "doctrine": 0.6546536707079772,
+          "keysize": 0.6546536707079772,
+          "top1": 1.0
+        },
+        {
+          "name": "real_finance_2.json",
+          "n": 8,
+          "model": 0.3779644730092272,
+          "doctrine": 0.7559289460184544,
+          "keysize": 0.7559289460184544,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_0.json",
+          "n": 8,
+          "model": 0.4364357804719848,
+          "doctrine": 0.6546536707079772,
+          "keysize": 0.6546536707079772,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_1.json",
+          "n": 8,
+          "model": 0.3571428571428571,
+          "doctrine": 0.4999999999999999,
+          "keysize": 0.4999999999999999,
+          "top1": 1.0
+        },
+        {
+          "name": "real_gov_edu_2.json",
+          "n": 8,
+          "model": 0.4999999999999999,
+          "doctrine": 0.4999999999999999,
+          "keysize": 0.4999999999999999,
+          "top1": 1.0
+        },
+        {
+          "name": "real_gov_edu_3.json",
+          "n": 8,
+          "model": 0.7319250547113998,
+          "doctrine": 0.7319250547113998,
+          "keysize": 0.7319250547113998,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_4.json",
+          "n": 8,
+          "model": 0.04335549847620599,
+          "doctrine": 0.8237544710479139,
+          "keysize": 0.8237544710479139,
+          "top1": 0.0
+        },
+        {
+          "name": "real_gov_edu_5.json",
+          "n": 8,
+          "model": 0.7319250547113998,
+          "doctrine": 0.7319250547113998,
+          "keysize": 0.7319250547113998,
+          "top1": 1.0
+        },
+        {
+          "name": "real_gov_edu_6.json",
+          "n": 2,
+          "model": 1.0,
+          "doctrine": 1.0,
+          "keysize": 1.0,
+          "top1": 1.0
+        },
+        {
+          "name": "real_infra_0.json",
+          "n": 8,
+          "model": 0.7559289460184544,
+          "doctrine": 0.7559289460184544,
+          "keysize": 0.7559289460184544,
+          "top1": 0.0
+        },
+        {
+          "name": "real_infra_1.json",
+          "n": 8,
+          "model": 0.3208444739598739,
+          "doctrine": 0.7791937224739796,
+          "keysize": 0.7791937224739796,
+          "top1": 0.0
+        },
+        {
+          "name": "real_infra_2.json",
+          "n": 5,
+          "model": -0.6324555320336759,
+          "doctrine": 0.6324555320336759,
+          "keysize": 0.6324555320336759,
+          "top1": 1.0
+        },
+        {
+          "name": "real_media_0.json",
+          "n": 8,
+          "model": 0.4999999999999999,
+          "doctrine": 0.4999999999999999,
+          "keysize": 0.4999999999999999,
+          "top1": 1.0
+        },
+        {
+          "name": "real_media_1.json",
+          "n": 3,
+          "model": 0.816496580927726,
+          "doctrine": 0.816496580927726,
+          "keysize": 0.816496580927726,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_0.json",
+          "n": 8,
+          "model": 0.7319250547113998,
+          "doctrine": 0.7319250547113998,
+          "keysize": 0.7319250547113998,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_1.json",
+          "n": 8,
+          "model": 0.3779644730092272,
+          "doctrine": 0.7559289460184544,
+          "keysize": 0.7559289460184544,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_10.json",
+          "n": 8,
+          "model": 0.052414241836095915,
+          "doctrine": 0.6813851438692469,
+          "keysize": 0.6813851438692469,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_11.json",
+          "n": 8,
+          "model": 0.7319250547113998,
+          "doctrine": 0.7319250547113998,
+          "keysize": 0.7319250547113998,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_12.json",
+          "n": 5,
+          "model": 0.11952286093343936,
+          "doctrine": 0.8366600265340756,
+          "keysize": 0.8366600265340756,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_2.json",
+          "n": 8,
+          "model": 0.3208444739598739,
+          "doctrine": 0.7791937224739796,
+          "keysize": 0.7791937224739796,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_3.json",
+          "n": 8,
+          "model": 0.3208444739598739,
+          "doctrine": 0.7791937224739796,
+          "keysize": 0.7791937224739796,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_4.json",
+          "n": 8,
+          "model": 0.7319250547113998,
+          "doctrine": 0.7319250547113998,
+          "keysize": 0.7319250547113998,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_5.json",
+          "n": 8,
+          "model": 0.6546536707079772,
+          "doctrine": 0.6546536707079772,
+          "keysize": 0.6546536707079772,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_6.json",
+          "n": 8,
+          "model": 0.6546536707079772,
+          "doctrine": 0.6546536707079772,
+          "keysize": 0.6546536707079772,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_7.json",
+          "n": 8,
+          "model": 0.4769104832382659,
+          "doctrine": 0.8237544710479139,
+          "keysize": 0.8237544710479139,
+          "top1": 1.0
+        },
+        {
+          "name": "real_mixed_8.json",
+          "n": 8,
+          "model": 0.4999999999999999,
+          "doctrine": 0.4999999999999999,
+          "keysize": 0.4999999999999999,
+          "top1": 0.0
+        },
+        {
+          "name": "real_mixed_9.json",
+          "n": 8,
+          "model": 0.7319250547113998,
+          "doctrine": 0.7319250547113998,
+          "keysize": 0.7319250547113998,
+          "top1": 1.0
+        },
+        {
+          "name": "real_security_0.json",
+          "n": 8,
+          "model": 0.7559289460184544,
+          "doctrine": 0.7559289460184544,
+          "keysize": 0.7559289460184544,
+          "top1": 0.0
+        },
+        {
+          "name": "real_security_1.json",
+          "n": 8,
+          "model": 0.4769104832382659,
+          "doctrine": 0.8237544710479139,
+          "keysize": 0.8237544710479139,
+          "top1": 1.0
+        },
+        {
+          "name": "real_security_2.json",
+          "n": 3,
+          "model": 0.33333333333333337,
+          "doctrine": 1.0,
+          "keysize": 1.0,
+          "top1": 1.0
+        },
+        {
+          "name": "real_tech_0.json",
+          "n": 8,
+          "model": 0.052414241836095915,
+          "doctrine": 0.6813851438692469,
+          "keysize": 0.6813851438692469,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_1.json",
+          "n": 8,
+          "model": 0.6546536707079772,
+          "doctrine": 0.6546536707079772,
+          "keysize": 0.6546536707079772,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_2.json",
+          "n": 8,
+          "model": 0.6546536707079772,
+          "doctrine": 0.6546536707079772,
+          "keysize": 0.6546536707079772,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_3.json",
+          "n": 8,
+          "model": 0.4769104832382659,
+          "doctrine": 0.8237544710479139,
+          "keysize": 0.8237544710479139,
+          "top1": 1.0
+        },
+        {
+          "name": "real_tech_4.json",
+          "n": 8,
+          "model": 0.7559289460184544,
+          "doctrine": 0.7559289460184544,
+          "keysize": 0.7559289460184544,
+          "top1": 1.0
+        },
+        {
+          "name": "real_tech_5.json",
+          "n": 8,
+          "model": 0.24397501823713327,
+          "doctrine": 0.7319250547113998,
+          "keysize": 0.7319250547113998,
+          "top1": 0.0
+        },
+        {
+          "name": "real_tech_6.json",
+          "n": 1,
+          "model": 1.0,
+          "doctrine": 1.0,
+          "keysize": 1.0,
+          "top1": 1.0
+        }
+      ]
+    }
+  }
+}

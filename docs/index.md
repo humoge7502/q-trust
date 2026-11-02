@@ -12,7 +12,7 @@ hide:
 
     ---
 
-    Scan → Risk → Compliance → Plan → Attest → Verify on **Base L2**. CBOM 1.7, SARIF 2.1, GNN/RL planning, EIP-712 gasless relay, W3C Verifiable Credentials — audited, 213 Foundry tests, τ 0.975.
+    Scan → Risk → Compliance → Plan → Attest → Verify on **Base L2**. CBOM 1.7, SARIF 2.1, GNN/RL planning, EIP-712 gasless relay, W3C Verifiable Credentials — audited, 213 Foundry tests, τ 0.975 (synthetic-scale, held-out).
 
     :material-rocket-launch: [Quickstart](#quickstart){ .md-button .md-button--primary }
     :material-api: [API Reference](api.md){ .md-button }
@@ -35,7 +35,7 @@ hide:
 | Use the SDK in CI | [Guides: Integrate the SDK](guides/integrate-sdk.md) | hash_cbom → IPFS → EIP-712 gasless relay |
 | Run the full stack locally | [Guides: Operate the stack](guides/operate-stack.md) | Docker compose + Prometheus/Grafana + runbooks |
 | Understand the protocol | [Whitepaper](WHITEPAPER.md) | Threat model, GNN planner, on-chain design |
-| See measured performance | [Performance](PERFORMANCE.md) + [_data/metrics.json](_data/metrics.json) | k6 147.8 rps, τ 0.975, GPU latencies |
+| See measured performance | [Performance](PERFORMANCE.md) + [_data/metrics.json](_data/metrics.json) | k6 147.8 rps, τ 0.975 (synthetic-scale, held-out), GPU latencies |
 | Evaluate for production | [Architecture](ARCHITECTURE.md) + [Reality check in README](https://github.com/humoge7502/q-trust#-reality-check) | Honest limits: no audit, no public deploy, relayer trust |
 | Developer's roadmap + critical analysis | [Strategic Analysis](STRATEGIC_ANALYSIS.md) | How to take Q-Trust further: audit-first, trust decentralization, real-data moat |
 | Nine specialist sub-audits | [Specialist Audit](SPECIALIST_AUDIT.md) | Per-category reviews: contracts · backend · frontend · ML · SDK · DevOps · compliance · data · competitive |
@@ -126,9 +126,10 @@ hide:
 
     ---
 
-    Backup & restore, incident response, SEV1 pause playbooks, indexer replay.
+    Backup & restore, incident response, SEV1 pause playbooks, issuer key
+    rotation, indexer replay.
 
-    [:octicons-arrow-right-24: Backup & Restore](runbook/backup-restore.md) · [Incident Response](runbook/incident-response.md)
+    [:octicons-arrow-right-24: Backup & Restore](runbook/backup-restore.md) · [Incident Response](runbook/incident-response.md) · [Issuer Key Rotation](runbook/issuer-key-rotation.md)
 
 - :material-hand-heart: **Contributing**
 
@@ -204,7 +205,7 @@ Full detail: [Architecture](ARCHITECTURE.md) · [Whitepaper §2–§7](WHITEPAPE
 ```
 contracts/   Foundry workspace — 11 Solidity contracts (UUPS, EIP-712, timelock)
 inspector/   Python scanner producing CBOMs / SARIF / compliance reports
-planner/     FastAPI microservice — GNN + RL migration planning (τ 0.975)
+planner/     FastAPI microservice — GNN + RL migration planning (τ 0.975 (synthetic-scale, held-out))
 backend/     Fastify API — verification, attestation, relay, GPU bridge (32 OpenAPI paths)
 sdk/         qtrust Python SDK for on-chain registration (web3.py 7.x)
 frontend/    Next.js 16 dApp — wallet (wagmi+RainbowKit), dashboard, scanner, GPU panels

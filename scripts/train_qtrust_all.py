@@ -35,7 +35,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import random
 import re
 import sys
 import time
@@ -110,14 +109,19 @@ def _summarize(train: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 def _code_splits(corpus: List[Dict[str, Any]], seed: int = 42) -> tuple:
-    """Split real code corpus by source repo (no cross-split leakage)."""
-    rnd = random.Random(seed)
-    sources = sorted({c.get("source", "unknown") for c in corpus})
-    rnd.shuffle(sources)
-    n_train = max(1, int(len(sources) * 0.8))
-    train_src, eval_src = set(sources[:n_train]), set(sources[n_train:])
-    train = [c for c in corpus if c.get("source") in train_src]
-    ev = [c for c in corpus if c.get("source") in eval_src]
+    """Split real code corpus by source repo (no cross-split leakage).
+
+    Uses the stable, digest-keyed source split in
+    :mod:`qtrust_ai.discovery.data_split`. Unlike the previous
+    ``random.Random(seed).shuffle(sources)`` implementation, a repository's
+    side of the split does not change when new repositories are added to the
+    corpus, so checkpoints remain comparable across corpus versions.
+    """
+    from qtrust_ai.discovery.data_split import split_corpus
+
+    train, _calibration, ev = split_corpus(
+        corpus, seed=seed, eval_buckets=(0, 1), calibration_buckets=()
+    )
     return train, ev
 
 

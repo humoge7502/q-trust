@@ -1,0 +1,36 @@
+{
+  "experiment": "P2 clean warm-start LOO",
+  "base_epochs": 40,
+  "base_graphs": 10000,
+  "fold_epochs": 30,
+  "n_synthetic_per_fold": 2000,
+  "clean_base_n_real_graphs": 0,
+  "contaminated_base_n_real_graphs": 40,
+  "metrics_contaminated": {
+    "kendall": 0.7167815714285715,
+    "node_rank": 0.31360535714285714,
+    "exact_rank": 0.023809523809523808,
+    "top5": 0.5,
+    "top10": 1.0
+  },
+  "metrics_clean": {
+    "kendall": 0.6008873333333333,
+    "node_rank": 0.5986393809523809,
+    "exact_rank": 0.2619047619047619,
+    "top5": 0.7142857142857143,
+    "top10": 1.0
+  },
+  "delta_contaminated": -0.004242,
+  "delta_clean": -0.120137,
+  "paired_clean": {
+    "mean": -0.12013647619047621,
+    "sd": 0.23305007678276068,
+    "ci95": [
+      -0.19479815,
+      -0.05672654761904762
+    ],
+    "t": -3.3407985157485225,
+    "p": 0.0017893225058118428,
+    "mde80": 0.10074614624761588
+  }
+}
