@@ -1,12 +1,12 @@
 /**
  * Contract tests binding the UI to the proxy authorization policy.
  *
- * The defect these lock down: the shipped UI called privileged endpoints
- * (`/v1/scan/full`, `/v1/plans`, `/v1/gpu/*`, `/v1/relay/attestation`, …) that
- * the same-origin proxy denied by default, so those controls returned 403 in
- * every deployment using the proxy — while the component tests stubbed `fetch`
- * and never noticed. The proxy tests asserted the denial; the UI tests asserted
- * the call. Nothing compared the two lists.
+ * The defect these lock down: the shipped UI called operator endpoints
+ * (`/v1/relay/attestation`, `/v1/webhooks/subscribe`, …) that the proxy denied
+ * by default, so those controls returned 403 in every deployment using the
+ * proxy — while the component tests stubbed `fetch` and never noticed. The
+ * proxy tests asserted the denial; the UI tests asserted the call. Nothing
+ * compared the two lists.
  *
  * This file compares them: it reads the UI source, extracts every `/v1/...`
  * endpoint literal, and fails if the policy module does not classify it.
@@ -102,7 +102,13 @@ describe("API route policy", () => {
     expect(classifyEndpoint("/v1/plans/did:web:example", "GET")).toBeNull();
     // ...while the operator surface behind them still requires a key.
     expect(classifyEndpoint("/v1/relay/attestation", "POST")).toBe("operator");
-    expect(classifyEndpoint("/v1/plans", "POST")).toBe("operator");
+    // The planner, scanner and GPU panels are open compute (demo posture).
+    expect(classifyEndpoint("/v1/plans", "POST")).toBe("public-compute");
+    // Planner liveness is a public read so the canary and the UI can observe
+    // which planner is serving. Planning itself stays POST-only.
+    expect(classifyEndpoint("/v1/planner/health", "GET")).toBe("public-read");
+    expect(classifyEndpoint("/v1/planner/health", "POST")).toBeNull();
+    expect(matchRouteRule("/v1/planner/health-extra")).toBeNull();
   });
 
   it("does not grant access on a shared string prefix", () => {
@@ -117,10 +123,28 @@ describe("API route policy", () => {
   });
 
   it("classifies the privileged surface exactly as the UI expects", () => {
+    // Money/state-mutating surface: still requires the caller's own key.
     const operatorEndpoints: Array<[string, string]> = [
+      ["/v1/relay/attestation", "POST"],
+      ["/v1/relay/cbom", "POST"],
+      ["/v1/relay/migration", "POST"],
+      ["/v1/write/assets", "POST"],
+      ["/v1/webhooks/subscribe", "POST"],
+      ["/v1/credentials/issue", "POST"],
+    ];
+    for (const [path, method] of operatorEndpoints) {
+      expect(endpointRequiresOperatorKey(path, method), `${method} ${path}`).toBe(true);
+    }
+
+    // Compute for anonymous browsers: scanner, planner, evidence, GPU panels.
+    for (const [path, method] of [
+      ["/v1/risk/score", "POST"],
+      ["/v1/compliance/evaluate", "POST"],
+      ["/v1/evidence/verify", "POST"],
       ["/v1/scan/full", "POST"],
       ["/v1/scan/source", "POST"],
       ["/v1/scan/manifests", "POST"],
+      ["/v1/scan/repo", "POST"],
       ["/v1/roadmap/generate", "POST"],
       ["/v1/evidence/create", "POST"],
       ["/v1/plans", "POST"],
@@ -128,22 +152,33 @@ describe("API route policy", () => {
       ["/v1/gpu/rl/plan", "POST"],
       ["/v1/gpu/anomaly/score", "POST"],
       ["/v1/gpu/quantum/estimate/2048", "GET"],
-      ["/v1/relay/attestation", "POST"],
-      ["/v1/webhooks/subscribe", "POST"],
-    ];
-    for (const [path, method] of operatorEndpoints) {
-      expect(endpointRequiresOperatorKey(path, method), `${method} ${path}`).toBe(true);
-    }
-
-    // Stateless compute stays open to anonymous browsers.
-    for (const [path, method] of [
-      ["/v1/risk/score", "POST"],
-      ["/v1/compliance/evaluate", "POST"],
-      ["/v1/evidence/verify", "POST"],
+      ["/v1/certify/verify", "POST"],
+      ["/v1/assurance/report", "POST"],
     ] as Array<[string, string]>) {
       expect(endpointRequiresOperatorKey(path, method), `${method} ${path}`).toBe(false);
       expect(classifyEndpoint(path, method)).toBe("public-compute");
     }
+  });
+
+  it("classifies certification issuance as operator and its public halves as open", () => {
+    // Issuance signs an attestation under the platform identity, so it needs
+    // the caller's own key — the proxy must never attach the server key.
+    expect(classifyEndpoint("/v1/certify", "POST")).toBe("operator");
+    expect(endpointRequiresOperatorKey("/v1/certify", "POST")).toBe(true);
+    // Public verification and the policy catalogue stay reachable anonymously.
+    expect(classifyEndpoint("/v1/certify/verify", "POST")).toBe("public-compute");
+    expect(endpointRequiresOperatorKey("/v1/certify/verify", "POST")).toBe(false);
+    expect(classifyEndpoint("/v1/certify/policies", "GET")).toBe("public-read");
+    // The issuer identity endpoint is what an auditor pins, so it must be
+    // reachable without a key — otherwise pinning is impossible out of band.
+    expect(classifyEndpoint("/v1/certify/issuer", "GET")).toBe("public-read");
+    expect(endpointRequiresOperatorKey("/v1/certify/issuer", "GET")).toBe(false);
+    expect(classifyEndpoint("/v1/certify/issuer", "POST")).toBeNull();
+    // Longest prefix wins: the broad issuer rule must not swallow verification.
+    expect(matchRouteRule("/v1/certify/verify")?.prefix).toBe("/v1/certify/verify");
+    // Methods are still constrained on the open paths.
+    expect(classifyEndpoint("/v1/certify/policies", "POST")).toBeNull();
+    expect(classifyEndpoint("/v1/certify/verify", "GET")).toBeNull();
   });
 
   it("has no duplicate or shadowing rules", () => {

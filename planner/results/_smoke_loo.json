@@ -1,0 +1,204 @@
+{
+  "protocol": "leave-one-out (host-disjoint CBOMs, real TLS scan)",
+  "n_cboms": 3,
+  "n_hosts": 21,
+  "fold_metrics": {
+    "real_finance_0.json": {
+      "model": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.755929,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.0,
+        "node_rank": 0.0
+      },
+      "n_assets": 7
+    },
+    "real_finance_1.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.534522,
+        "node_rank": 0.142857
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.534522,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": 0.534522,
+        "node_rank": 0.285714
+      },
+      "n_assets": 7
+    },
+    "real_finance_2.json": {
+      "model": {
+        "exact_rank": 0.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.690066,
+        "node_rank": 0.285714
+      },
+      "heuristic": {
+        "exact_rank": 1.0,
+        "top5": 1.0,
+        "top10": 1.0,
+        "kendall": 0.690066,
+        "node_rank": 1.0
+      },
+      "random": {
+        "exact_rank": 0.0,
+        "top5": 0.0,
+        "top10": 1.0,
+        "kendall": -0.552052,
+        "node_rank": 0.0
+      },
+      "n_assets": 7
+    }
+  },
+  "aggregate": {
+    "model": {
+      "exact_rank": {
+        "mean": 0.333333,
+        "median": 0.0,
+        "stdev": 0.57735,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "top5": {
+        "mean": 0.666667,
+        "median": 1.0,
+        "stdev": 0.57735,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "top10": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "kendall": {
+        "mean": 0.660172,
+        "median": 0.690066,
+        "stdev": 0.11369,
+        "min": 0.534522,
+        "max": 0.755929
+      },
+      "node_rank": {
+        "mean": 0.47619,
+        "median": 0.285714,
+        "stdev": 0.459221,
+        "min": 0.142857,
+        "max": 1.0
+      }
+    },
+    "heuristic": {
+      "exact_rank": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "top5": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "top10": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "kendall": {
+        "mean": 0.660172,
+        "median": 0.690066,
+        "stdev": 0.11369,
+        "min": 0.534522,
+        "max": 0.755929
+      },
+      "node_rank": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "random": {
+      "exact_rank": {
+        "mean": 0.0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "top5": {
+        "mean": 0.0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "top10": {
+        "mean": 1.0,
+        "median": 1.0,
+        "stdev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "kendall": {
+        "mean": -0.005843,
+        "median": 0.0,
+        "stdev": 0.543311,
+        "min": -0.552052,
+        "max": 0.534522
+      },
+      "node_rank": {
+        "mean": 0.095238,
+        "median": 0.0,
+        "stdev": 0.164957,
+        "min": 0.0,
+        "max": 0.285714
+      }
+    }
+  },
+  "model_vs_heuristic_tau_b": 0.0,
+  "model_vs_random_tau_b": 0.666015,
+  "config": {
+    "init": "planner\\model_gpu_v3.pt",
+    "epochs": 2,
+    "n_synthetic": 200,
+    "batch_size": 16,
+    "learning_rate": 0.0005,
+    "seed": 42
+  },
+  "device": "cpu",
+  "generated_at": "2026-10-21T19:12:28Z"
+}

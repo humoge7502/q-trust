@@ -34,6 +34,23 @@ export class OperatorKeyRequiredError extends Error {
   }
 }
 
+/**
+ * Non-2xx backend response. Extends Error so existing `instanceof Error`
+ * handlers keep working, while UI can branch on `status` (e.g. 503 planner
+ * busy vs 422 bad CBOM) instead of pattern-matching the message.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly detail: string;
+
+  constructor(status: number, detail: string) {
+    super(`API ${status}: ${detail || "request failed"}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 /** Headers carrying the caller's operator key, when one is stored. */
 export function operatorHeaders(): Record<string, string> {
   const key = getOperatorKey();
@@ -78,7 +95,7 @@ async function handleResponse<T>(response: Response, path: string): Promise<T> {
   }
 
   const detail = await readErrorMessage(response);
-  throw new Error(`API ${response.status}: ${detail || "request failed"}`);
+  throw new ApiError(response.status, detail);
 }
 
 
@@ -314,16 +331,37 @@ export interface ProductSupportInfo {
  * because several of these are called from server components as well as from
  * the browser.
  */
+/**
+ * Read timeout for GET-style API calls.
+ *
+ * Without it a slow upstream blocked the server render of /v/[id] indefinitely:
+ * the navigation never settled, so the page could not reach its own
+ * "record could not be reached" state. Every route that goes through
+ * `apiFetch` is an indexer/RPC read, so a 15 s ceiling is generous; long
+ * compute calls go through `apiPostJson` and keep their own budget.
+ */
+const API_READ_TIMEOUT_MS = 15_000;
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const { url, headers } = resolveRequest(path);
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-      ...(init?.headers ?? {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      signal: init?.signal ?? AbortSignal.timeout(API_READ_TIMEOUT_MS),
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "";
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new Error(`Upstream timed out after ${API_READ_TIMEOUT_MS}ms: ${path}`);
+    }
+    throw err;
+  }
   return handleResponse<T>(response, path);
 }
 
@@ -478,6 +516,28 @@ export async function fetchMigrationPlan(payload: {
   }>("/v1/plans", payload);
 }
 
+/**
+ * Scan a public GitHub repository (server-side archive ingestion).
+ *
+ * The backend only talks to codeload.github.com and caps the archive at 5 MB;
+ * this call is `public-compute`, so the proxy attaches the server key.
+ */
+export function scanRepository<TFinding = Record<string, unknown>>(payload: {
+  repo: string;
+  ref?: string;
+  scanType?: "source" | "manifests" | "full";
+}): Promise<{
+  repo: string;
+  ref?: string;
+  scanType: string;
+  timestamp: string;
+  filesScanned?: number;
+  detector?: Record<string, string>;
+  findings: TFinding[];
+}> {
+  return apiPostJson("/v1/scan/repo", payload);
+}
+
 /** Subscribe to webhook notifications. */
 export function subscribeWebhook(
   address: string,
@@ -511,9 +571,36 @@ export function isValidIpfsCid(cidOrUri: string): boolean {
 
 export async function fetchIpfsJson(cidOrUri: string): Promise<Record<string, unknown> | null> {
   const gateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "https://ipfs.io/ipfs/";
-  const cid = cidOrUri.replace(/^ipfs:\/\//, "");
-  if (!isValidIpfsCid(cid)) return null;
-  const url = `${gateway}${cid}`;
+  let url: string;
+  if (/^https?:\/\//i.test(cidOrUri)) {
+    // Demo records point at ordinary HTTPS documents (the deployed /demo
+    // folder), while production records can still use ipfs:// CIDs. Only
+    // public HTTPS hosts are fetched: this runs server-side, so localhost and
+    // private ranges are rejected to avoid SSRF through on-chain metadata.
+    let parsed: URL;
+    try {
+      parsed = new URL(cidOrUri);
+    } catch {
+      return null;
+    }
+    if (parsed.protocol !== "https:") return null;
+    const host = parsed.hostname.toLowerCase();
+    const privateHost =
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host.endsWith(".internal") ||
+      /^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      host === "[::1]" ||
+      host === "::1" ||
+      /^f[cd]/.test(host);
+    if (privateHost) return null;
+    url = parsed.toString();
+  } else {
+    const cid = cidOrUri.replace(/^ipfs:\/\//, "");
+    if (!isValidIpfsCid(cid)) return null;
+    url = `${gateway}${cid}`;
+  }
   try {
     const response = await fetch(url, { cache: "no-store", redirect: "error" });
     if (!response.ok) return null;

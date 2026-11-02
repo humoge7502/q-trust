@@ -62,7 +62,7 @@ describe("S-1 proxy route allowlist", () => {
   beforeEach(() => {
     fetchMock.mockReset();
     fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
-    process.env.QTRUST_API_KEY = "test-admin-key";
+    process.env.QTRUST_API_KEY = "qtrust-fixture-server-value";
   });
 
   describe("public reads are proxied", () => {
@@ -76,6 +76,7 @@ describe("S-1 proxy route allowlist", () => {
       ["GET", ["v1", "orgs", "did:web:example", "assets"]],
       ["GET", ["v1", "vendors", "did:web:example", "attestations"]],
       ["GET", ["v1", "relay", "nonce", "did:web:example"]],
+      ["GET", ["v1", "certify", "issuer"]],
       ["GET", ["health"]],
     ])("%s %s", async (method, segments) => {
       const res = await call(method, segments as string[]);
@@ -93,9 +94,32 @@ describe("S-1 proxy route allowlist", () => {
       ["v1", "compliance", "full-report"],
       ["v1", "credentials", "verify"],
       ["v1", "evidence", "verify"],
+      // Demo surface: the shipped scanner, roadmap, evidence and planner
+      // controls are usable by anonymous visitors.
+      ["v1", "scan", "source"],
+      ["v1", "scan", "manifests"],
+      ["v1", "scan", "full"],
+      ["v1", "roadmap", "generate"],
+      ["v1", "evidence", "create"],
+      ["v1", "plans"],
+      ["v1", "gpu", "side-channel", "analyze"],
+      ["v1", "gpu", "rl", "plan"],
+      ["v1", "gpu", "anomaly", "score"],
     ])("POST %j", async (...segments: string[]) => {
       const res = await call("POST", segments);
       expect(res.status).not.toBe(403);
+    });
+
+    it("proxies GPU status and quantum estimation reads", async () => {
+      for (const segments of [
+        ["v1", "gpu", "status"],
+        ["v1", "gpu", "quantum", "estimate", "2048"],
+      ]) {
+        fetchMock.mockClear();
+        const res = await call("GET", segments);
+        expect(res.status).not.toBe(403);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      }
     });
   });
 
@@ -108,17 +132,9 @@ describe("S-1 proxy route allowlist", () => {
       ["POST", ["v1", "write", "assets"]],
       ["POST", ["v1", "write", "attestations"]],
       ["POST", ["v1", "write", "migrations"]],
-      ["POST", ["v1", "evidence", "create"]],
       ["POST", ["v1", "webhooks", "subscribe"]],
       ["POST", ["v1", "webhooks", "unsubscribe"]],
-      ["POST", ["v1", "scan", "source"]],
-      ["POST", ["v1", "scan", "full"]],
-      ["POST", ["v1", "scan", "manifests"]],
-      ["POST", ["v1", "gpu", "side-channel", "analyze"]],
-      ["POST", ["v1", "gpu", "rl", "plan"]],
-      ["POST", ["v1", "gpu", "anomaly", "score"]],
       ["POST", ["v1", "credentials", "issue"]],
-      ["POST", ["v1", "plans"]],
     ])("%s %s", async (method, segments) => {
       const res = await call(method, segments as string[]);
       expect(res.status).toBe(403);
@@ -153,24 +169,15 @@ describe("S-1 proxy route allowlist", () => {
   });
 
   /**
-   * Operator surface: privileged routes the UI used to call and always got 403
-   * for. They now require the caller's own key, and the server-side admin key
-   * is never attached to them.
+   * Operator surface: money/state-mutating routes still require the caller's
+   * own key, and the server-side admin key is never attached to them.
    */
   describe("operator routes require the caller's own key", () => {
     const operatorRoutes: Array<[string, string[]]> = [
-      ["POST", ["v1", "scan", "full"]],
-      ["POST", ["v1", "scan", "source"]],
-      ["POST", ["v1", "scan", "manifests"]],
-      ["POST", ["v1", "roadmap", "generate"]],
-      ["POST", ["v1", "evidence", "create"]],
-      ["POST", ["v1", "plans"]],
-      ["POST", ["v1", "gpu", "side-channel", "analyze"]],
-      ["POST", ["v1", "gpu", "rl", "plan"]],
-      ["POST", ["v1", "gpu", "anomaly", "score"]],
-      ["GET", ["v1", "gpu", "quantum", "estimate", "2048"]],
       ["POST", ["v1", "relay", "attestation"]],
       ["POST", ["v1", "webhooks", "subscribe"]],
+      ["POST", ["v1", "write", "assets"]],
+      ["POST", ["v1", "credentials", "issue"]],
     ];
 
     it.each(operatorRoutes)(
@@ -184,24 +191,30 @@ describe("S-1 proxy route allowlist", () => {
     );
 
     it("forwards the caller's key and never the server admin key", async () => {
-      const res = await call("POST", ["v1", "scan", "full"], {
-        "x-qtrust-api-key": "operator-own-key",
+      const res = await call("POST", ["v1", "relay", "attestation"], {
+        "x-qtrust-api-key": "qtrust-fixture-caller-value",
       });
       expect(res.status).not.toBe(403);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const sent = upstreamHeaders();
-      expect(sent.get("x-api-key")).toBe("operator-own-key");
-      expect(sent.get("x-api-key")).not.toBe("test-admin-key");
+      expect(sent.get("x-api-key")).toBe("qtrust-fixture-caller-value");
+      expect(sent.get("x-api-key")).not.toBe("qtrust-fixture-server-value");
     });
 
     it("does not leak the caller's header upstream under its own name", async () => {
-      await call("POST", ["v1", "scan", "full"], { "x-qtrust-api-key": "operator-own-key" });
+      await call("POST", ["v1", "relay", "attestation"], { "x-qtrust-api-key": "qtrust-fixture-caller-value" });
       expect(upstreamHeaders().get("x-qtrust-api-key")).toBeNull();
     });
 
     it("ignores a caller key on public routes and keeps using the server key", async () => {
-      await call("GET", ["v1", "assets", "asset-1"], { "x-qtrust-api-key": "operator-own-key" });
-      expect(upstreamHeaders().get("x-api-key")).toBe("test-admin-key");
+      await call("GET", ["v1", "assets", "asset-1"], { "x-qtrust-api-key": "qtrust-fixture-caller-value" });
+      expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-server-value");
+    });
+
+    it("attaches the server key to public compute routes (scanner stays usable)", async () => {
+      await call("POST", ["v1", "scan", "full"], { "x-qtrust-api-key": "qtrust-fixture-caller-value" });
+      expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-server-value");
+      expect(upstreamHeaders().get("x-qtrust-api-key")).toBeNull();
     });
 
     // NOTE: control characters can never reach this handler — the Headers
@@ -209,7 +222,7 @@ describe("S-1 proxy route allowlist", () => {
     // defence-in-depth for runtimes that normalise instead of throwing. It is
     // unit-tested directly in `lib/__tests__/api-route-policy.test.ts`.
     it("treats a whitespace-only key as absent rather than forwarding it", async () => {
-      const res = await call("POST", ["v1", "scan", "full"], {
+      const res = await call("POST", ["v1", "relay", "attestation"], {
         "x-qtrust-api-key": "   ",
       });
       expect(res.status).toBe(403);
@@ -218,7 +231,7 @@ describe("S-1 proxy route allowlist", () => {
     });
 
     it("rejects an over-long key", async () => {
-      const res = await call("POST", ["v1", "scan", "full"], {
+      const res = await call("POST", ["v1", "relay", "attestation"], {
         "x-qtrust-api-key": "k".repeat(600),
       });
       expect(res.status).toBe(400);
@@ -227,7 +240,7 @@ describe("S-1 proxy route allowlist", () => {
 
     it("stays open in local development when no server key is configured", async () => {
       await withEnv({ QTRUST_API_KEY: undefined, QTRUST_API_KEYS: undefined }, async () => {
-        const res = await call("POST", ["v1", "scan", "full"]);
+        const res = await call("POST", ["v1", "relay", "attestation"]);
         expect(res.status).not.toBe(403);
         // No admin key exists, so nothing is attached — the backend's own
         // dev-open policy decides.
@@ -239,7 +252,7 @@ describe("S-1 proxy route allowlist", () => {
       await withEnv(
         { QTRUST_API_KEY: undefined, QTRUST_API_KEYS: undefined, NODE_ENV: "production" },
         async () => {
-          const res = await call("POST", ["v1", "scan", "full"]);
+          const res = await call("POST", ["v1", "relay", "attestation"]);
           expect(res.status).toBe(403);
           expect(fetchMock).not.toHaveBeenCalled();
         },

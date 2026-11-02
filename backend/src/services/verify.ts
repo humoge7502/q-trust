@@ -330,12 +330,12 @@ export async function getMigrationProgress(
       `SELECT
          COUNT(DISTINCT m.migration_id)::int AS total_migrations,
          COUNT(DISTINCT m.migration_id) FILTER (WHERE m.verified)::int AS verified_migrations,
-         COUNT(DISTINCT a.asset_id)::int AS asset_count,
+         (SELECT COUNT(*)::int FROM assets a
+           WHERE lower(a.org_did) = $1 AND a.active) AS asset_count,
          (SELECT COUNT(*)::int FROM attestations att
-           WHERE att.vendor_did = $1 AND NOT att.revoked) AS attestation_count
+           WHERE lower(att.vendor_did) = $1 AND NOT att.revoked) AS attestation_count
        FROM migrations m
-       LEFT JOIN assets a ON a.asset_id = m.asset_id
-       WHERE m.org_did = $1`,
+       WHERE lower(m.org_did) = $1`,
       [org],
     );
     const r = res.rows[0];

@@ -313,7 +313,7 @@ Measured matrix for this checkout (all commands executed locally):
 | Hypothesis property tests | pass |
 | SDK `mypy qtrust` (strict) | pass |
 | `ruff check .` | pass |
-| Planner CI gates: training smoke, eval harness, provenance gate, promotion gate | all pass (promotion: v3 τ 0.9753 > v2 τ 0.9703) |
+| Planner CI gates: training smoke, eval harness, provenance gate, promotion gate | all pass (promotion: v3 τ 0.975 (synthetic-scale, held-out)3 > v2 τ 0.9703) |
 | `mkdocs build --strict` + docs-v2 `npm run docs:build` | pass |
 | `bash scripts/check_golive_blockers.sh` | pass |
 | `sha256sum -c models.sha256` | all OK |

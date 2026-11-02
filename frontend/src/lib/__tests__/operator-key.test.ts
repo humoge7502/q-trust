@@ -58,7 +58,7 @@ describe("apiPostJson", () => {
   it("attaches the operator key when one is stored", async () => {
     setOperatorKey("stored-key");
     fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
-    await apiPostJson("/v1/scan/full", { target: "/tmp" });
+    await apiPostJson("/v1/relay/attestation", { target: "/tmp" });
     expect(lastHeaders().get(OPERATOR_KEY_HEADER)).toBe("stored-key");
   });
 
@@ -75,7 +75,7 @@ describe("apiPostJson", () => {
         headers: { "content-type": "application/json" },
       }),
     );
-    await expect(apiPostJson("/v1/scan/full", {})).rejects.toBeInstanceOf(
+    await expect(apiPostJson("/v1/relay/attestation", {})).rejects.toBeInstanceOf(
       OperatorKeyRequiredError,
     );
   });
@@ -87,7 +87,7 @@ describe("apiPostJson", () => {
         headers: { "content-type": "application/json" },
       }),
     );
-    const error = await apiPostJson("/v1/scan/full", {}).catch((e: unknown) => e);
+    const error = await apiPostJson("/v1/relay/attestation", {}).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(Error);
     expect(error).not.toBeInstanceOf(OperatorKeyRequiredError);
   });

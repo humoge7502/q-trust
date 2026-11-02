@@ -32,12 +32,50 @@ WEB3_STORAGE_TOKEN_ENV_VAR = "QTRUST_WEB3_STORAGE_TOKEN"
 DEFAULT_KUBO_API = "http://127.0.0.1:5001"
 
 
+def validate_endpoint_url(url: str, *, allow_private: bool = False) -> str:
+    """Validate a pinning endpoint URL before any server-side request.
+
+    Enforces the http/https scheme and a well-formed, non-empty host. Unless
+    ``allow_private`` is set, literal loopback / private / reserved /
+    link-local / multicast / unspecified addresses are rejected — an endpoint
+    must not silently target infrastructure addresses.
+
+    ``allow_private=True`` is the documented policy for the Kubo provider:
+    its default endpoint IS the operator's own local node
+    (127.0.0.1:5001), so operator-configured private hosts are legitimate.
+    Hostname→IP resolution is deliberately not performed here: this is an
+    operator-side client SDK (the operator configures the endpoints), while
+    server-side request boundary enforcement (DNS-resolution checks against
+    attacker-influenced URLs) lives in the hosted backend services.
+    """
+    import ipaddress
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"endpoint must use http/https: {url!r}")
+    host = parsed.hostname
+    if not host:
+        raise ValueError(f"endpoint has no host: {url!r}")
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return url  # hostname — resolution policy is the operator's
+    if not allow_private and (
+        ip.is_loopback or ip.is_private or ip.is_reserved
+        or ip.is_link_local or ip.is_multicast or ip.is_unspecified
+    ):
+        raise ValueError(f"endpoint host is a non-public IP: {host}")
+    return url
+
+
 class PinataClient:
     """Pins files and JSON to IPFS via the Pinata API."""
 
     BASE_URL = "https://api.pinata.cloud"
 
     def __init__(self, api_key: str, api_secret: str):
+        validate_endpoint_url(self.BASE_URL)
         self.api_key = api_key
         self.api_secret = api_secret
         self.headers = {
@@ -151,6 +189,9 @@ class KuboProvider:
         self.api_url = (
             api_url or os.environ.get(KUBO_API_ENV_VAR) or DEFAULT_KUBO_API
         ).rstrip("/")
+        # Operator-configured endpoint; the default IS the operator's local
+        # node, so private hosts are explicitly allowed here.
+        validate_endpoint_url(self.api_url, allow_private=True)
         user = user if user is not None else os.environ.get(KUBO_USER_ENV_VAR)
         password = password if password is not None else os.environ.get(KUBO_PASS_ENV_VAR)
         self.auth = (user, password) if user is not None and password is not None else None
@@ -183,6 +224,7 @@ class Web3StorageProvider:
     BASE_URL = "https://api.web3.storage"
 
     def __init__(self, token: str):
+        validate_endpoint_url(self.BASE_URL)
         self.token = token
         self.headers = {"Authorization": f"Bearer {token}"}
 

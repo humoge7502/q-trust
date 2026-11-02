@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import demoRecords from "@/lib/demo-records.json";
 import { parseAssetId } from "@/lib/config";
 
 /**
@@ -45,6 +46,18 @@ export function useVerifyAsset() {
   return { error, pending, verify, clearError };
 }
 
-/** Example used in placeholder copy and the "use the example" shortcut. */
-export const EXAMPLE_ASSET_ID =
-  "0x7b52d7b29272207cab6c061ee4e58141b434ce20eef955b5684c175ceb12c6b6";
+/**
+ * Example used in placeholder copy and the "use the example" shortcut.
+ *
+ * It is read from the seeded demo records rather than written as a literal.
+ * The hardcoded ID this replaced was never registered on chain, so every
+ * visitor who followed the advertised example landed on a 404 — the one path
+ * through the product that must not dead-end. Reading the same file the
+ * landing page uses for its "live on-chain records" chips means the example is
+ * a record that exists, and it cannot drift when the seed is regenerated.
+ *
+ * Empty when no record has been seeded; callers omit the shortcut in that case
+ * rather than offering an example that cannot resolve.
+ */
+export const EXAMPLE_ASSET_ID: string =
+  demoRecords.records.find((record) => record.assetId)?.assetId ?? "";

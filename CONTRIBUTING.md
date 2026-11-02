@@ -103,7 +103,7 @@ Numbers in docs, README, and marketing material must be **reproducible from
 the repo**: cite the benchmark/artifact that produced them (e.g. "147.8
 req/s @ 100 VUs, p95 = 11.3 ms" → `docs/PERFORMANCE.md` + k6 scripts in
 `ops/loadtest/`; "213 contract tests" → `forge test` under the strict
-invariant config; "Kendall τ 0.975" → `planner/results/benchmark_v3.json`).
+invariant config; "Kendall τ 0.975 (synthetic-scale, held-out)" → `planner/results/benchmark_v3.json`).
 If you can't cite it, don't claim it — and if a claim becomes stale, fix the
 claim, not the reader's expectations.
 

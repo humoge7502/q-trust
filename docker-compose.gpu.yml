@@ -1,0 +1,15 @@
+# Optional NVIDIA GPU overlay for the planner.
+# Requires Docker Desktop with WSL2 GPU support (or nvidia-container-toolkit
+# on Linux). The planner falls back to CPU automatically if no device is
+# exposed, so this file is never required for a normal deployment.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+services:
+  planner:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

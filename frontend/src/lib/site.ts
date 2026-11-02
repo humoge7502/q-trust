@@ -9,9 +9,16 @@
  *
  * Overridable at build time so a preview deployment can emit its own origin
  * instead of advertising the production one.
+ *
+ * The fallback is the application origin, not the documentation site. Those are
+ * two different deployments: `humoge7502.github.io/q-trust` serves MkDocs, so a
+ * build that fell back to it advertised canonicals, sitemap entries and an
+ * `og:image` on a host that does not contain the app's routes or assets. The
+ * production Vercel build sets the env var, which is why the live HTML is
+ * correct; this makes an unconfigured build correct too.
  */
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_QTRUST_SITE_URL ?? "https://humoge7502.github.io/q-trust"
+  process.env.NEXT_PUBLIC_QTRUST_SITE_URL ?? "https://q-trust-nu.vercel.app"
 ).replace(/\/$/, "");
 
 /** Absolute URL for a site-relative path. */

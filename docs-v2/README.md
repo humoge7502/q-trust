@@ -36,12 +36,15 @@ docs-v2/
 
 ## Expected images in `public/`
 
-The site references three brand images that are **provided by the design-kit
-assets** (copy them into `docs-v2/public/` before the production switch):
+The site references three brand images, sourced from the design-kit assets and
+**now committed** under `docs-v2/public/` (verified present 2026-10-23):
 
 - `public/hero.png` — home-page hero illustration
 - `public/logo.png` — site logo (nav/sidebar)
 - `public/og-github.png` — social preview image (also referenced by the
   absolute URL in `.vitepress/config.ts`)
 
-They are intentionally not committed with this skeleton.
+> Note: `.vitepress/config.ts` still points `OG_IMAGE` at the **mkdocs** GitHub
+> Pages URL (`https://humoge7502.github.io/q-trust/og-github.png`). Until the
+> production switch to docs-v2, that absolute URL is correct for the live site;
+> update it to the docs-v2 origin as the final step of the MIGRATION.md runbook.

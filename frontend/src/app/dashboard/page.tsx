@@ -26,6 +26,7 @@ import {
   PanelTitle,
   SectionHeading,
 } from "@/components/ui/panel";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { EmptyState } from "@/components/ui/state";
 
@@ -42,12 +43,13 @@ const QuantumThreatPanel = dynamic(() => import("@/components/quantum-threat-pan
 const AnomalyPanel = dynamic(() => import("@/components/anomaly-panel"), { ssr: false });
 const RLPlanViewer = dynamic(() => import("@/components/rl-plan-viewer"), { ssr: false });
 
-/** Placeholder matching the panel chrome, so the frame does not jump on load. */
+/** Placeholder matching the panel chrome, so the frame does not jump on load.
+ *  Built from the shared `Skeleton` primitive rather than a hand-rolled pulse. */
 function PanelSkeleton({ rows = 4 }: { rows?: number }) {
   return (
-    <div className="mt-3 animate-pulse space-y-3" aria-hidden="true">
+    <div className="mt-3 space-y-3" aria-hidden="true">
       {Array.from({ length: rows }).map((_, index) => (
-        <div key={index} className="h-4 w-full rounded bg-neutral-surface" />
+        <Skeleton key={index} className="h-4 w-full" />
       ))}
     </div>
   );
@@ -169,6 +171,9 @@ function DashboardInner() {
             if you&rsquo;re a vendor.
           </p>
         </div>
+        <div className="mt-6 flex justify-center">
+          <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
+        </div>
       </CenteredNote>
     );
   }
@@ -181,12 +186,17 @@ function DashboardInner() {
     <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold tracking-[-0.035em] text-foreground">
+          <h1 className="font-display text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
             Org dashboard
           </h1>
           <p className="mt-2 break-all font-mono text-micro text-muted-foreground">{org}</p>
         </div>
-        <AuditStatus code={latest?.result_code ?? null} exists={latest?.exists ?? false} />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Persistent wallet control: without it a connected visitor has no
+              way to see the active account, switch wallets, or disconnect. */}
+          <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
+          <AuditStatus code={latest?.result_code ?? null} exists={latest?.exists ?? false} />
+        </div>
       </header>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">

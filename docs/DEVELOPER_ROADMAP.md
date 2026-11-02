@@ -3,6 +3,13 @@
 *Written 2026-08-30. Every number below was reproduced in this session on the
 real corpus — none are estimates.*
 
+*Update 2026-10-26: the CodeBERTa figures below are the **legacy v1 record**.
+A later leakage audit found 87.6 % of its held-out eval paths already present in
+training; the current clean model of record is **v4 on repo-disjoint splits —
+F1 0.9205 de-duplicated (keep_longest, gate 0.50) / 0.9235 native**
+(`qtrust_ai/artifacts/eval_dedup_v4.json`, EXPERIMENTS.md E-14/E-15/E-16).
+Cite v1's 0.9395 only as history, never as the clean result.*
+
 ## 1. Where the models actually stand (measured today)
 
 | Model | Protocol | Measured result | Interpretation |
@@ -10,7 +17,8 @@ real corpus — none are estimates.*
 | GNN planner v3 | Full **40-fold LOO**, host-disjoint real CBOMs (280 hosts, re-run 2026-09-02 on the deterministic-kernel harness, **30-epoch fine-tune, 2,000 synthetic per fold**, folds sharded across **4 A100s** via `eval_real_cbom_loo.py --fold-start/--fold-end`, merged with `--merge-shards`; 3-fold repro bit-identical) | τ-b **0.7263** vs heuristic **0.7450** (Δ **−0.0188**); random 0.2234 (**+0.503**); **reproduces the doctrine on 38/40 folds** (0 wins / 38 ties / 2 losses — small heavily-tied graphs, n≤8 and n≤13) | Model *reproduces* the doctrine heuristic on essentially every held-out real estate (38/40, Δ≈0); the honest ceiling break requires expert pairwise labels. 60-epoch fine-tunes overfit the synthetic mix (Δ −0.055) — 30 epochs is the operating point. The pre-fix τ-b 0.7377 (39/40) is superseded: deterministic kernels (seeded shuffles, cudnn deterministic, no torch.compile) changed per-fold fine-tune outcomes |
 | RL agent | PPO, 64 vectorized envs, trained on packed real-CBOM estates with **scan-derived risk labels** (RSA-1024 → critical, RSA-2048 → high, expired/near-expiry raise the class), evaluated on 40 packed real-CBOM environments | mean reward **140.34** ± 8.13 vs heuristic **140.62** (Δ −0.28 — **tie**) vs random **136.84** (+**2.6%**); 100% completion, 2/40 wins · 27 ties · 11 losses | **Learns real risk-priority and matches the doctrine on real estates** (archived “beats heuristic 130.20 vs 112.40” was NOT reproducible — the CBOM builder stamped every asset `criticality: medium`, so real environments had zero reward signal; fixed + re-measured 2026-09-02; `pack_graph_cboms` host-set ordering was hash-randomized per process — sorted + re-run, identical across processes) |
 | Anomaly detector | Real CBOMs (277 hosts → 276 assets), 120 epochs, 80% train | **100% detection** (162/162), FPR **2/54** (3.7%) | Strong — real-data trained, improved FPR |
-| CodeBERTa detector | Real code corpus (13,973 files incl. SolidiFI/EIPs/WebAuthn), CodeBERTa fine-tune, repo-disjoint held-out | P 0.952 / R 0.953 / F1 0.952 (2026-09-01, GPU 4-epoch) | **+0.11 F1 vs prior** — beats all baselines, 6/7 beat naive; real differentiator |
+| CodeBERTa detector (clean, shipped) | Corpus v4: 17,171 files / 58 sources; repo-disjoint eval split (2,238 records → 1,779 unique paths), gate 0.50 | **P 0.9264 / R 0.9146 / F1 0.9205** de-duplicated (keep_longest); **F1 0.9235** on the native split; sensitivity 0.9167–0.9223 across policies (2026-10-25/26, E-14/E-16) | **The current claim** — leakage-audited, de-dup-robust, artifact-pinned by the metric gate; 8,814 crypto files vs v1's 4,431 |
+| CodeBERTa detector v1 (legacy) | Real code corpus (13,973 files incl. SolidiFI/EIPs/WebAuthn), CodeBERTa fine-tune, held-out | Historical P 0.9279 / R 0.9514 / F1 0.9395 (2026-09-01) | **Superseded — do not cite as clean:** 87.6 % of its eval paths overlap training; 0.9395 is the leak-inflated number, kept only as the pre-audit record |
 | Risk / purpose / vendor models | Real corpora (277 hosts / 820 uses / 16 vendors) | trained + anchor-verified (committed report) | Solid |
 
 **The honest headline (2026-09-02):** the **40-fold LOO** completed on the
@@ -22,9 +30,10 @@ heuristic **0.7450** (Δ **−0.0188**), reproducing the doctrine on **38/40**
 folds (0 wins / 38 ties / 2 losses — small heavily-tied graphs, n≤8 and
 n≤13), **+0.503 vs random** (see `real_cbom_loo_40.json`; a fresh 3-fold run
 is bit-identical to the merged shards). The 60-epoch fine-tune (Δ −0.0545)
-confirms the extra epochs overfit the synthetic mix. CodeBERTa holds at
-**F1 0.9525** on the 13,973-file real corpus (deterministic — same seed →
-same F1); the RL agent, retrained after a 2026-09-02 integrity fix (real
+confirms the extra epochs overfit the synthetic mix. CodeBERTa's **clean** result
+is **F1 0.9205** de-duplicated (**0.9235** native) on corpus v4's repo-disjoint
+split — the legacy v1 figure 0.9395 is leak-inflated (87.6 % eval-path overlap)
+and retained only as history; the RL agent, retrained after a 2026-09-02 integrity fix (real
 assets now carry scan-derived risk instead of the builder's blanket
 `criticality: medium`, which had zeroed the reward signal), scores **140.34**
 vs heuristic **140.62** (tie) and **136.84** random (+2.6%) on 40 packed
@@ -90,7 +99,9 @@ What would actually move the needle (in order of leverage):
   the probe-verified device and full config.)
 - Train the anomaly detector and CodeBERTa on the *full* real corpus with the
   GPU properly reserved; commit the reports (models stay gitignored). (Done
-  2026-09-02: F1 0.9525 deterministic; anomaly 162/162, FPR 2/54.)
+  2026-09-02 for v1 — F1 0.9395, later found leak-inflated — and superseded
+  2026-10-25/26 by clean v4: **F1 0.9205 de-duplicated / 0.9235 native** on
+  repo-disjoint splits; anomaly 162/162, FPR 2/54.)
 - Wire the real-data training into CI as a weekly scheduled job (like
   `pqc-scan.yml`) so the artifacts can't rot.
 
@@ -121,12 +132,15 @@ What would actually move the needle (in order of leverage):
 ## 5. Competitive reality (honest)
 
 - **Defensible today:** the host-disjoint real CBOM corpus + LOO discipline,
-  the real-data CodeBERTa detector (F1 0.952, trained on 13,973 real files
-  incl. SolidiFI/SmartBugs/EIPs/WebAuthn blockchain code), the side-channel
+  the leakage-audited CodeBERTa detector (**F1 0.9205 de-duplicated / 0.9235
+  native** on corpus v4 — 17,171 real files, 8,814 crypto, incl.
+  SolidiFI/SmartBugs/EIPs/WebAuthn blockchain code), the side-channel
   detector (real liboqs traces), the on-chain attestation layer, and the
   honest benchmark reports. SandboxAQ/IBM/PQShield can copy any single
-  feature; a *publishable, reproducible, host-disjoint real benchmark* with
-  F1 0.952 on 14k real code files is the thing they cannot fake.
+  feature; a *publishable, reproducible, host-disjoint, de-dup-robust* real
+  benchmark at F1 0.9205 on 17k real code files is the thing they cannot fake.
+  (The older 13,973-file / F1 0.9395 v1 figure is retained only as history:
+  87.6 % of its eval paths overlapped training.)
 - **Defensible today (RL):** the RL agent **learns real risk-priority and
   matches the doctrine heuristic on real estates** — reward 140.34 vs
   heuristic 140.62 (Δ −0.28, tie) vs random 136.84 (+2.6%), 100% completion,

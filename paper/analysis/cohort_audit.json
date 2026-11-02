@@ -1,0 +1,115 @@
+{
+  "c42": {
+    "n_estates": 42,
+    "n_assets": 277,
+    "n_unique_hosts": 277,
+    "hosts_repeated_within_cohort": 0,
+    "algorithms": {
+      "RSA-2048": 175,
+      "ECDSA-P256": 89,
+      "RSA-4096": 10,
+      "None": 1,
+      "ECDSA-P384": 1,
+      "RSA-3072": 1
+    },
+    "key_types": {
+      "RSAPublicKey": 186,
+      "ECPublicKey": 90,
+      "None": 1
+    },
+    "key_sizes": {
+      "2048": 175,
+      "256": 89,
+      "4096": 10,
+      "None": 1,
+      "384": 1,
+      "3072": 1
+    },
+    "criticality": {
+      "medium": 277
+    },
+    "pqc_ready": {
+      "None": 277
+    },
+    "not_after_unique": 139,
+    "not_after_top": {
+      "2026-11-02": 7,
+      "2026-10-31": 6,
+      "2026-11-24": 6,
+      "2026-12-19": 6,
+      "2026-09-13": 5,
+      "2026-11-10": 5,
+      "2026-11-04": 4,
+      "2026-10-22": 4
+    },
+    "estate_sizes": {
+      "7": 37,
+      "3": 1,
+      "2": 1,
+      "4": 2,
+      "5": 1
+    }
+  },
+  "c38": {
+    "n_estates": 38,
+    "n_assets": 275,
+    "n_unique_hosts": 275,
+    "hosts_repeated_within_cohort": 0,
+    "algorithms": {
+      "sha256WithRSAEncryption": 186,
+      "ecdsa-with-SHA384": 43,
+      "ecdsa-with-SHA256": 41,
+      "sha384WithRSAEncryption": 3,
+      "None": 2
+    },
+    "key_types": {
+      "RSAPublicKey": 183,
+      "ECPublicKey": 90,
+      "None": 2
+    },
+    "key_sizes": {
+      "2048": 172,
+      "256": 89,
+      "4096": 10,
+      "None": 2,
+      "384": 1,
+      "3072": 1
+    },
+    "criticality": {
+      "medium": 275
+    },
+    "pqc_ready": {
+      "None": 275
+    },
+    "not_after_unique": 135,
+    "not_after_top": {
+      "2026-11-27": 7,
+      "2026-12-19": 6,
+      "2026-11-24": 6,
+      "2026-10-31": 5,
+      "2026-12-04": 5,
+      "2027-03-20": 4,
+      "2026-11-04": 4,
+      "2026-12-07": 4
+    },
+    "estate_sizes": {
+      "8": 32,
+      "2": 1,
+      "5": 2,
+      "3": 2,
+      "1": 1
+    }
+  },
+  "overlap": {
+    "c42": 277,
+    "c38": 275,
+    "intersection": 275,
+    "c42_only": 2,
+    "c38_only": 0,
+    "c42_only_hosts": [
+      "esa.int",
+      "southwest.com"
+    ],
+    "c38_only_hosts": []
+  }
+}

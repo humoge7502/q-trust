@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-10-19T22:13:07.631Z",
+  "network": "Base Sepolia",
+  "chainId": 84532,
+  "records": [
+    {
+      "label": "Q-Trust inspector (Python)",
+      "assetId": "0x125fad1d7f435ea1dfeb014bdcbbbe0636fe7043b1e4e4ac90975768e3d1a349",
+      "findings": 23,
+      "target": "/workspace/projects/inspector/qtrust_inspector",
+      "metadataURI": "https://q-trust-nu.vercel.app/demo/cbom-inspector.json"
+    },
+    {
+      "label": "Q-Trust planner (Python)",
+      "assetId": "0xd30d41f474522329945e5927ba1e28c0ce376fba80942b1e80b7cdc3c74f7cac",
+      "findings": 7,
+      "target": "/workspace/projects/planner/qtrust_planner",
+      "metadataURI": "https://q-trust-nu.vercel.app/demo/cbom-planner.json"
+    },
+    {
+      "label": "Q-Trust backend (TypeScript)",
+      "assetId": "0xbc5464cb3f08b7984fcf6392a0ab12f01759ca3a4f654f6b070a2e3d2f7eddd7",
+      "findings": 0,
+      "target": "/workspace/projects/backend/src",
+      "metadataURI": "https://q-trust-nu.vercel.app/demo/cbom-backend.json"
+    }
+  ]
+}

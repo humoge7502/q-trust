@@ -1,0 +1,189 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-19T21:56:02.298Z",
+    "component": {
+      "type": "application",
+      "name": "Q-Trust planner (Python)",
+      "version": "2.2.0"
+    },
+    "tools": [
+      {
+        "vendor": "Q-Trust",
+        "name": "crypto-inspector",
+        "version": "2.2.0"
+      }
+    ],
+    "properties": [
+      {
+        "name": "qtrust.scan.target",
+        "value": "scan-4d0cd234380c4a23"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "finding-0",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "qtrust.category",
+          "value": ""
+        },
+        {
+          "name": "qtrust.severity",
+          "value": ""
+        },
+        {
+          "name": "qtrust.file",
+          "value": ""
+        },
+        {
+          "name": "qtrust.line",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "finding-1",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "qtrust.category",
+          "value": ""
+        },
+        {
+          "name": "qtrust.severity",
+          "value": ""
+        },
+        {
+          "name": "qtrust.file",
+          "value": ""
+        },
+        {
+          "name": "qtrust.line",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "finding-2",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "qtrust.category",
+          "value": ""
+        },
+        {
+          "name": "qtrust.severity",
+          "value": ""
+        },
+        {
+          "name": "qtrust.file",
+          "value": ""
+        },
+        {
+          "name": "qtrust.line",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "finding-3",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "qtrust.category",
+          "value": ""
+        },
+        {
+          "name": "qtrust.severity",
+          "value": ""
+        },
+        {
+          "name": "qtrust.file",
+          "value": ""
+        },
+        {
+          "name": "qtrust.line",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "finding-4",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "qtrust.category",
+          "value": ""
+        },
+        {
+          "name": "qtrust.severity",
+          "value": ""
+        },
+        {
+          "name": "qtrust.file",
+          "value": ""
+        },
+        {
+          "name": "qtrust.line",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "finding-5",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "qtrust.category",
+          "value": ""
+        },
+        {
+          "name": "qtrust.severity",
+          "value": ""
+        },
+        {
+          "name": "qtrust.file",
+          "value": ""
+        },
+        {
+          "name": "qtrust.line",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "finding-6",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "qtrust.category",
+          "value": ""
+        },
+        {
+          "name": "qtrust.severity",
+          "value": ""
+        },
+        {
+          "name": "qtrust.file",
+          "value": ""
+        },
+        {
+          "name": "qtrust.line",
+          "value": ""
+        }
+      ]
+    }
+  ]
+}

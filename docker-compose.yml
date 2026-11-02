@@ -1,11 +1,15 @@
-# Q-Trust backend docker-compose.
-# Starts the API (including indexer and webhook fan-out), the Postgres store,
-# Redis, and the AI planner microservice.
+# Q-Trust full-stack docker-compose.
+# Starts the Next.js frontend, the API (including indexer and webhook fan-out),
+# the Postgres store, Redis, the AI planner microservice, and the observability
+# stack.
 #
 # Usage:
 #   cp .env.example .env
 #   # edit .env with your RPC URL, private key, and contract addresses
-#   docker compose up -d
+#   docker compose up -d --build
+#
+# GPU (optional): the planner runs on CPU by default. For an NVIDIA host, add
+# the override:  docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 
 services:
   api:
@@ -30,8 +34,11 @@ services:
       - QTRUST_PLANNER_API_KEY=${QTRUST_PLANNER_API_KEY:?QTRUST_PLANNER_API_KEY must be set in .env}
       - QTRUST_SCAN_ALLOWED_ROOTS=${QTRUST_SCAN_ALLOWED_ROOTS:?QTRUST_SCAN_ALLOWED_ROOTS must be set in .env}
       - QTRUST_BASE_SEPOLIA_RPC=${QTRUST_BASE_SEPOLIA_RPC:-https://sepolia.base.org}
+      - QTRUST_DATA_DIR=/var/lib/qtrust
+      - QTRUST_EVIDENCE_DB_PATH=/var/lib/qtrust/evidence_chain.jsonl
     volumes:
       - ${QTRUST_SCAN_HOST_ROOT:-.}:${QTRUST_SCAN_CONTAINER_ROOT:-/workspace/projects}:ro
+      - qtrust-data:/var/lib/qtrust
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -39,6 +46,44 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    networks:
+      - qtrust-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_QTRUST_API_URL: ${NEXT_PUBLIC_QTRUST_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_QTRUST_CHAIN_ID: ${NEXT_PUBLIC_QTRUST_CHAIN_ID:-84532}
+        NEXT_PUBLIC_QTRUST_BASE_SEPOLIA_RPC: ${NEXT_PUBLIC_QTRUST_BASE_SEPOLIA_RPC:-https://sepolia.base.org}
+        NEXT_PUBLIC_QTRUST_USE_MAINNET: ${NEXT_PUBLIC_QTRUST_USE_MAINNET:-false}
+        NEXT_PUBLIC_QTRUST_ASSET_REGISTRY_ADDRESS: ${NEXT_PUBLIC_QTRUST_ASSET_REGISTRY_ADDRESS:-0x0000000000000000000000000000000000000000}
+        NEXT_PUBLIC_QTRUST_VENDOR_REGISTRY_ADDRESS: ${NEXT_PUBLIC_QTRUST_VENDOR_REGISTRY_ADDRESS:-0x0000000000000000000000000000000000000000}
+        NEXT_PUBLIC_QTRUST_MIGRATION_REGISTRY_ADDRESS: ${NEXT_PUBLIC_QTRUST_MIGRATION_REGISTRY_ADDRESS:-0x0000000000000000000000000000000000000000}
+        NEXT_PUBLIC_QTRUST_AUDIT_REGISTRY_ADDRESS: ${NEXT_PUBLIC_QTRUST_AUDIT_REGISTRY_ADDRESS:-0x0000000000000000000000000000000000000000}
+        NEXT_PUBLIC_IPFS_GATEWAY: ${NEXT_PUBLIC_IPFS_GATEWAY:-https://ipfs.io/ipfs/}
+        NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID:-00000000000000000000000000000000}
+        NEXT_PUBLIC_QTRUST_SITE_URL: ${NEXT_PUBLIC_QTRUST_SITE_URL:-http://localhost:3000}
+    image: qtrust-frontend:2.2.0
+    container_name: qtrust-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - path: ./frontend/.env.local
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      # Server-side /api proxy target (container DNS).
+      - QTRUST_BACKEND_URL=http://api:3001
+      # Server-only key the proxy forwards for protected read routes.
+      - QTRUST_API_KEY=${QTRUST_API_KEY:-}
+    depends_on:
+      api:
+        condition: service_started
     networks:
       - qtrust-net
 
@@ -86,16 +131,8 @@ services:
       # GPU features (RL agent). Set to "auto" to use the A100 when present;
       # the planner falls back to CPU transparently when no device is exposed.
       - QTRUST_DEVICE=auto
-    # NVIDIA GPU passthrough (requires nvidia-container-toolkit on the host).
-    # `docker compose up planner` then exposes the A100; verify with:
-    #   docker exec qtrust-planner nvidia-smi
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # NVIDIA GPU passthrough lives in docker-compose.gpu.yml (optional).
+    # The planner transparently falls back to CPU when no device is exposed.
     networks:
       - qtrust-net
 
@@ -190,6 +227,8 @@ volumes:
   redis-data:
     driver: local
   postgres-data:
+    driver: local
+  qtrust-data:
     driver: local
   prometheus-data:
     driver: local

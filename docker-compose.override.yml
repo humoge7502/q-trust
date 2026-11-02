@@ -1,0 +1,14 @@
+# Hosted-mode override: while the API still runs locally (planner, scanner and
+# the indexer live on this machine), its Postgres connection is redirected to
+# the hosted database so the Vercel serverless API and the local indexer share
+# one database. Set QTRUST_COMPOSE_PG_URL in .env to enable; without it, the
+# base compose file's local Postgres is used.
+services:
+  api:
+    environment:
+      - QTRUST_PG_URL=${QTRUST_COMPOSE_PG_URL:?QTRUST_COMPOSE_PG_URL must be set in .env}
+      # The local API must never proxy scanner/GPU routes: .env carries the
+      # public tunnel URL for the Vercel deploy, and forwarding to it from the
+      # local container loops back into this same API. The hosted function is
+      # the only place that should set QTRUST_SCANNER_PROXY_URL.
+      - QTRUST_SCANNER_PROXY_URL=

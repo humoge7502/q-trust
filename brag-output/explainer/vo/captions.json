@@ -1,0 +1,172 @@
+[
+  {
+    "start": 0.35,
+    "end": 2.73,
+    "text": "The algorithms protecting most of today's data"
+  },
+  {
+    "start": 2.78,
+    "end": 4.56,
+    "text": "are already <b>obsolete</b>."
+  },
+  {
+    "start": 4.61,
+    "end": 6.81,
+    "text": "Attackers are recording traffic now,"
+  },
+  {
+    "start": 6.86,
+    "end": 9.35,
+    "text": "waiting for the day they can read it."
+  },
+  {
+    "start": 9.95,
+    "end": 12.67,
+    "text": "Q-Trust is the operating system for the migration."
+  },
+  {
+    "start": 12.72,
+    "end": 13.95,
+    "text": "Scan the estate."
+  },
+  {
+    "start": 14.0,
+    "end": 15.33,
+    "text": "Rank the exposure."
+  },
+  {
+    "start": 15.38,
+    "end": 16.51,
+    "text": "Plan the move."
+  },
+  {
+    "start": 16.56,
+    "end": 17.99,
+    "text": "Anchor the evidence."
+  },
+  {
+    "start": 18.04,
+    "end": 19.53,
+    "text": "Let <b>anyone</b> verify it."
+  },
+  {
+    "start": 20.25,
+    "end": 22.03,
+    "text": "It starts with a scan."
+  },
+  {
+    "start": 22.08,
+    "end": 25.18,
+    "text": "Q-Trust reads source code and dependency manifests,"
+  },
+  {
+    "start": 25.23,
+    "end": 27.58,
+    "text": "and maps every algorithm in use."
+  },
+  {
+    "start": 27.63,
+    "end": 30.79,
+    "text": "Here: <b>twenty findings</b> across three services."
+  },
+  {
+    "start": 31.75,
+    "end": 35.16,
+    "text": "Each finding gets a harvest-now-decrypt-later score."
+  },
+  {
+    "start": 35.21,
+    "end": 37.66,
+    "text": "The gateway's RSA key: <b>eighty-four</b>."
+  },
+  {
+    "start": 37.71,
+    "end": 39.69,
+    "text": "The payments key, <b>the same</b>."
+  },
+  {
+    "start": 39.74,
+    "end": 43.68,
+    "text": "The mobile exchange uses <b>ML-KEM-768</b> &mdash; and scores ten."
+  },
+  {
+    "start": 44.55,
+    "end": 47.86,
+    "text": "The planner turns those scores into an ordered roadmap:"
+  },
+  {
+    "start": 47.91,
+    "end": 49.41,
+    "text": "what to migrate first,"
+  },
+  {
+    "start": 49.46,
+    "end": 52.49,
+    "text": "and which evidence each step must produce."
+  },
+  {
+    "start": 53.25,
+    "end": 55.67,
+    "text": "Every step writes an evidence record."
+  },
+  {
+    "start": 55.72,
+    "end": 58.44,
+    "text": "<b>Only its hash</b> goes on chain, to Base Sepolia."
+  },
+  {
+    "start": 58.49,
+    "end": 61.25,
+    "text": "The evidence never leaves the organization."
+  },
+  {
+    "start": 61.3,
+    "end": 63.15,
+    "text": "Anyone can check the hash."
+  },
+  {
+    "start": 63.2,
+    "end": 64.99,
+    "text": "No one can read the file."
+  },
+  {
+    "start": 65.65,
+    "end": 69.59,
+    "text": "Paste an asset ID, and Q-Trust reads the registry directly."
+  },
+  {
+    "start": 69.64,
+    "end": 71.55,
+    "text": "<b>No wallet. No account.</b>"
+  },
+  {
+    "start": 71.6,
+    "end": 73.19,
+    "text": "The record is verified,"
+  },
+  {
+    "start": 73.24,
+    "end": 75.66,
+    "text": "and the transaction is public."
+  },
+  {
+    "start": 76.35,
+    "end": 78.63,
+    "text": "Vendors publish the same way."
+  },
+  {
+    "start": 78.68,
+    "end": 81.48,
+    "text": "Connect a wallet, sign the claim with EIP-712,"
+  },
+  {
+    "start": 81.53,
+    "end": 84.0,
+    "text": "and Q-Trust relays it gaslessly."
+  },
+  {
+    "start": 84.05,
+    "end": 87.22,
+    "text": "But only for wallets holding the <b>vendor role</b>."
+  }
+]

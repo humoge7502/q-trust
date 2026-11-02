@@ -79,7 +79,7 @@ function ScoreBar({
         segment.value > 0 ? (
           <div
             key={segment.label}
-            className={`${segment.className} transition-all duration-500 motion-reduce:transition-none`}
+            className={`${segment.className} grow-in-x`}
             style={{ width: `${(segment.value / total) * 100}%` }}
           />
         ) : null,

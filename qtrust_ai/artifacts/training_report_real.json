@@ -75,9 +75,9 @@
           "saved_to": "/home/nvidia/Project/qtrust_ai/artifacts/crypto_codebert"
         },
         "_eval": {
-          "precision": 0.952,
-          "recall": 0.953,
-          "f1": 0.9525,
+          "precision": 0.9279,
+          "recall": 0.9514,
+          "f1": 0.9395,
           "accuracy": 0.9271,
           "false_negatives": 87,
           "fn_rate": 0.047,

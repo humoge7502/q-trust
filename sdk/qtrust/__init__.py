@@ -1,5 +1,11 @@
 # sdk/qtrust/__init__.py
 """Q-Trust SDK -- Post-Quantum Cryptography migration."""
+from .bundle import (
+    BundleVerification,
+    VerificationChecklist,
+    verify_bundle,
+    verify_bundle_file,
+)
 from .cbom_models import (
     CostEstimate,
     CycloneDXBOM,
@@ -36,6 +42,7 @@ from .vc import (
 
 __version__ = "1.1.0"
 __all__ = [
+    "BundleVerification",
     "CBOM",
     "CBOMEntry",
     "AssetRecord",
@@ -69,7 +76,10 @@ __all__ = [
     "VendorInfo",
     "VerifiableCredential",
     "VerifiablePresentation",
+    "VerificationChecklist",
     "convert_to_cyclonedx",
     "generate_evidence_ledger",
     "generate_migration_roadmap",
+    "verify_bundle",
+    "verify_bundle_file",
 ]

@@ -14,7 +14,6 @@ via_ir = false
 dynamic_test_linking = false
 test = "test"
 # Exclude OpenZeppelin's own test files from compilation
-deny_warnings = false
 ignored_warnings_from = ["lib/openzeppelin-contracts"]
 
 # Remap OpenZeppelin imports

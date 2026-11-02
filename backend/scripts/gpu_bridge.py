@@ -94,21 +94,42 @@ def cmd_status(_payload: dict) -> None:
             info = {
                 "available": True,
                 "device_name": props.name,
+                "device_type": "cuda",
                 "memory_total_gb": round(props.total_memory / 1e9, 1),
                 "models_loaded": sorted(set(models_loaded)),
+                "execution_mode": "gpu",
             }
         else:
-            # Even without GPU, report CPU-available models
+            # CPU fallback: the side-channel and anomaly models are tiny and
+            # run fine without CUDA. Check the env overrides first — container
+            # images copy the weights to /opt/qtrust-models and the
+            # repo-relative inspector/ tree does not exist there.
             models_loaded: list[str] = []
             for p, label in [
-                (_REPO_ROOT / "inspector" / "side_channel_model.pt", "side_channel_cpu"),
-                (_REPO_ROOT / "inspector" / "anomaly_model.pt", "anomaly_cpu"),
-                (_REPO_ROOT / "planner" / "model.pt", "planner_v2_cpu"),
-                (_REPO_ROOT / "planner" / "model_gpu_v3.pt", "planner_v3_cpu"),
+                (os.environ.get("QTRUST_SIDE_CHANNEL_MODEL", ""), "side_channel_cpu"),
+                (os.environ.get("QTRUST_ANOMALY_MODEL", ""), "anomaly_cpu"),
+                (str(_REPO_ROOT / "inspector" / "side_channel_model.pt"), "side_channel_cpu"),
+                (str(_REPO_ROOT / "inspector" / "anomaly_model.pt"), "anomaly_cpu"),
+                (str(_REPO_ROOT / "planner" / "model.pt"), "planner_v2_cpu"),
+                (str(_REPO_ROOT / "planner" / "model_gpu_v3.pt"), "planner_v3_cpu"),
             ]:
-                if os.path.exists(str(p)):
+                if p and os.path.exists(p):
                     models_loaded.append(label)
-            info = {"available": False, "device_name": None, "memory_total_gb": None, "models_loaded": sorted(set(models_loaded))}
+            try:
+                import torch  # noqa: F401
+
+                torch_ok = True
+            except Exception:
+                torch_ok = False
+            usable = torch_ok and bool(models_loaded)
+            info = {
+                "available": usable,
+                "device_name": "CPU (torch)" if usable else None,
+                "device_type": "cpu",
+                "memory_total_gb": None,
+                "models_loaded": sorted(set(models_loaded)),
+                "execution_mode": "cpu" if usable else "unavailable",
+            }
     except Exception:
         pass
     _emit(info)

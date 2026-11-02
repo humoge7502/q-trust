@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-10-19T22:13:07.631Z",
+  "network": {
+    "name": "Base Sepolia",
+    "chainId": 84532
+  },
+  "org": "0xE610569aE0352DC3262419bb051a86145f52875c",
+  "assets": [
+    {
+      "assetId": "0x125fad1d7f435ea1dfeb014bdcbbbe0636fe7043b1e4e4ac90975768e3d1a349",
+      "target": {
+        "slug": "inspector",
+        "path": "/workspace/projects/inspector/qtrust_inspector",
+        "label": "Q-Trust inspector (Python)"
+      },
+      "cbomHash": "0x54a1c1153e8e2ece03e3a6e699d34b6e0f176739760434fcde9f4ee1ee06faf4",
+      "metadataURI": "https://q-trust-nu.vercel.app/demo/cbom-inspector.json",
+      "findings": 23,
+      "txHash": "already-registered"
+    },
+    {
+      "assetId": "0xd30d41f474522329945e5927ba1e28c0ce376fba80942b1e80b7cdc3c74f7cac",
+      "target": {
+        "slug": "planner",
+        "path": "/workspace/projects/planner/qtrust_planner",
+        "label": "Q-Trust planner (Python)"
+      },
+      "cbomHash": "0xf5d49cad65b764cc5f3407b8eaaeedb3fa814f745a907be46d90f4d00502d045",
+      "metadataURI": "https://q-trust-nu.vercel.app/demo/cbom-planner.json",
+      "findings": 7,
+      "txHash": "already-registered"
+    },
+    {
+      "assetId": "0xbc5464cb3f08b7984fcf6392a0ab12f01759ca3a4f654f6b070a2e3d2f7eddd7",
+      "target": {
+        "slug": "backend",
+        "path": "/workspace/projects/backend/src",
+        "label": "Q-Trust backend (TypeScript)"
+      },
+      "cbomHash": "0xc279b269f481b0351865cc5c9bc0c5faa4729ed6daee3ee63fab233b80bb1c53",
+      "metadataURI": "https://q-trust-nu.vercel.app/demo/cbom-backend.json",
+      "findings": 0,
+      "txHash": "already-registered"
+    }
+  ],
+  "migration": {
+    "id": "0x014e6d93c8ded0e535ebecf11985736f867ea0708a949983c5b3ad16a794fe8e",
+    "txHash": "0xec0e55de99ddcb18b9a394be9f704c703e7d5ade53b29e16c4fc0a60264d3984",
+    "from": "RSA-2048",
+    "to": "ML-KEM-768"
+  },
+  "verified": {
+    "assets": 3,
+    "migrations": {
+      "org_address": "0xE610569aE0352DC3262419bb051a86145f52875c",
+      "total_migrations": 0,
+      "verified_migrations": 0,
+      "unverified_migrations": 0,
+      "asset_count": 0,
+      "attestation_count": 0,
+      "fetched_at": 1792447985
+    }
+  }
+}

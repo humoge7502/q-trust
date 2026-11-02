@@ -1,4 +1,6 @@
 """qtrust_inspector -- discovers cryptographic assets and produces CBOMs."""
+from .agility import AssetAgility, EstateAgility, score_asset, score_estate
+from .assurance_packs import PACKS, ControlResult, PackReport, evaluate_all, evaluate_pack, list_packs
 from .ast_scanner import (
     DETECTOR_CAPABILITIES,
     merge_findings_dedupe,
@@ -7,6 +9,7 @@ from .ast_scanner import (
     scan_with_ast,
 )
 from .compliance import ComplianceEngine, ComplianceFramework, ComplianceReport, ComplianceResult, ComplianceRule
+from .crqc import CRQCReport, AssetExposure, CRQCAssumptions, assess
 from .cyclonedx import generate_cyclonedx, save_cyclonedx
 from .evidence import EvidenceLedger, EvidenceEntry, CBOMDiff, compute_cbom_diff
 from .file_scanner import scan_pem_files, scan_ssh_directory
@@ -26,22 +29,31 @@ from .source_scanner import scan_source_directory, scan_source_file
 
 __version__ = "1.1.0"
 __all__ = [
+    "AssetAgility",
+    "AssetExposure",
     "AssetFinding",
     "CBOMDiff",
+    "CRQCAssumptions",
+    "CRQCReport",
     "ComplianceEngine",
     "ComplianceFramework",
     "ComplianceReport",
     "ComplianceResult",
     "ComplianceRule",
+    "ControlResult",
     "CostEstimate",
     "CryptoScanner",
     "DETECTOR_CAPABILITIES",
+    "EstateAgility",
     "EvidenceEntry",
     "EvidenceLedger",
     "MigrationPhase",
+    "PACKS",
+    "PackReport",
     "QuantumVulnerability",
     "RiskScore",
     "ScanResult",
+    "assess",
     "calculate_risk_score",
     "compute_cbom_diff",
     "generate_cyclonedx",
@@ -73,4 +85,9 @@ __all__ = [
     "detect_capture_format",
     "scan_binary",
     "scan_binaries_in_directory",
+    "score_asset",
+    "score_estate",
+    "evaluate_all",
+    "evaluate_pack",
+    "list_packs",
 ]

@@ -68,7 +68,7 @@ describe("ScannerDashboard", () => {
     fetchMock.mockResolvedValue(okResponse(SCAN_RESPONSE));
     render(<ScannerDashboard />);
 
-    fireEvent.change(screen.getByPlaceholderText("e.g. /opt/app or ./src"), {
+    fireEvent.change(screen.getByLabelText("Target directory"), {
       target: { value: "/repo" },
     });
     fireEvent.click(screen.getByRole("button", { name: /run scan/i }));
@@ -85,13 +85,60 @@ describe("ScannerDashboard", () => {
       includeManifests: true,
     });
 
-    expect(screen.getByText("2 findings")).toBeInTheDocument();
-    expect(screen.getByText("1 critical")).toBeInTheDocument();
-    expect(screen.getByText("1 high")).toBeInTheDocument();
-    // Table + mobile card fallback both render — use getAllByText
+    // The headline is one large total; the severity mix is a stacked bar whose
+    // accessible name carries the exact counts, plus a legend with one count per
+    // band. Asserting the bar's label is stricter than the old per-pill text: it
+    // fails if a band is dropped from the bar *or* from the legend.
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Severity mix: 1 critical, 1 high" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Critical")).toBeInTheDocument();
+    expect(screen.getByText("High")).toBeInTheDocument();
+    // Table + mobile card fallback both render - use getAllByText
     expect(screen.getAllByText("RSA-2048")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("src/tls.py")[0]).toBeInTheDocument();
+    // The table shows the basename and keeps the full path in the title.
+    expect(screen.getAllByText("tls.py")[0]).toBeInTheDocument();
+    expect(screen.getAllByTitle("src/tls.py")[0]).toBeInTheDocument();
     expect(screen.getAllByText("quantum-vulnerable key exchange")[0]).toBeInTheDocument();
+  });
+
+  it("scans a public repository through POST /v1/scan/repo", async () => {
+    fetchMock.mockResolvedValue(
+      okResponse({
+        repo: "octocat/Spoon-Knife",
+        scanType: "full",
+        timestamp: "2026-10-28T00:00:00.000Z",
+        filesScanned: 3,
+        findings: [
+          {
+            file: "services/payments/signing.py",
+            algorithm: "RSA-2048",
+            line: 7,
+            severity: "critical",
+            message: "hardcoded RSA key",
+          },
+        ],
+      }),
+    );
+    render(<ScannerDashboard />);
+
+    fireEvent.change(screen.getByLabelText("GitHub repository"), {
+      target: { value: "octocat/Spoon-Knife" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /scan repo/i }));
+
+    await screen.findByText("Results");
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe("/api/v1/scan/repo");
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual({
+      repo: "octocat/Spoon-Knife",
+      scanType: "full",
+    });
+    expect(screen.getByText(/3 files scanned/i)).toBeInTheDocument();
+    expect(screen.getAllByText("signing.py")[0]).toBeInTheDocument();
   });
 
   it("shows the backend error message when the scan request fails", async () => {
@@ -103,7 +150,7 @@ describe("ScannerDashboard", () => {
     );
     render(<ScannerDashboard />);
 
-    fireEvent.change(screen.getByPlaceholderText("e.g. /opt/app or ./src"), {
+    fireEvent.change(screen.getByLabelText("Target directory"), {
       target: { value: "/repo" },
     });
     fireEvent.click(screen.getByRole("button", { name: /run scan/i }));

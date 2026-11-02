@@ -1,0 +1,23 @@
+{
+  "n_files": 13973,
+  "n_repos": 38,
+  "n_train": 11558,
+  "n_eval": 2415,
+  "eval_prevalence": 0.767287784679089,
+  "exact_dup_eval_keys": [
+    "aws/aws-lc::parser.peg.go",
+    "aws/aws-lc::symmetric.h",
+    "aws/aws-lc::randombytes.h",
+    "aws/aws-lc::ct.c",
+    "aws/aws-lc::polyz_unpack_table.c",
+    "aws/aws-lc::rej_uniform_eta_table.c",
+    "aws/aws-lc::rej_uniform_table.c",
+    "aws/aws-lc::aarch64_zetas.c",
+    "aws/aws-lc::rej_uniform_table.c",
+    "aws/aws-lc::consts.c",
+    "aws/aws-lc::consts.h"
+  ],
+  "exact_dup_eval_count": 11,
+  "cross_repo_dup_snippets": 11,
+  "near_dup_eval_count": 375
+}

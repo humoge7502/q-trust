@@ -3,11 +3,13 @@
 /**
  * Operator access UI.
  *
- * The same-origin proxy refuses the privileged surface (scanning, evidence
- * creation, GPU jobs, planner, relayer, webhooks) unless the caller presents
- * its own API key — see `lib/api-route-policy.ts`. Before this component the
- * affected controls simply failed with an opaque 403. They now render either a
- * proactive "Operator access" panel or an in-context prompt.
+ * The same-origin proxy refuses the money/state-mutating surface (relayer
+ * submissions, workspace writes, webhook mutations, credential issuance)
+ * unless the caller presents its own API key — see `lib/api-route-policy.ts`.
+ * Scanner, planner, evidence and GPU compute are open to every visitor and
+ * never need this panel. Before this component the affected controls simply
+ * failed with an opaque 403; they now render either a proactive "Operator
+ * access" panel or an in-context prompt.
  *
  * The key is held in `sessionStorage` for the tab, is never rendered back in
  * full, and is never sent anywhere except the same-origin proxy.
@@ -95,8 +97,50 @@ function KeyField({ onSaved }: { onSaved?: () => void }) {
 }
 
 /** Collapsible settings panel, for pages that offer several privileged actions. */
-export function OperatorAccessPanel({ defaultOpen = false }: { defaultOpen?: boolean }) {
+export function OperatorAccessPanel({
+  defaultOpen = false,
+  variant = "card",
+}: {
+  defaultOpen?: boolean;
+  /**
+   * `card` — a full bordered block, for operator-facing pages where privileged
+   * actions are the point (`/dashboard`, `/vendors`).
+   *
+   * `strip` — a single 40px row with the explanation behind a disclosure, for
+   * the public surface. On `/scanner` the card variant sat *above* the tool and
+   * was the first thing a visitor saw, which read as "this product needs a key"
+   * when in fact nothing on the page does. The strip states the opposite —
+   * public surface, key optional — and still opens the same field.
+   */
+  variant?: "card" | "strip";
+}) {
   const current = useOperatorKey();
+
+  if (variant === "strip") {
+    return (
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-micro font-medium text-muted-foreground transition hover:border-slate-400 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 [&::-webkit-details-marker]:hidden">
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${current ? "bg-success" : "bg-slate-400"}`}
+            aria-hidden="true"
+          />
+          Operator access
+          <span aria-hidden="true">·</span>
+          <span className="font-normal">{current ? "key set" : "optional"}</span>
+        </summary>
+        <div className="mt-3 rounded-xl border border-border bg-white p-4">
+          <p className="max-w-prose text-micro leading-6 text-muted-foreground">
+            Only relayer submissions, workspace writes, webhook mutations and
+            credential issuance require the caller&rsquo;s own key. Scanning, the AI
+            planner, evidence records, GPU analysis, public verification, risk scoring
+            and compliance evaluation are open to every visitor and need no key.
+          </p>
+          <KeyField />
+        </div>
+      </details>
+    );
+  }
+
   return (
     <details
       open={defaultOpen}
@@ -109,10 +153,10 @@ export function OperatorAccessPanel({ defaultOpen = false }: { defaultOpen?: boo
         </StatusPill>
       </summary>
       <p className="mt-3 max-w-prose text-micro leading-6 text-muted-foreground">
-        Scanning targets, creating evidence records, running GPU analysis, requesting
-        planner output and submitting attestations all run privileged backend code, so the
-        API requires the caller&rsquo;s own key. Public verification, risk scoring and
-        compliance evaluation need no key.
+        Only relayer submissions, workspace writes, webhook mutations and credential
+        issuance require the caller&rsquo;s own key. Scanning, the AI planner, evidence
+        records, GPU analysis, public verification, risk scoring and compliance
+        evaluation are open to every visitor and need no key.
       </p>
       <KeyField />
     </details>
@@ -139,9 +183,9 @@ export function OperatorAccessInline({
     >
       <p className="font-semibold">Operator access required</p>
       <p className="mt-1 leading-5">
-        <code className="rounded bg-card/70 px-1 font-mono">{endpoint}</code> runs privileged
-        backend code. Add your Q-Trust API key to continue, or call the API directly with your
-        own key.
+        <code className="rounded bg-card/70 px-1 font-mono">{endpoint}</code> mutates
+        on-chain state or spends relayer gas, so it needs an API key. Add your Q-Trust API
+        key to continue, or call the API directly with your own key.
       </p>
       {current ? (
         <p className="mt-2 leading-5">

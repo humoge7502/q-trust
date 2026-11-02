@@ -1,0 +1,102 @@
+{
+  "checkpoint": "qtrust_ai\\artifacts\\crypto_codebert_v3",
+  "corpus": {
+    "path": "qtrust-datasets/code_corpus_v3.json",
+    "total_files": 16100,
+    "sources": 50,
+    "crypto": 8266
+  },
+  "split": {
+    "seed": 42,
+    "train_files": 12919,
+    "train_crypto": 6627,
+    "train_repos": 40,
+    "eval_files": 3181,
+    "eval_crypto": 1639,
+    "eval_repos": 10,
+    "repo_disjoint": true
+  },
+  "fine_tune": {
+    "status": "trained",
+    "model": "huggingface/CodeBERTa-small-v1",
+    "device": "cpu",
+    "epochs": 2,
+    "examples": 12919,
+    "batch_size": 32,
+    "train_accuracy": 0.9085,
+    "final_loss": 0.2029,
+    "gpus_visible": 0,
+    "saved_to": "C:\\Users\\Devesh tiwari\\q-trust-projects\\q-trust\\qtrust_ai\\artifacts\\crypto_codebert_v3",
+    "max_len": 128
+  },
+  "eval": {
+    "precision": 0.8293,
+    "recall": 0.845,
+    "f1": 0.8371,
+    "accuracy": 0.8306,
+    "false_negatives": 254,
+    "fn_rate": 0.155,
+    "coverage": 1.0,
+    "n": 3181,
+    "per_language": {
+      "python": {
+        "tp": 89,
+        "fp": 0,
+        "fn": 12,
+        "tn": 4
+      },
+      "shell": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 4,
+        "tn": 11
+      },
+      "rust": {
+        "tp": 85,
+        "fp": 26,
+        "fn": 40,
+        "tn": 99
+      },
+      "go": {
+        "tp": 321,
+        "fp": 48,
+        "fn": 145,
+        "tn": 886
+      },
+      "c": {
+        "tp": 6,
+        "fp": 8,
+        "fn": 31,
+        "tn": 150
+      },
+      "javascript": {
+        "tp": 34,
+        "fp": 0,
+        "fn": 1,
+        "tn": 0
+      },
+      "java": {
+        "tp": 770,
+        "fp": 17,
+        "fn": 0,
+        "tn": 1
+      },
+      "solidity": {
+        "tp": 77,
+        "fp": 186,
+        "fn": 21,
+        "tn": 106
+      }
+    }
+  },
+  "calibration": {
+    "shipped_temperature": 1.92177,
+    "cross_fitted_ece_before": 0.343546,
+    "cross_fitted_ece_after": 0.244648,
+    "brier_before": 0.182588,
+    "brier_after": 0.17121,
+    "predictions": "qtrust_ai\\artifacts\\crypto_codebert_v3\\predictions_v3.jsonl"
+  },
+  "device": "cpu",
+  "generated_at": "2026-10-23T23:09:33Z"
+}

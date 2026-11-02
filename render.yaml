@@ -1,7 +1,11 @@
-# Render blueprint — one-click Q-Trust deploy.
-# Button: https://render.com/deploy?repo=https://github.com/humoge7502/q-trust
-# Secrets (relayer key, planner key, db passwords) are prompted at deploy
-# time (sync: false) and never committed. Mirrors docker-compose.yml.
+# Q-Trust Render blueprint - backend, planner, Postgres, and Redis.
+#
+# Frontend deploys separately to Vercel (see deploy/README.md). Secrets use
+# `sync: false`, so Render prompts for them at Blueprint creation time and
+# never reads them from git.
+#
+# Deploy button:
+#   https://render.com/deploy?repo=https://github.com/humoge7502/q-trust
 services:
   - type: web
     name: qtrust-backend
@@ -9,12 +13,40 @@ services:
     dockerfilePath: backend/Dockerfile
     dockerContext: .
     plan: starter
+    region: oregon
     healthCheckPath: /health
+    autoDeployTrigger: commit
+    disk:
+      name: qtrust-evidence
+      mountPath: /var/lib/qtrust
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3001
+      - key: QTRUST_PUBLIC_URL
+        sync: false
+      - key: QTRUST_USE_MAINNET
+        value: "false"
+      - key: QTRUST_BASE_SEPOLIA_RPC
+        sync: false
+      - key: QTRUST_RPC_URLS
+        sync: false
+      - key: QTRUST_RELAYER_PRIVATE_KEY
+        sync: false
+      - key: QTRUST_API_KEYS
+        sync: false
+      - key: QTRUST_CORS_ORIGINS
+        sync: false
+      - key: QTRUST_SCAN_ALLOWED_ROOTS
+        value: /workspace/projects
+      - key: QTRUST_SCAN_CONTAINER_ROOT
+        value: /workspace/projects
+      - key: QTRUST_DATA_DIR
+        value: /var/lib/qtrust
+      - key: QTRUST_EVIDENCE_DB_PATH
+        value: /var/lib/qtrust/evidence_chain.jsonl
       - key: QTRUST_PLANNER_URL
         fromService:
           name: qtrust-planner
@@ -23,10 +55,6 @@ services:
           scheme: http
       - key: QTRUST_PLANNER_API_KEY
         sync: false
-      - key: QTRUST_RELAYER_PRIVATE_KEY
-        sync: false
-      - key: QTRUST_SCAN_ALLOWED_ROOTS
-        value: /workspace/projects
       - key: QTRUST_REDIS_URL
         fromService:
           name: qtrust-redis
@@ -37,6 +65,32 @@ services:
           name: qtrust-postgres
           type: pserv
           property: connectionString
+      - key: QTRUST_ASSET_REGISTRY_ADDRESS
+        sync: false
+      - key: QTRUST_VENDOR_REGISTRY_ADDRESS
+        sync: false
+      - key: QTRUST_MIGRATION_REGISTRY_ADDRESS
+        sync: false
+      - key: QTRUST_AUDIT_REGISTRY_ADDRESS
+        sync: false
+      - key: QTRUST_REVOCATION_ANCHOR_ADDRESS
+        sync: false
+      - key: QTRUST_POLICY_COMMITMENT_ADDRESS
+        sync: false
+      - key: QTRUST_SCHEMA_REGISTRY_ADDRESS
+        sync: false
+      - key: QTRUST_TRUST_ANCHOR_REGISTRY_ADDRESS
+        sync: false
+      - key: QTRUST_INDEXER_FROM_BLOCK
+        sync: false
+      - key: QTRUST_WEBHOOK_ENC_KEY
+        sync: false
+      - key: QTRUST_VC_ISSUER_KEY
+        sync: false
+      - key: QTRUST_WEBHOOKS
+        sync: false
+      - key: QTRUST_SENTRY_DSN
+        sync: false
 
   - type: pserv
     name: qtrust-planner
@@ -44,21 +98,24 @@ services:
     dockerfilePath: Dockerfile
     dockerContext: ./planner
     plan: starter
+    region: oregon
     healthCheckPath: /health
+    autoDeployTrigger: commit
     envVars:
       - key: QTRUST_PLANNER_API_KEY
         sync: false
-      - key: QTRUST_REDIS_URL
-        fromService:
-          name: qtrust-redis
-          type: redis
-          property: connectionString
+      - key: QTRUST_ENFORCE_MODEL_MANIFEST
+        value: "1"
+      - key: QTRUST_DEVICE
+        value: cpu
 
 databases:
   - name: qtrust-postgres
     databaseName: qtrust
     user: qtrust
     plan: starter
+    region: oregon
 
   - name: qtrust-redis
     plan: starter
+    region: oregon

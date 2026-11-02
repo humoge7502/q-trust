@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * The app layer had no shared surface vocabulary. The same card wrapper was
  * written out verbatim 18 times across six files, and the same panel heading
  * (`text-sm font-semibold uppercase tracking-wider text-slate-500`) appeared 11
- * times — alongside `text-slate-800`, `text-slate-950` and `text-slate-600`
+ * times — alongside `text-slate-800`, `text-slate-950` and `text-muted-foreground`
  * variants of the same idea. Nothing was wrong with any one of them; the problem
  * was that no two agreed, so the product read as a set of screens written at
  * different times rather than one system.

@@ -6,7 +6,7 @@ Q-Trust is a post-quantum cryptography (PQC) migration assurance platform that r
 
 ## Contract Layer
 
-All nine contracts are Solidity 0.8.24, UUPS-proxy upgradeable via OpenZeppelin `ERC1967Proxy`, and use `AccessControl` role-based permissions. Admin operations route through `QTrustGovernance` (2-day timelock). Gasless meta-transactions use EIP-712 typed signatures with nonce tracking.
+All eleven contracts are Solidity 0.8.24, UUPS-proxy upgradeable via OpenZeppelin `ERC1967Proxy`, and use `AccessControl` role-based permissions. Admin operations route through `QTrustGovernance` (7-day timelock, `DEFAULT_DELAY = 7 days`). Gasless meta-transactions use EIP-712 typed signatures with nonce tracking.
 
 | Contract | Description |
 |---|---|
@@ -14,9 +14,11 @@ All nine contracts are Solidity 0.8.24, UUPS-proxy upgradeable via OpenZeppelin 
 | **VendorRegistry** | Vendors (DigiCert, Thales, AWS) post PQC-readiness attestations per product/version/algorithm. |
 | **MigrationRegistry** | Records each migration step (from-algo → to-algo) with evidence hashes; validates asset existence against AssetRegistry. |
 | **AuditRegistry** | Third-party auditors post attestation results (Passed/Failed/Conditional); binds to on-chain migration count. |
+| **EvidenceRegistry** | Stores verifiable evidence records (hashes + metadata) referenced by audits and migrations for tamper-evident traceability. |
 | **QTrustGovernance** | Timelock-gated wrapper around the four core registries for pausing, retiring, role grants, and upgrades. |
 | **RevocationAnchor** | Anchors off-chain Merkle roots for privacy-preserving credential revocation checks. |
 | **PolicyCommitment** | Versioned on-chain policy hash anchors for reproducible trust assessments. |
+| **ComplianceAttestation** | Records regulatory/compliance attestations (jurisdiction, standard, status) bound to assets and vendors. |
 | **SchemaRegistry** | Registers JSON Schema documents for CBOM/credential formats with cross-domain equivalence mappings. |
 | **TrustAnchorRegistry** | Accreditation of credential issuers by governance multisig; verifiers reject non-accredited issuers. |
 
@@ -160,7 +162,7 @@ Inspector scan → CBOM JSON (qtrust.cbom.v1)
 ## Security Model
 
 - **RBAC:** OpenZeppelin `AccessControl` with named roles per contract (REGISTRAR_ROLE, VENDOR_ROLE, MIGRATOR_ROLE, AUDITOR_ROLE).
-- **Timelock:** `QTrustGovernance` wraps all admin mutations through a 2-day `TimelockController`, preventing single-key compromise.
+- **Timelock:** `QTrustGovernance` wraps all admin mutations through a 7-day `TimelockController` (`DEFAULT_DELAY = 7 days`), preventing single-key compromise.
 - **EIP-712:** Gasless meta-transactions for CBOM registration, vendor attestations, migration recording, and revocation root updates. Domain-separated typed hashes with per-address nonces.
 - **Replay protection:** Sequential nonce mapping per signer; signature recovery validates the signer matches the claimed org/vendor/issuer.
 - **Pausability:** Every registry can be emergency-paused by the admin; governance can schedule unpause through the timelock.
