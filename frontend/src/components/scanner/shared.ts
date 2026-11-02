@@ -70,6 +70,9 @@ export interface ScanResult {
   timestamp: string;
   findings: ScanFinding[];
   summary: ScanSummary;
+  /** Present for API-originated scans (repository ingestion). */
+  origin?: "path" | "repo";
+  filesScanned?: number;
 }
 
 type RiskLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "NONE";
@@ -258,12 +261,12 @@ export const SAMPLE_TARGETS = [
 /**
  * Severity → semantic tone.
  *
- * These helpers used to return raw Tailwind class pairs
- * (`bg-rose-100 text-rose-700`, `bg-sky-100 text-sky-700`, …) that no other part
- * of the application shared: "critical" was rose here, red in the anomaly
- * panel and the compliance chips, and risk-critical in the gauge. Returning a
- * tone instead means every chip in the product is rendered by `StatusPill`
- * against a measured AA-safe surface.
+ * These helpers used to return raw Tailwind palette pairs (a rose-tinted chip
+ * here, a sky-tinted one there, …) that no other part of the application
+ * shared: "critical" was rose here, red in the anomaly panel and the compliance
+ * chips, and risk-critical in the gauge. Returning a tone instead means every
+ * chip in the product is rendered by `StatusPill` against a measured AA-safe
+ * surface.
  *
  * The information design is unchanged — `medium` keeps the brand accent and
  * `high` keeps its caution colour, so the bands stay distinguishable.

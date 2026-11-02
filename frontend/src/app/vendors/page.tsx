@@ -157,7 +157,7 @@ function VendorsInner() {
     <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-[-0.035em] text-foreground">
+          <h1 className="font-display text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
             Vendor portal
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">

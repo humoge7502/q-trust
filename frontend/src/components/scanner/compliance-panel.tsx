@@ -41,7 +41,7 @@ export function CompliancePanel({ state }: { state: ScannerState }) {
                 <select
                   value={complianceFramework}
                   onChange={(e) => setComplianceFramework(e.target.value)}
-                  className="mt-1 block rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-foreground focus-visible:border-qtrust-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600/20"
+                  className="mt-1 block rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground focus-visible:border-qtrust-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600/20"
                 >
                   {COMPLIANCE_FRAMEWORKS.map((fw) => (
                     <option key={fw.value} value={fw.value}>
@@ -81,7 +81,7 @@ export function CompliancePanel({ state }: { state: ScannerState }) {
                 <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
                   <div className="relative h-28 w-28 shrink-0">
                     <svg className="h-28 w-28 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
-                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" strokeWidth="2.5" />
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--color-border)" strokeWidth="2.5" />
                       <circle
                         cx="18"
                         cy="18"
@@ -89,10 +89,10 @@ export function CompliancePanel({ state }: { state: ScannerState }) {
                         fill="none"
                         stroke={
                           complianceReport.scorePercent >= 80
-                            ? "#15803d"
+                            ? "var(--color-risk-low)"
                             : complianceReport.scorePercent >= 50
-                              ? "#a16207"
-                              : "#b91c1c"
+                              ? "var(--color-risk-medium)"
+                              : "var(--color-risk-critical)"
                         }
                         strokeWidth="2.5"
                         strokeDasharray={`${complianceReport.scorePercent} ${100 - complianceReport.scorePercent}`}
@@ -100,7 +100,7 @@ export function CompliancePanel({ state }: { state: ScannerState }) {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="font-mono text-2xl font-semibold text-slate-950 tabular-nums">
+                      <span className="font-mono text-2xl font-semibold text-foreground tabular-nums">
                         {complianceReport.scorePercent}%
                       </span>
                     </div>
@@ -134,7 +134,7 @@ export function CompliancePanel({ state }: { state: ScannerState }) {
                   <table className="w-full text-left text-xs">
                     <caption className="sr-only">Compliance findings</caption>
                     <thead>
-                      <tr className="border-b border-border bg-[#fbfbfa] text-label uppercase tracking-[0.14em] text-muted-foreground">
+                      <tr className="border-b border-border bg-canvas text-label uppercase tracking-[0.14em] text-muted-foreground">
                         <th scope="col" className="px-4 py-2.5 font-semibold">File</th>
                         <th scope="col" className="px-4 py-2.5 font-semibold">Algorithm</th>
                         <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>
@@ -145,7 +145,7 @@ export function CompliancePanel({ state }: { state: ScannerState }) {
                       {complianceReport.results.map((r, i) => (
                         <tr
                           key={i}
-                          className="border-b border-slate-100 transition-colors last:border-0 hover:bg-[#fbfbfa]"
+                          className="border-b border-border transition-colors last:border-0 hover:bg-canvas"
                         >
                           <td className="max-w-[180px] truncate px-4 py-2.5 font-mono text-foreground">
                             {r.file}
@@ -171,7 +171,7 @@ export function CompliancePanel({ state }: { state: ScannerState }) {
                   {complianceReport.results.map((r, i) => (
                     <div
                       key={i}
-                      className="rounded-xl border border-border bg-white p-3"
+                      className="rounded-xl border border-border bg-canvas-raised p-3"
                       role="listitem"
                     >
                       <div className="flex items-center justify-between gap-2">

@@ -57,6 +57,9 @@ export function BadgeEmbed({
     }
   }
 
+  // Raw palette classes below are deliberate: this surface mirrors the
+  // self-contained SVG-style markup a third party embeds — token-driven theming
+  // would diverge from what actually renders off-site.
   return (
     <section className="mt-6 rounded-xl border border-border bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-1">
