@@ -15,7 +15,7 @@ qiskit>=2.5.2
 qiskit-aer>=0.17.2
 
 # Side-channel analysis
-numpy>=1.26.0
+numpy>=2.5.3
 scipy>=1.12.0
 
 # RL agent — uses a self-contained simulation environment (MigrationEnvironment);
