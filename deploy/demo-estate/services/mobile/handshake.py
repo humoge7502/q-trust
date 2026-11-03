@@ -12,7 +12,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 try:  # pragma: no cover - optional demo dependency
-    from pqcrypto.kem.ml_kem_768 import generate_keypair as ml_kem_768_keypair
+    # pqcrypto >= 1.0.0 renamed generate_keypair to keygen (same (pk, sk) tuple).
+    from pqcrypto.kem.ml_kem_768 import keygen as ml_kem_768_keypair
 except ImportError:  # pragma: no cover
     ml_kem_768_keypair = None
 
