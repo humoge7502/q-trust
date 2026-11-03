@@ -101,7 +101,7 @@ export function CommandPalette({ renderTrigger = true }: { renderTrigger?: boole
   const router = useRouter();
   const pathname = usePathname();
 
-  // ⌘K / Ctrl+K toggles; "/" focuses the palette too (common convention).
+  // ⌘K / Ctrl+K toggles the palette; no other keyboard shortcut is wired up.
   // The header-mounted trigger opens the palette through the same listener
   // set (see COMMAND_PALETTE_OPEN_EVENT) — one window listener set owns both
   // entry points, so ⌘K and the button can never disagree about state.

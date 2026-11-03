@@ -206,6 +206,16 @@ crypto-inspector verify ${safeAssetId}`}</code>
  * chain says.
  */
 function VerificationUnavailable({ assetId }: { assetId: string }) {
+  // Audit H-7 (unreachable branch): the raw route param reaches this component
+  // unvalidated, and like the main flow above it is interpolated into a
+  // copy-pastable CLI snippet. Gate it through the same parseAssetId check;
+  // when it fails, render a literal placeholder instead of the raw param.
+  let safeAssetId: string;
+  try {
+    safeAssetId = parseAssetId(assetId);
+  } catch {
+    safeAssetId = "<asset-id>";
+  }
   return (
     <main className="flex-1 bg-canvas text-foreground">
       <div className="mx-auto max-w-2xl px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
@@ -235,7 +245,7 @@ function VerificationUnavailable({ assetId }: { assetId: string }) {
           label="Independent verification command"
           className="mt-4 overflow-x-auto rounded-xl border border-night-edge bg-night p-4 font-mono text-xs leading-6 text-night-ink"
         >
-          <code>crypto-inspector verify {assetId}</code>
+          <code>crypto-inspector verify {safeAssetId}</code>
         </CodeBlock>
       </div>
     </main>
