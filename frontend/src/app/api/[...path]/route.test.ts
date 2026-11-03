@@ -169,6 +169,30 @@ describe("S-1 proxy route allowlist", () => {
   });
 
   /**
+   * Audit (post-merge adversarial pass): Next percent-decodes catch-all
+   * segments before the handler runs, so the tests below pass the DECODED
+   * `..`/`.` segments — the exact shape the handler sees in production for a
+   * request like `/api/v1/stats/%2e%2e/admin`. Before the dot-segment guard,
+   * that path matched the public-read `/v1/stats` prefix (the policy runs on
+   * the un-normalized join) while undici normalized the URL to `/v1/admin`
+   * before the backend saw it.
+   */
+  describe("dot-segment traversal is rejected before policy matching", () => {
+    it.each([
+      ["GET", ["v1", "stats", "..", "admin"]],
+      ["GET", ["v1", "assets", "asset-1", "..", "..", "admin"]],
+      ["GET", ["v1", "."]],
+      ["GET", ["..", "health"]],
+      ["POST", ["v1", "scan", "source", "..", "relay", "attestation"]],
+    ])("%s %j is rejected with 400 and never forwarded", async (method, segments) => {
+      const res = await call(method, segments as string[]);
+      expect(res.status).toBe(400);
+      await expect(res.json()).resolves.toMatchObject({ error: expect.any(String) });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
    * Operator surface: money/state-mutating routes still require the caller's
    * own key, and the server-side admin key is never attached to them.
    */

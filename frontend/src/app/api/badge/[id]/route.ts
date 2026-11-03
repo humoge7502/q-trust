@@ -38,8 +38,25 @@ const STATUS_COLOR: Record<BadgeState["kind"], string> = {
 /** Approximate monospace glyph advance (px) at the 11px badge font. */
 const GLYPH = 7;
 
+/**
+ * Audit (post-merge adversarial pass) hardening: the message is interpolated
+ * into both an attribute (`aria-label`) and two text nodes (`<title>`,
+ * `<text>`) of a CORS-enabled (`*`) SVG, so nothing unescaped may reach those
+ * positions. `&` is replaced first, or the replacements themselves would be
+ * re-escaped; `"` is included because the value lands inside a double-quoted
+ * attribute. Every message is a hardcoded literal today, so output is
+ * byte-identical for all current inputs — this guards the day one isn't.
+ */
+function escapeSvgText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function buildBadge(state: BadgeState): string {
-  const message = state.message.toUpperCase();
+  const message = escapeSvgText(state.message.toUpperCase());
   const leftWidth = 70; // "Q-Trust" segment
   const rightWidth = Math.max(58, message.length * GLYPH + 20);
   const width = leftWidth + rightWidth;
