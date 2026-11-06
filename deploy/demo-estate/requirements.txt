@@ -1,5 +1,5 @@
 cryptography==50.0.0
 pyOpenSSL==26.4.0
 PyJWT==2.15.0
-requests==2.31.0
+requests==2.33.0
 pqcrypto==1.0.0
