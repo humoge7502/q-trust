@@ -1,12 +1,17 @@
 /**
- * Session-scoped store for the caller's own Q-Trust API key ("operator key").
+ * Fallback store for the caller's own Q-Trust API key ("operator key").
  *
  * WHY
  * ---
  * The same-origin proxy refuses the privileged surface (scanning, evidence
  * creation, GPU jobs, planner, relayer, webhooks) unless the caller presents
- * its own key — the server-side admin key is deliberately never used for those
- * routes. This module holds that caller-supplied key in the browser.
+ * its own credential — the server-side admin key is deliberately never used for
+ * those routes. Since 2026-11-07 the normal credential is a short-lived session
+ * token: the raw key is presented exactly once to `POST /v1/auth/session` and
+ * exchanged for a token, which `frontend/src/lib/operator-session.ts` keeps in
+ * `sessionStorage` (`qtrust.operatorSession`). This module remains the fallback
+ * for when the backend reports `session_unavailable`: the raw key is then kept
+ * here in the browser, exactly as before the token flow existed.
  *
  * STORAGE CHOICE
  * --------------
@@ -15,12 +20,15 @@
  *     persist on a shared machine;
  *   - never sent in a URL, never logged, never rendered back in full.
  *
- * THREAT NOTE (see docs/SECURITY_THREAT_MODEL.md, TM-FE-02): a key held in the
- * browser is readable by any script running on this origin, so XSS is
- * equivalent to key disclosure. That is acceptable here because the key is
- * operator-supplied, revocable, session-scoped, and the deployment's own CSP
- * forbids inline/remote scripts in production. Operators should issue a
- * separate key per operator so one can be revoked independently.
+ * THREAT NOTE (see docs/SECURITY_THREAT_MODEL.md, TM-FE-03): a credential held
+ * in the browser is readable by any script running on this origin, so XSS can
+ * use it until it expires or is revoked. The token flow narrows that window to
+ * the token's remaining TTL (60-min sliding default); the raw-key fallback is
+ * unchanged and still lives in `sessionStorage`. The deployment's CSP does NOT
+ * forbid inline scripts — production `script-src` keeps `'unsafe-inline'`
+ * (`frontend/next.config.mjs`, because Next.js emits inline bootstrap/RSC
+ * scripts), so CSP is not a backstop here. Operators should issue a separate
+ * key per operator so one can be revoked independently.
  */
 const STORAGE_KEY = "qtrust.operatorKey";
 

@@ -143,7 +143,7 @@ flowchart TD
 | TM-PL-02 | Supply chain | Write access to artifacts | Poison checkpoint | Corrupt rankings / RCE-pickle | Planner integrity | `weights_only=True` (`predict.py:78`); **startup SHA-256 pin vs `models.sha256` — implemented 2026-09-08** (`planner/qtrust_planner/checkpoint_manifest.py`, verified before `torch.load` in `server.py` + `predict.py`; image-baked manifest; compose `QTRUST_ENFORCE_MODEL_MANIFEST=1`) | Closed (was: hashes not pinned at deploy) | **Implemented** — pin SHA256 of checkpoints at deploy (files exist in repo) | Startup integrity check: mismatch aborts boot, fail-closed | Low | High | Medium |
 | TM-FE-01 | On-chain attacker | Asset registered | SSRF via `metadata_uri` server-side fetch | Internal service read | Frontend server trust | **FIXED**: `isValidIpfsCid` + `redirect:"error"` (`api.ts`), 8 regression tests | Gateway itself could be hostile (config) | Pin gateway + allowlist via env; consider CSP `connect-src` | — | — | — | Closed |
 | TM-FE-02 | Vendor | Vendor-controlled `evidence_uri` | XSS via rendered link | Session theft (browser) | Users | `sanitizeUri` allowlist (FE-3 fix, `sanitize-uri.ts`); zero `dangerouslySetInnerHTML` | — | — | — | — | — | Closed |
-| TM-FE-03 | Browser user / operator | Operator reaches the dashboard and performs a privileged action | XSS on this origin can read the browser-held operator key (key disclosure → privileged API access until revoked). Pre-fix variant: the proxy denied every privileged route, so those controls were permanently dead | Privileged API access with the operator's own key; previously a functional outage of the scan/planner/GPU/attestation surface | Operator API key; scanner, relayer and GPU surface | Policy is a single exported source of truth (`lib/api-route-policy.ts`); the proxy **never attaches the server-side admin key to operator routes** and rejects anonymous callers (`app/api/[...path]/route.ts`, verified live 2026-09-12); key lives in `sessionStorage` per tab, is never logged and never rendered in full (`lib/operator-key.ts`, `components/operator-access.tsx`); production CSP forbids inline/remote scripts | XSS on this origin is equivalent to key disclosure; a browser key is inherently less protected than a server-held one | Issue a distinct key per operator so one can be revoked independently; keep the length/control-char validation; consider short-lived key exchange if the operator surface grows | Proxy 403 `operator_key_required` rate; backend 401 rate per key | Low | Medium | Low |
+| TM-FE-03 | Browser user / operator | Operator reaches the dashboard and performs a privileged action | XSS on this origin can use the browser-held operator credential for privileged API access — the short-lived session token under the shipped flow, or the raw key on the fallback path — until it expires or is revoked. Pre-fix variant: the proxy denied every privileged route, so those controls were permanently dead | Privileged API access with the operator's own key; previously a functional outage of the scan/planner/GPU/attestation surface | Operator API key; scanner, relayer and GPU surface | Policy is a single exported source of truth (`lib/api-route-policy.ts`); the proxy **never attaches the server-side admin key to operator routes** and rejects anonymous callers (`app/api/[...path]/route.ts`, verified live 2026-09-12). Operator session tokens (2026-11-07): the raw key is presented exactly once to `POST /v1/auth/session` (static-key only, 10/min) and exchanged for a short-lived token — only SHA-256(token) is persisted server-side (`backend/src/services/operator-sessions.ts`, Redis or in-memory under `qtrust:opsess:<hash>` with a per-key index); 60-min sliding TTL default via `QTRUST_OPERATOR_SESSION_TTL_SECONDS` (clamped [60, 86400]); fail-closed in production without Redis (503 `session_unavailable`); per-key revocation via `/v1/auth/session/revoke` and `/v1/auth/session/revoke-all` (`backend/src/routes/auth.ts`, `backend/src/middleware/auth.ts`); after exchange the browser stores only the token in `sessionStorage` (`lib/operator-session.ts`, `components/operator-access.tsx`); public routes carry no credential | Residual: XSS on this origin can still use the live session token until it expires (default 60-min sliding TTL), and when the backend reports `session_unavailable` the static-key fallback still keeps the raw key in `sessionStorage` as before; production CSP `script-src` keeps `'unsafe-inline'` (`frontend/next.config.mjs` — Next.js emits inline bootstrap/RSC scripts), so CSP is not a script backstop | Drop `'unsafe-inline'` from `script-src` with a nonce/strict-dynamic CSP (tracked as TD-18); keep per-operator keys so one can be revoked independently | Proxy 403 `operator_key_required` rate; backend 401 rate per key | Low | Medium | Low |
 | TM-OPS-01 | Config error | Operator misconfiguration | Start with permissive defaults | Varies | All | Fail-closed startup gates verified live (CORS/relayer/scan roots) | None noted | — | Startup-refusal is itself the alarm | Low | Medium | Low |
 
 ### Same-origin proxy authorization (2026-09-12)
@@ -155,7 +155,13 @@ A single policy module (`lib/api-route-policy.ts`) classifies every endpoint:
 |---|---|---|---|
 | `public-read` | `GET /v1/assets/:id`, `/v1/orgs/:did/*`, `/v1/relay/nonce/:did` | Yes (when configured) | None |
 | `public-compute` | `POST /v1/risk/score`, `/v1/compliance/evaluate`, `/v1/evidence/verify` | Yes (when configured) | None (stateless, no writes) |
-| `operator` | `POST /v1/scan/full`, `/v1/plans`, `/v1/evidence/create`, `/v1/relay/attestation`, `/v1/gpu/*`, `/v1/webhooks/*` | **Never** | Caller's own key in `x-qtrust-api-key`; otherwise `403 operator_key_required` |
+| `operator` | `POST /v1/scan/full`, `/v1/plans`, `/v1/evidence/create`, `/v1/relay/attestation`, `/v1/gpu/*`, `/v1/webhooks/*` | **Never** | Caller's own credential — `x-qtrust-session` (preferred) or `x-qtrust-api-key` fallback; otherwise `403 operator_key_required` |
+
+(2026-11-07) The operator credential is normally a short-lived session token:
+`lib/operator-session.ts` exchanges the raw key exactly once at `POST /v1/auth/session`
+and stores only the token (`sessionStorage` `qtrust.operatorSession`); operator routes
+send it as `x-qtrust-session` and fall back to `x-qtrust-api-key` only while the backend
+reports `session_unavailable`. Public routes carry neither header. See TM-FE-03.
 
 Verified live against a running production build (stub upstream echoing the received
 key): anonymous privileged call → `403 operator_key_required` with no upstream request;
@@ -209,6 +215,15 @@ adds a caller-key path: anonymous callers are still refused, the server-side adm
 is still never attached to privileged routes, and a contract test now fails if the UI
 references an endpoint the policy does not classify. See
 `frontend/src/lib/api-route-policy.ts` and the verification table above.
+
+Third pass (2026-11-07) mitigated TM-FE-03 with short-lived operator session tokens and
+corrected a false claim the TM-FE-03 row had carried: production CSP does **not** forbid
+inline scripts — `frontend/next.config.mjs` keeps `'unsafe-inline'` in `script-src`
+because Next.js always emits inline bootstrap and RSC-streaming scripts, so CSP was
+never a script backstop on this origin. Nonce/strict-dynamic CSP is tracked as TD-18 in
+`TECHNICAL_DEBT.md`. Residual after the mitigation, stated plainly: XSS on this origin
+can still use the live session token until it expires (default 60-min sliding TTL), and
+the `session_unavailable` fallback still keeps the raw operator key in `sessionStorage`.
 
 Update this document after any architecture change or when
 the three open questions are answered.
