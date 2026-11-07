@@ -131,10 +131,20 @@ describe("API route policy", () => {
       ["/v1/write/assets", "POST"],
       ["/v1/webhooks/subscribe", "POST"],
       ["/v1/credentials/issue", "POST"],
+      // Operator session management: the one-shot exchange and revocation.
+      // The UI references these literals (lib/operator-session.ts), so the
+      // scan test above needs them classified here.
+      ["/v1/auth/session", "POST"],
+      ["/v1/auth/session/revoke", "POST"],
+      ["/v1/auth/session/revoke-all", "POST"],
     ];
     for (const [path, method] of operatorEndpoints) {
       expect(endpointRequiresOperatorKey(path, method), `${method} ${path}`).toBe(true);
     }
+
+    // Session rules are POST-only: no introspection surface leaks through.
+    expect(classifyEndpoint("/v1/auth/session", "GET")).toBeNull();
+    expect(classifyEndpoint("/v1/auth/session/revoke", "GET")).toBeNull();
 
     // Compute for anonymous browsers: scanner, planner, evidence, GPU panels.
     for (const [path, method] of [

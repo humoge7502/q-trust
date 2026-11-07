@@ -147,6 +147,9 @@ describe("S-1 proxy route allowlist", () => {
       ["POST", ["v1", "stats"]],
       // R1: retired planner lookup stays default-deny through the proxy.
       ["GET", ["v1", "plans", "did:web:example"]],
+      // The session rules are POST-only: session introspection must stay
+      // default-deny even if the backend grows a GET variant.
+      ["GET", ["v1", "auth", "session"]],
     ])("%s %s (wrong method on allowed path)", async (method, segments) => {
       const res = await call(method, segments as string[]);
       expect(res.status).toBe(403);
@@ -202,6 +205,11 @@ describe("S-1 proxy route allowlist", () => {
       ["POST", ["v1", "webhooks", "subscribe"]],
       ["POST", ["v1", "write", "assets"]],
       ["POST", ["v1", "credentials", "issue"]],
+      // Session exchange and revocation are operator-class too: an anonymous
+      // exchange attempt gets the same machine-readable 403.
+      ["POST", ["v1", "auth", "session"]],
+      ["POST", ["v1", "auth", "session", "revoke"]],
+      ["POST", ["v1", "auth", "session", "revoke-all"]],
     ];
 
     it.each(operatorRoutes)(
@@ -213,6 +221,79 @@ describe("S-1 proxy route allowlist", () => {
         expect(fetchMock).not.toHaveBeenCalled();
       },
     );
+
+    // The session-exchange endpoint is itself operator-class: anonymous callers
+    // get the same machine-readable 403, with a key it is forwarded.
+    it("forwards the exchange endpoint with the presented key", async () => {
+      const res = await call("POST", ["v1", "auth", "session"], {
+        "x-qtrust-api-key": "qtrust-fixture-caller-value",
+      });
+      expect(res.status).not.toBe(403);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-caller-value");
+      expect(upstreamHeaders().get("x-api-key")).not.toBe("qtrust-fixture-server-value");
+      expect(upstreamHeaders().get("x-qtrust-api-key")).toBeNull();
+    });
+
+    it("forwards the revoke endpoints with the presented session token", async () => {
+      for (const segments of [
+        ["v1", "auth", "session", "revoke"],
+        ["v1", "auth", "session", "revoke-all"],
+      ]) {
+        fetchMock.mockClear();
+        const res = await call("POST", segments, { "x-qtrust-session": "qtrust-fixture-session-token" });
+        expect(res.status).not.toBe(403);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-session-token");
+      }
+    });
+
+    it("forwards a session token as the upstream x-api-key", async () => {
+      const res = await call("POST", ["v1", "relay", "attestation"], {
+        "x-qtrust-session": "qtrust-fixture-session-token",
+      });
+      expect(res.status).not.toBe(403);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const sent = upstreamHeaders();
+      expect(sent.get("x-api-key")).toBe("qtrust-fixture-session-token");
+      expect(sent.get("x-api-key")).not.toBe("qtrust-fixture-server-value");
+      // The browser-only header name never reaches the backend.
+      expect(sent.get("x-qtrust-session")).toBeNull();
+    });
+
+    it("prefers the session token when both caller headers are present", async () => {
+      const res = await call("POST", ["v1", "relay", "attestation"], {
+        "x-qtrust-session": "qtrust-fixture-session-token",
+        "x-qtrust-api-key": "qtrust-fixture-caller-value",
+      });
+      expect(res.status).not.toBe(403);
+      // A caller that exchanged its key must not be downgraded to replaying
+      // the static one.
+      expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-session-token");
+    });
+
+    it("rejects a malformed session token", async () => {
+      const res = await call("POST", ["v1", "relay", "attestation"], {
+        "x-qtrust-session": "t".repeat(600),
+      });
+      expect(res.status).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("treats a whitespace-only session token as absent (403, not 400)", async () => {
+      const res = await call("POST", ["v1", "relay", "attestation"], {
+        "x-qtrust-session": "   ",
+      });
+      expect(res.status).toBe(403);
+      await expect(res.json()).resolves.toMatchObject({ code: "operator_key_required" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("never attaches a caller credential to public routes, even when presented", async () => {
+      await call("GET", ["v1", "assets", "asset-1"], { "x-qtrust-session": "qtrust-fixture-session-token" });
+      expect(upstreamHeaders().get("x-api-key")).toBe("qtrust-fixture-server-value");
+      expect(upstreamHeaders().get("x-qtrust-session")).toBeNull();
+    });
 
     it("forwards the caller's key and never the server admin key", async () => {
       const res = await call("POST", ["v1", "relay", "attestation"], {
