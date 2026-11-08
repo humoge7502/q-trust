@@ -24,8 +24,7 @@ describe("operator key fingerprint derivation", () => {
     process.env = originalEnv;
   });
 
-  it("is deterministic, 16 hex chars, and key-distinct (scrypt fallback)", () => {
-    delete process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET;
+  it("is deterministic, 16 hex chars, and key-distinct", () => {
     const a1 = keyFingerprint("fp-key-a");
     const a2 = keyFingerprint("fp-key-a");
     const b = keyFingerprint("fp-key-b");
@@ -34,17 +33,7 @@ describe("operator key fingerprint derivation", () => {
     expect(a1).not.toBe(b);
   });
 
-  it("mixes the configured secret into the derivation (HMAC path)", () => {
-    process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET = "pepper-one";
-    const withOne = keyFingerprint("fp-key-hmac");
-    process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET = "pepper-two";
-    const withTwo = keyFingerprint("fp-key-hmac");
-    expect(withOne).toMatch(/^[0-9a-f]{16}$/);
-    expect(withOne).not.toBe(withTwo);
-  });
-
   it("never equals a bare sha256 truncation of the key", () => {
-    delete process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET;
     const bareSha = createHash("sha256")
       .update("fp-key-scrypt", "utf8")
       .digest("hex")

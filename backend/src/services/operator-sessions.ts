@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes, scryptSync } from "node:crypto";
+import { createHash, randomBytes, scryptSync } from "node:crypto";
 import { Redis } from "ioredis";
 import { operatorSessionTtlSeconds } from "../config.js";
 
@@ -51,45 +51,28 @@ export function sha256Hex(value: string): string {
 // The fingerprint is derived from the RAW API KEY (a password-class secret)
 // and is persisted in Redis index sets, route responses and audit logs, so
 // the derivation must not be a bare fast hash: SHA-256(key) in a leaked store
-// would be brute-forceable if the operator key is low-entropy. Two modes:
-//
-//   1. QTRUST_OPERATOR_FINGERPRINT_SECRET set — HMAC-SHA256 under that
-//      secret (fast; per-request cheap). Recovering a key from a leaked
-//      fingerprint requires the secret itself.
-//   2. No secret — scrypt (adaptive KDF) over a fixed documented salt:
-//      deterministic and replica-stable for the shared Redis index, and
-//      brute-force-resistant even unpeppered. Memoized per value because
-//      scryptSync blocks the event loop (~50ms/call) and static-auth
-//      computes the fingerprint on every request. Production logs a one-
-//      time warning recommending the secret (mode 1).
+// would be brute-forceable if the operator key is low-entropy. The derivation
+// is therefore scrypt (adaptive KDF) over a fixed, documented salt — CodeQL
+// accepts scrypt as password-safe, and a fixed salt is fine here: it only
+// needs to defeat precomputation, and the fingerprint must be deterministic
+// and replica-stable for the shared Redis index. Memoized per value because
+// scryptSync blocks the event loop (~50ms/call) and static-auth computes the
+// fingerprint on every request; the cache holds one entry per configured key.
 
-const FINGERPRINT_FALLBACK_SALT = "qtrust:operator-key-fingerprint:v1";
+const FINGERPRINT_SALT = "qtrust:operator-key-fingerprint:v1";
 const fingerprintCache = new Map<string, string>();
-let warnedMissingSecret = false;
 
 /**
- * First 16 hex chars of the keyed digest of `value`: a stable,
+ * First 16 hex chars of the scrypt-derived digest of `value`: a stable,
  * non-reversible identifier for the per-key revoke index, route responses
  * and audit logs. 16 hex chars (64 bits) is enough to make collision and
  * reconstruction of the underlying credential impractical while never
  * persisting the secret.
  */
 export function keyFingerprint(value: string): string {
-  const secret = process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET;
-  if (secret) {
-    return createHmac("sha256", secret).update(value, "utf8").digest("hex").slice(0, 16);
-  }
-  if (isProduction() && !warnedMissingSecret) {
-    warnedMissingSecret = true;
-    console.warn(
-      "[operator-sessions] QTRUST_OPERATOR_FINGERPRINT_SECRET is not set — " +
-        "operator-key fingerprints fall back to scrypt (slower). Set the " +
-        "secret to use the HMAC path.",
-    );
-  }
   let fp = fingerprintCache.get(value);
   if (fp === undefined) {
-    fp = scryptSync(value, FINGERPRINT_FALLBACK_SALT, 32).toString("hex").slice(0, 16);
+    fp = scryptSync(value, FINGERPRINT_SALT, 32).toString("hex").slice(0, 16);
     fingerprintCache.set(value, fp);
   }
   return fp;
