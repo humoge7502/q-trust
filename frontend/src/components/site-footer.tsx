@@ -10,6 +10,7 @@
 import Link from "next/link";
 import { API_DOCS_URL } from "@/lib/api";
 import { CHAIN } from "@/lib/config";
+import { CurrentYear } from "@/components/ui/current-year";
 import { ArrowTopRightOnSquareIcon, ShieldCheckIcon } from "@/app/icons";
 
 const explorerUrl =
@@ -119,7 +120,7 @@ export function SiteFooter() {
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-6 text-[11px] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} Q-Trust contributors · MIT licensed
+            © <CurrentYear /> Q-Trust contributors · MIT licensed
           </p>
           <p className="font-mono uppercase tracking-[0.16em] text-night-ink-soft">
             {CHAIN.name} · chain id {CHAIN.id}

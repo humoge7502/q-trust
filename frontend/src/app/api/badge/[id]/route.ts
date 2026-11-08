@@ -13,7 +13,7 @@
  * response is cached briefly (60 s) so a popular README does not hammer the
  * backend on every page load.
  */
-import { fetchAssetVerification } from "@/lib/api";
+import { ApiError, fetchAssetVerification } from "@/lib/api";
 import { parseAssetId } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
@@ -103,10 +103,22 @@ export async function GET(
           : { kind: "revoked", message: "revoked" };
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      state = msg.includes("404")
-        ? { kind: "notfound", message: "not found" }
-        : { kind: "unreachable", message: "unreachable" };
+      // Branch on the typed error status when we have one: `ApiError.message`
+      // embeds the upstream detail verbatim, so a 500 whose body happens to
+      // mention "404" (a proxy log line, a cache hint) used to be classified
+      // as NOT_FOUND. Message matching remains only as the fallback for
+      // errors that carry no status at all (plain transport failures).
+      const status = err instanceof ApiError ? err.status : undefined;
+      if (status === 404) {
+        state = { kind: "notfound", message: "not found" };
+      } else if (status !== undefined) {
+        state = { kind: "unreachable", message: "unreachable" };
+      } else {
+        const msg = err instanceof Error ? err.message : "";
+        state = msg.includes("404")
+          ? { kind: "notfound", message: "not found" }
+          : { kind: "unreachable", message: "unreachable" };
+      }
     }
   } catch {
     state = { kind: "invalid", message: "invalid id" };

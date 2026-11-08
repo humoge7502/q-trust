@@ -32,7 +32,7 @@ export function CodeBlock({ label, className, children, ...props }: CodeBlockPro
       role="region"
       aria-label={label}
       className={cn(
-        "scrollbar-thin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
+        "scrollbar-thin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum focus-visible:ring-offset-2 focus-visible:ring-offset-night",
         className,
       )}
       {...props}

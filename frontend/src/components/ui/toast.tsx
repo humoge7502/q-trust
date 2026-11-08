@@ -13,8 +13,11 @@ export interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const variantStyles: Record<string, string> = {
   default: "border-border bg-white text-foreground",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  destructive: "border-rose-200 bg-rose-50 text-rose-900",
+  // success/danger state tokens from globals.css replace the raw
+  // emerald/rose pairs; the measured foreground-on-surface contrast is
+  // documented next to the token definitions.
+  success: "border-success-border bg-success-surface text-success",
+  destructive: "border-danger-border bg-danger-surface text-danger",
 };
 
 export function Toast({
@@ -39,9 +42,9 @@ export function Toast({
     >
       <span className="mt-0.5 shrink-0" aria-hidden="true">
         {variant === "success" ? (
-          <ShieldCheckIcon className="h-4 w-4 text-emerald-600" />
+          <ShieldCheckIcon className="h-4 w-4 text-success" />
         ) : variant === "destructive" ? (
-          <XCircleIcon className="h-4 w-4 text-rose-600" />
+          <XCircleIcon className="h-4 w-4 text-danger" />
         ) : null}
       </span>
       <div className="min-w-0 flex-1">
@@ -54,7 +57,7 @@ export function Toast({
           type="button"
           onClick={onClose}
           aria-label="Dismiss"
-          className="shrink-0 rounded p-1 text-slate-400 hover:bg-neutral-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
+          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-neutral-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600"
         >
           <span aria-hidden="true">×</span>
         </button>
