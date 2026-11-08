@@ -5,20 +5,28 @@
  *
  * The same-origin proxy refuses the money/state-mutating surface (relayer
  * submissions, workspace writes, webhook mutations, credential issuance)
- * unless the caller presents its own API key — see `lib/api-route-policy.ts`.
- * Scanner, planner, evidence and GPU compute are open to every visitor and
- * never need this panel. Before this component the affected controls simply
- * failed with an opaque 403; they now render either a proactive "Operator
- * access" panel or an in-context prompt.
+ * unless the caller presents its own credential — see
+ * `lib/api-route-policy.ts`. Scanner, planner, evidence and GPU compute are
+ * open to every visitor and never need this panel. Before this component the
+ * affected controls simply failed with an opaque 403; they now render either a
+ * proactive "Operator access" panel or an in-context prompt.
  *
- * The key is held in `sessionStorage` for the tab, is never rendered back in
- * full, and is never sent anywhere except the same-origin proxy.
+ * CREDENTIAL HANDLING
+ * -------------------
+ * Saving a key first tries to EXCHANGE it for a short-lived session token
+ * (`lib/operator-session.ts`): the raw key is presented exactly once and never
+ * stored, and the browser keeps only the session. If the session service is
+ * unavailable, saving falls back to today's behaviour and keeps the raw key in
+ * this tab's `sessionStorage`. Either way the credential is never rendered
+ * back in full and is never sent anywhere except the same-origin proxy.
  */
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useOperatorKey } from "@/hooks/use-operator-key";
+import { useOperatorSession } from "@/hooks/use-operator-session";
+import { clearOperatorSession, exchangeOperatorKey } from "@/lib/operator-session";
 import { setOperatorKey } from "@/lib/operator-key";
 
 /** Mask a stored key so it is identifiable without being disclosed in full. */
@@ -27,26 +35,73 @@ function maskKey(key: string): string {
   return `${key.slice(0, 4)}…${key.slice(-4)}`;
 }
 
+/** Honest, tone-tagged outcome text for the last save/clear action. */
+interface Feedback {
+  tone: "success" | "error";
+  message: string;
+}
+
 function KeyField({ onSaved }: { onSaved?: () => void }) {
   const keyId = useId();
   const helpId = `${keyId}-help`;
+  const statusId = `${keyId}-status`;
   const [draft, setDraft] = useState("");
+  const [pending, setPending] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const current = useOperatorKey();
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const session = useOperatorSession();
 
-  function save() {
-    if (!draft.trim()) return;
-    setOperatorKey(draft);
-    setDraft("");
-    setSavedAt(Date.now());
-    onSaved?.();
+  async function save() {
+    const trimmed = draft.trim();
+    if (!trimmed || pending) return;
+    setPending(true);
+    setFeedback(null);
+    try {
+      const result = await exchangeOperatorKey(trimmed);
+      if (result.ok) {
+        // The session now carries access; drop any raw key so it does not
+        // linger as a second, stronger credential. (exchangeOperatorKey also
+        // clears it — this keeps the invariant if the store changes later.)
+        setOperatorKey("");
+        setDraft("");
+        setFeedback({
+          tone: "success",
+          message: "Session started for this tab — your key was not stored.",
+        });
+        onSaved?.();
+      } else if (result.reason === "rejected") {
+        // The server saw the key and refused it. Persist nothing — a stored
+        // rejected key would just make every privileged call fail with an
+        // opaque backend error instead of this honest one.
+        setFeedback({
+          tone: "error",
+          message: "The server rejected this key. Check that it is valid and not revoked.",
+        });
+      } else {
+        // Session service unavailable (older backend, 503, network): fall back
+        // to keeping the raw key in this tab's sessionStorage, exactly the
+        // pre-session behaviour.
+        setOperatorKey(trimmed);
+        setDraft("");
+        setFeedback({
+          tone: "success",
+          message: "Session service unavailable — key kept in this tab's storage instead.",
+        });
+        onSaved?.();
+      }
+    } finally {
+      setPending(false);
+    }
   }
 
   function clear() {
     setOperatorKey(null);
-    setSavedAt(null);
+    clearOperatorSession();
+    setFeedback(null);
     onSaved?.();
   }
+
+  const hasCredential = Boolean(session) || Boolean(current);
 
   return (
     <div className="mt-3">
@@ -66,30 +121,42 @@ function KeyField({ onSaved }: { onSaved?: () => void }) {
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
-              save();
+              void save();
             }
           }}
-          placeholder={current ? `Stored: ${maskKey(current)}` : "Paste your API key"}
+          placeholder={
+            session
+              ? "Session active"
+              : current
+                ? `Stored: ${maskKey(current)}`
+                : "Paste your API key"
+          }
           className="max-w-xs font-mono"
         />
-        <Button size="sm" onClick={save} disabled={!draft.trim()}>
-          Save key
+        <Button size="sm" onClick={() => void save()} disabled={!draft.trim() || pending}>
+          {pending ? "Exchanging…" : "Save key"}
         </Button>
-        {current ? (
+        {hasCredential ? (
           <Button size="sm" variant="ghost" onClick={clear}>
             Clear
           </Button>
         ) : null}
       </div>
       <p id={helpId} className="mt-2 max-w-prose text-micro leading-5 text-muted-foreground">
-        Kept in this tab&rsquo;s session storage only, sent to the same-origin API proxy,
-        and forwarded as the backend <code className="rounded bg-neutral-surface px-1">x-api-key</code>.
-        The server-side admin key is never used for privileged routes, so each operator
-        should use their own key.
+        Your key is exchanged once for a short-lived session token and is not stored in
+        the browser; the token is sent to the same-origin API proxy and forwarded as the
+        backend <code className="rounded bg-neutral-surface px-1">x-api-key</code>. If the
+        session service is unavailable, the key is kept in this tab&rsquo;s session
+        storage only. The server-side admin key is never used for privileged routes, so
+        each operator should use their own key.
       </p>
-      {savedAt !== null ? (
-        <p role="status" className="mt-2 text-micro font-medium text-success">
-          Key saved for this tab.
+      {feedback ? (
+        <p
+          id={statusId}
+          role={feedback.tone === "error" ? "alert" : "status"}
+          className={`mt-2 text-micro font-medium ${feedback.tone === "error" ? "text-danger" : "text-success"}`}
+        >
+          {feedback.message}
         </p>
       ) : null}
     </div>
@@ -115,18 +182,21 @@ export function OperatorAccessPanel({
   variant?: "card" | "strip";
 }) {
   const current = useOperatorKey();
+  const session = useOperatorSession();
+  const hasCredential = Boolean(session) || Boolean(current);
+  const credentialLabel = session ? "session active" : current ? "key set" : "optional";
 
   if (variant === "strip") {
     return (
       <details className="group">
         <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-micro font-medium text-muted-foreground transition hover:border-slate-400 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600 [&::-webkit-details-marker]:hidden">
           <span
-            className={`h-1.5 w-1.5 rounded-full ${current ? "bg-success" : "bg-slate-400"}`}
+            className={`h-1.5 w-1.5 rounded-full ${hasCredential ? "bg-success" : "bg-slate-400"}`}
             aria-hidden="true"
           />
           Operator access
           <span aria-hidden="true">·</span>
-          <span className="font-normal">{current ? "key set" : "optional"}</span>
+          <span className="font-normal">{hasCredential ? credentialLabel : "optional"}</span>
         </summary>
         <div className="mt-3 rounded-xl border border-border bg-white p-4">
           <p className="max-w-prose text-micro leading-6 text-muted-foreground">
@@ -148,8 +218,8 @@ export function OperatorAccessPanel({
     >
       <summary className="cursor-pointer text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-qtrust-600">
         Operator access
-        <StatusPill tone={current ? "success" : "neutral"} className="ml-2">
-          {current ? "key set" : "no key"}
+        <StatusPill tone={hasCredential ? "success" : "neutral"} className="ml-2">
+          {hasCredential ? credentialLabel : "no key"}
         </StatusPill>
       </summary>
       <p className="mt-3 max-w-prose text-micro leading-6 text-muted-foreground">
@@ -164,8 +234,9 @@ export function OperatorAccessPanel({
 }
 
 /**
- * In-context prompt shown when a privileged action was attempted without a key.
- * Saving the key calls `onSaved`, so callers can immediately retry.
+ * In-context prompt shown when a privileged action was attempted without a
+ * credential (or with one the backend refused). Saving the key calls
+ * `onSaved`, so callers can immediately retry.
  */
 export function OperatorAccessInline({
   endpoint,

@@ -180,3 +180,54 @@ errors; a full-page screenshot was reviewed for layout at 1360×1000.
   and UI now match it.
 - Verified: backend certification 19 + routes 9; frontend verifier 5/5;
   `tsc` clean.
+
+## Session 4 — operator session tokens (2026-11-07)
+
+### 1. Short-lived operator session tokens — IMPLEMENTED
+- **Backend service** `backend/src/services/operator-sessions.ts`: session store
+  (Redis, with an in-memory fallback for development) keyed by SHA-256(token) under
+  `qtrust:opsess:<hash>` plus a per-key index (`qtrust:opsess-key:<fp>`); tokens are
+  32-byte base64url and only their hash is ever persisted. 60-min sliding TTL by
+  default via `QTRUST_OPERATOR_SESSION_TTL_SECONDS` (clamped [60, 86400]);
+  fail-closed in production without Redis.
+- **Middleware** `backend/src/middleware/auth.ts`: `requireApiKey` accepts the static
+  key or a session token (constant-time comparison loop preserved, sets
+  `request.operatorAuth`); new `requireStaticApiKey` rejects session tokens, so a
+  session token cannot mint further sessions.
+- **Routes** `backend/src/routes/auth.ts` (registered in `server.ts`):
+  `POST /v1/auth/session` (static-key only, 10/min, 503 `session_unavailable` when
+  production lacks Redis), `POST /v1/auth/session/revoke`,
+  `POST /v1/auth/session/revoke-all`.
+- **Frontend** `frontend/src/lib/operator-session.ts`: exchanges the raw key exactly
+  once at `POST /v1/auth/session` and stores only the token (`sessionStorage`
+  `qtrust.operatorSession`); 503 `session_unavailable` / 404 / network → "unavailable",
+  raw-key fallback persisted as before; 400/401/403 → "rejected", nothing persisted.
+  `api.ts` sends `x-qtrust-session` (preferred) or `x-qtrust-api-key` on operator
+  routes and no credential on public routes; a 403 `operator_key_required` clears the
+  stored session before raising. The proxy (`app/api/[...path]/route.ts`) forwards
+  either browser header upstream as `x-api-key`. `operator-access.tsx` saves through
+  the exchange first and shows honest rejected/unavailable states.
+
+### 2. Verification (executed)
+```
+backend   vitest 409 passed / 2 skipped | tsc clean
+frontend  vitest 209/209 | tsc + eslint clean
+e2e       Playwright operator-session.spec.ts 6/6 | a11y-app 10/10
+```
+
+### 3. Docs honesty pass (same day)
+- TM-FE-03 (`docs/SECURITY_THREAT_MODEL.md`) rewritten to the shipped design with the
+  residual stated plainly: XSS on the frontend origin can still use the live session
+  token until it expires (default 60-min sliding TTL), and the `session_unavailable`
+  raw-key fallback still keeps the key in `sessionStorage` as before.
+- **Corrected a false claim** that appeared in the TM-FE-03 row, TD-08 and the
+  `operator-key.ts` header: "production CSP forbids inline/remote scripts" is untrue —
+  `frontend/next.config.mjs` keeps `'unsafe-inline'` in `script-src` in production
+  because Next.js always emits inline bootstrap/RSC-streaming scripts. TD-18 tracks
+  the nonce/strict-dynamic CSP follow-up.
+
+### 4. Still open (honest)
+- CSP nonce/strict-dynamic migration (TD-18): CSP is currently not a script backstop
+  on the frontend origin.
+- The live-token XSS window (default 60-min sliding) is inherent to the design; the
+  raw-key fallback path remains whenever the backend reports `session_unavailable`.

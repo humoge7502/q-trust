@@ -7,13 +7,17 @@
 import {
   OPERATOR_KEY_HEADER,
   OPERATOR_KEY_REQUIRED_CODE,
+  OPERATOR_SESSION_HEADER,
   classifyEndpoint,
+  matchRouteRule,
 } from "@/lib/api-route-policy";
 import { getOperatorKey } from "@/lib/operator-key";
+import { clearOperatorSession, getOperatorSession } from "@/lib/operator-session";
 
 // Browser API calls use the same-origin Next.js proxy. For public routes the
 // proxy attaches the server-only QTRUST_API_KEY; for operator routes it forwards
-// the caller's own key instead (see lib/api-route-policy.ts).
+// the caller's own credential — a short-lived session token when one exists,
+// the raw key as a fallback, nothing when anonymous (see lib/api-route-policy.ts).
 export const API_BASE_URL = "/api";
 
 /**
@@ -51,12 +55,6 @@ export class ApiError extends Error {
   }
 }
 
-/** Headers carrying the caller's operator key, when one is stored. */
-export function operatorHeaders(): Record<string, string> {
-  const key = getOperatorKey();
-  return key ? { [OPERATOR_KEY_HEADER]: key } : {};
-}
-
 /** True when this path+method is on the privileged (operator) surface. */
 export function endpointNeedsOperatorKey(path: string, method: string): boolean {
   return classifyEndpoint(path, method) === "operator";
@@ -90,6 +88,12 @@ async function handleResponse<T>(response: Response, path: string): Promise<T> {
       code = undefined;
     }
     if (code === OPERATOR_KEY_REQUIRED_CODE) {
+      // Stale session self-heal: the token died server-side (expired, revoked,
+      // or the backend restarted and forgot it), so keeping it in storage would
+      // make every retry fail identically. Clearing it here drops the browser
+      // back to anonymous — the inline operator prompt then renders its key
+      // field, and a fresh exchange restores access without a reload.
+      clearOperatorSession();
       throw new OperatorKeyRequiredError(`${path}`);
     }
   }
@@ -149,10 +153,18 @@ export type ApiRuntime = "browser" | "server";
  * unit-testable — the server branch is the one that broke `/v/[id]`, and it is
  * unreachable from a jsdom test (which always has a `window`).
  *
- * The two invariants worth asserting:
- *   - server URLs are absolute (relative ones throw in Node's `fetch`); and
- *   - the server-only admin key is used on the server and the caller's operator
- *     key in the browser, never swapped.
+ * The invariants worth asserting:
+ *   - server URLs are absolute (relative ones throw in Node's `fetch`);
+ *   - the server-only admin key is used on the server and the caller's own
+ *     credential in the browser, never swapped; and
+ *   - in the browser, the caller's credential is scoped to the operator route
+ *     class ONLY (see `lib/api-route-policy.ts`): public reads and public
+ *     compute carry neither header, so a stored key can no longer ride on
+ *     every request the page makes. On operator routes the short-lived
+ *     session token is preferred (`x-qtrust-session`); the raw key is the
+ *     fallback when the exchange was unavailable, and neither header is sent
+ *     when the caller is anonymous — the proxy answers 403
+ *     `operator_key_required` and the UI prompts.
  */
 export function resolveApiRequest(
   path: string,
@@ -161,15 +173,26 @@ export function resolveApiRequest(
     backendOrigin: string;
     serverApiKey?: string;
     operatorKey?: string | null;
+    operatorSession?: { token: string } | null;
   },
 ): { url: string; headers: Record<string, string> } {
   if (runtime === "browser") {
-    return {
-      url: `${API_BASE_URL}${path}`,
-      headers: options.operatorKey
-        ? { [OPERATOR_KEY_HEADER]: options.operatorKey }
-        : {},
-    };
+    // Endpoint helpers append query strings (`?version=…`); the policy matches
+    // on segments, so strip the query before classifying.
+    const routePath = path.split("?")[0];
+    const rule = matchRouteRule(routePath);
+    const headers: Record<string, string> = {};
+    if (rule?.routeClass === "operator") {
+      if (options.operatorSession?.token) {
+        // Session preferred: the raw key is gone (or irrelevant) once exchanged.
+        headers[OPERATOR_SESSION_HEADER] = options.operatorSession.token;
+      } else if (options.operatorKey) {
+        // Fallback: the session service was unavailable, so the raw key is
+        // still the caller's credential — exactly the pre-session behaviour.
+        headers[OPERATOR_KEY_HEADER] = options.operatorKey;
+      }
+    }
+    return { url: `${API_BASE_URL}${path}`, headers };
   }
   return {
     url: `${options.backendOrigin.replace(/\/$/, "")}${path}`,
@@ -187,8 +210,11 @@ function resolveRequest(path: string): {
     {
       backendOrigin: backendOrigin(),
       serverApiKey: serverApiKey(),
-      // `getOperatorKey` is a no-op on the server (it guards on `window`).
+      // `getOperatorKey`/`getOperatorSession` are no-ops on the server (both
+      // guard on `window`), so server renders can never attach a caller
+      // credential.
       operatorKey: getOperatorKey(),
+      operatorSession: getOperatorSession(),
     },
   );
 }

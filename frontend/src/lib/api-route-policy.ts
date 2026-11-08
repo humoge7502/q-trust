@@ -32,11 +32,14 @@
  *                      the backend and constrained by QTRUST_SCAN_ALLOWED_ROOTS.
  *  - `operator`        Money/state-mutating surface: relayer submissions
  *                      (spends gas), workspace writes (`/v1/write/*`), webhook
- *                      mutations and credential issuance. The proxy NEVER
- *                      attaches the server-side admin key to these routes. A
- *                      caller must present its own key via `x-qtrust-api-key`,
- *                      which the proxy forwards as `x-api-key`. Anonymous
- *                      callers get 403.
+ *                      mutations and credential issuance, plus the operator
+ *                      session endpoints (`/v1/auth/session[/...]`). The proxy
+ *                      NEVER attaches the server-side admin key to these
+ *                      routes. A caller must present its own credential — a
+ *                      raw key via `x-qtrust-api-key`, or (preferred) a
+ *                      short-lived session token via `x-qtrust-session` — which
+ *                      the proxy forwards as `x-api-key`. Anonymous callers
+ *                      get 403.
  */
 
 export type RouteClass = "public-read" | "public-compute" | "operator";
@@ -56,6 +59,21 @@ export interface RouteRule {
  * server-side admin key by sending `x-api-key` directly.
  */
 export const OPERATOR_KEY_HEADER = "x-qtrust-api-key";
+
+/**
+ * Header the browser uses to present a short-lived operator session token to
+ * the proxy, after the raw key was exchanged once at `/v1/auth/session`.
+ *
+ * WHY a separate header (instead of reusing `x-qtrust-api-key`)
+ * -------------------------------------------------------------
+ * After the exchange the browser must never hold or send the raw key again —
+ * that is the entire XSS-surface reduction (TM-FE-03). The proxy accepts
+ * either header on operator routes (session preferred) and forwards whichever
+ * was presented as the backend's `x-api-key`; the backend's `requireApiKey`
+ * accepts a static key or a session token in that single upstream header, so
+ * the browser-only distinction never leaks past the proxy.
+ */
+export const OPERATOR_SESSION_HEADER = "x-qtrust-session";
 
 /** Error code returned by the proxy when an operator route is hit anonymously. */
 export const OPERATOR_KEY_REQUIRED_CODE = "operator_key_required";
@@ -137,6 +155,16 @@ export const ROUTE_POLICY: readonly RouteRule[] = [
   // Issuance signs a platform-identity attestation, so anonymous visitors must
   // not mint bundles. Verification (`/v1/certify/verify`, above) stays public.
   { prefix: "/v1/certify", methods: POST, routeClass: "operator" },
+  // Operator session management: the one-shot exchange of a raw key for a
+  // short-lived session token (exact path) and its revocation endpoints
+  // (segment prefix covers /revoke and /revoke-all). Both are operator-class:
+  // the exchange presents the raw key as `x-qtrust-api-key` and revocation
+  // presents the session token as `x-qtrust-session` — the proxy forwards
+  // either upstream as `x-api-key` and never the server admin key. The exact
+  // rule exists so `GET /v1/auth/session` (session introspection) stays
+  // default-deny even if the backend grows one.
+  { prefix: "/v1/auth/session", methods: POST, routeClass: "operator" },
+  { prefix: "/v1/auth/session/", methods: POST, routeClass: "operator" },
 ];
 
 /**

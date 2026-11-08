@@ -22,6 +22,7 @@ import { registerWriteRoutes } from "./routes/write.js";
 import { registerCertifyRoutes } from "./routes/certify.js";
 import { registerAssuranceRoutes } from "./routes/assurance.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
+import { registerAuthRoutes } from "./routes/auth.js";
 import { gracefulShutdown, requireApiKey } from "./middleware/auth.js";
 import { initSentry, registerSentryHooks } from "./plugins/sentry.js";
 import { registerMetrics } from "./plugins/metrics.js";
@@ -258,6 +259,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   registerScannerRoutes(server);
   await server.register(registerGPURoutes);
   await registerWebhookRoutes(server, redis);
+  await registerAuthRoutes(server);
 
   return server;
 }

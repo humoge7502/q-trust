@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   OPERATOR_KEY_HEADER,
   OPERATOR_KEY_REQUIRED_CODE,
+  OPERATOR_SESSION_HEADER,
   isValidOperatorKeyShape,
   matchRouteRule,
   type RouteClass,
@@ -31,16 +32,28 @@ import {
  *   - `public-read` / `public-compute` — forwarded with the server-side key
  *     (when configured). Unchanged from the S-1 fix.
  *   - `operator` — privileged surface (filesystem scanning, on-disk evidence
- *     writes, relayer submissions, GPU jobs, planner + webhook mutations).
- *     The proxy NEVER attaches the server-side admin key here. The caller must
- *     present its OWN key in `x-qtrust-api-key`, which is forwarded as the
- *     backend's `x-api-key`. Anonymous callers get 403 with
- *     `code: "operator_key_required"`.
+ *     writes, relayer submissions, GPU jobs, planner + webhook mutations, and
+ *     the operator session endpoints themselves). The proxy NEVER attaches the
+ *     server-side admin key here. The caller must present its OWN credential:
+ *       - `x-qtrust-session` — a short-lived session token minted by
+ *         `POST /v1/auth/session` (preferred when present); or
+ *       - `x-qtrust-api-key` — the caller's raw key, the fallback when the
+ *         session service was unavailable.
+ *     Session preferred over raw key when both arrive, so a caller that
+ *     exchanged its key cannot be downgraded to replaying the static one. The
+ *     presented credential — whichever it was — is forwarded as the backend's
+ *     `x-api-key`, because the backend's `requireApiKey` accepts either a
+ *     static key or a session token in that single upstream header; the
+ *     browser-only distinction never reaches the backend as a separate name.
+ *     Neither caller header is ever forwarded under its own name, and the
+ *     server key is never attached to these routes. Anonymous callers get 403
+ *     with `code: "operator_key_required"` (unchanged, so the UI's inline
+ *     operator prompt keeps working).
  *
  * Properties this preserves from S-1:
  *   - No anonymous reach to privileged routes; no admin key ever reaches them.
  *   - Per-caller rate limiting works, because the backend now sees the caller's
- *     key rather than the proxy's shared key.
+ *     credential rather than the proxy's shared key.
  *
  * Local development: when no server-side key is configured AND the process is
  * not production, operator routes are forwarded without a key, mirroring the
@@ -70,14 +83,17 @@ function operatorRoutesOpenInDev(): boolean {
 function forwardedHeaders(
   request: Request,
   routeClass: RouteClass,
-  callerKey: string | null,
+  callerCredential: string | null,
 ): Headers {
   const headers = new Headers();
   headers.set("accept", "application/json");
 
   if (routeClass === "operator") {
     // Never fall back to the server key here: that is exactly the S-1 bug.
-    if (callerKey) headers.set("x-api-key", callerKey);
+    // `callerCredential` is whatever the caller presented — a session token or
+    // a raw key — both of which the backend's `requireApiKey` accepts as
+    // `x-api-key`.
+    if (callerCredential) headers.set("x-api-key", callerCredential);
   } else {
     const apiKey = serverApiKey();
     if (apiKey) headers.set("x-api-key", apiKey);
@@ -124,14 +140,25 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
     );
   }
 
-  let callerKey: string | null = null;
+  let callerCredential: string | null = null;
   if (rule.routeClass === "operator") {
-    const presented = request.headers.get(OPERATOR_KEY_HEADER)?.trim() ?? "";
+    // Two caller credential channels, session preferred: after
+    // POST /v1/auth/session the browser must never resend the raw key, so the
+    // session token wins when both arrive (a present-but-stale token is the
+    // backend's verdict, not ours — it answers 401 and the UI re-prompts).
+    // Whichever was presented is forwarded upstream as `x-api-key`; neither
+    // caller header passes through under its own name.
+    const sessionToken = request.headers.get(OPERATOR_SESSION_HEADER)?.trim() ?? "";
+    const rawKey = request.headers.get(OPERATOR_KEY_HEADER)?.trim() ?? "";
+    const presented = sessionToken || rawKey;
     if (presented) {
+      // Same shape validation for both channels — the session token is just a
+      // bearer credential of the same size class as a key, and the check is
+      // defence in depth against header injection downstream.
       if (!isValidOperatorKeyShape(presented)) {
-        return jsonError("Malformed operator API key", 400);
+        return jsonError("Malformed operator API key or session token", 400);
       }
-      callerKey = presented;
+      callerCredential = presented;
     } else if (!operatorRoutesOpenInDev()) {
       return jsonError(
         "This endpoint requires operator access. Add your Q-Trust API key in the operator panel, or call the API directly with your own key.",
@@ -143,7 +170,7 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
 
   const init: RequestInit = {
     method: request.method,
-    headers: forwardedHeaders(request, rule.routeClass, callerKey),
+    headers: forwardedHeaders(request, rule.routeClass, callerCredential),
     redirect: "manual",
     signal: AbortSignal.timeout(65_000),
   };

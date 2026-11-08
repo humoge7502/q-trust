@@ -120,6 +120,18 @@ export const API_KEYS: string[] = optionalEnv("QTRUST_API_KEYS", "")
 /** Whether API key gating is enforced. Fail-closed in production. */
 export const API_KEY_REQUIRED = IS_PRODUCTION || API_KEYS.length > 0;
 
+/**
+ * Operator session lifetime in seconds (sliding window — refreshed on every
+ * successful validation, see services/operator-sessions.ts). Default 1 hour.
+ * Clamped to [60, 86400] so a mistyped value can neither mint effectively
+ * permanent sessions nor expire tokens faster than they can be used.
+ */
+export function operatorSessionTtlSeconds(): number {
+  const raw = Number(process.env.QTRUST_OPERATOR_SESSION_TTL_SECONDS);
+  if (!Number.isFinite(raw) || raw <= 0) return 3600;
+  return Math.min(86_400, Math.max(60, Math.floor(raw)));
+}
+
 /** Postgres connection string (optional — indexer degrades to direct RPC). */
 export const PG_URL = process.env.QTRUST_PG_URL ?? process.env.DATABASE_URL ?? "";
 

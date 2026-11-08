@@ -1,0 +1,34 @@
+# Production canary — verifies the deployed product end to end from a clean
+# GitHub runner (the reliable vantage point when operator networks block or
+# TLS-intercept vercel.app). Runs the repo's dependency-free canary
+# (frontend/scripts/prod-canary.mjs) against production through the same
+# same-origin proxy paths a browser uses. Required checks fail the job;
+# operator-infra checks warn only (pass --strict to promote them).
+name: Production Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "Site to probe (defaults to the production URL)"
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.2.2 — SHA-pinned per repo policy (no mutable tags).
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run production canary
+        env:
+          SITE: ${{ inputs.site }}
+        run: |
+          if [ -n "$SITE" ]; then
+            node scripts/prod-canary.mjs --site="$SITE"
+          else
+            node scripts/prod-canary.mjs
+          fi
+        working-directory: frontend
