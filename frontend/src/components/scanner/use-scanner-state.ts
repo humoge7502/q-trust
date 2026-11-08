@@ -7,10 +7,17 @@
  * piece of scan / risk / compliance / roadmap / evidence / export / tab state,
  * plus the API calls that populate it. The dashboard shell calls this hook
  * once and passes the result down to the per-tab panels, so the state stays
- * shared across tabs exactly as before. No behaviour change.
+ * shared across tabs exactly as before.
+ *
+ * F-13: each proxy call (scan, repo scan, risk, compliance, roadmap, evidence
+ * create / verify) now owns its loading / error / operator-key prompt through
+ * `useApiOperation` instead of a hand-rolled loading-error-operator cycle per
+ * call. The consumed return shape is unchanged — the panels still read the
+ * same flat fields — with the per-operation states merged into those read-outs.
  */
 import { useState } from "react";
-import { apiPostJson, OperatorKeyRequiredError, scanRepository } from "@/lib/api";
+import { apiPostJson, scanRepository } from "@/lib/api";
+import { useApiOperation } from "@/hooks/use-api-operation";
 import {
   buildCbom,
   buildSarif,
@@ -21,7 +28,6 @@ import {
   safeName,
   sha256Hex,
   summarizeFindings,
-  type ComplianceFinding,
   type ComplianceReport,
   type EvidenceLedger,
   type EvidenceVerifyResult,
@@ -41,41 +47,41 @@ export function useScannerState() {
   const [target, setTarget] = useState(DEMO_ESTATE);
   const [scanSource, setScanSource] = useState(true);
   const [scanManifest, setScanManifest] = useState(true);
-  const [scanLoading, setScanLoading] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const [scanError, setScanError] = useState("");
+
+  /*
+   * One operation per proxy call (F-13): the hook owns loading, the error text
+   * and the operator-key prompt for that call. The path scan and the repo scan
+   * both populate the single displayed result, so each clears the other's data
+   * before running — previously one shared `scanResult` was nulled at the
+   * start of either run.
+   */
+  const pathScanOp = useApiOperation<ScanResult>();
+  const repoScanOp = useApiOperation<ScanResult>();
 
   /* ---- Public-repository scan state ---- */
   const [repoInput, setRepoInput] = useState("");
-  const [repoLoading, setRepoLoading] = useState(false);
-  const [repoError, setRepoError] = useState("");
 
   /* ---- Risk state ---- */
-  const [riskScores, setRiskScores] = useState<ScoredFinding[]>([]);
-  const [riskLoading, setRiskLoading] = useState(false);
-  const [riskError, setRiskError] = useState("");
+  const riskOp = useApiOperation<ScoredFinding[]>();
 
   /* ---- Compliance state ---- */
   const [complianceFramework, setComplianceFramework] = useState<string>(COMPLIANCE_FRAMEWORKS[0].value);
-  const [complianceReport, setComplianceReport] = useState<ComplianceReport | null>(null);
-  const [complianceLoading, setComplianceLoading] = useState(false);
-  const [complianceError, setComplianceError] = useState("");
+  const complianceOp = useApiOperation<ComplianceReport>();
 
   /* ---- Roadmap state ---- */
   const [roadmapDailyRate, setRoadmapDailyRate] = useState("");
-  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
-  const [roadmapLoading, setRoadmapLoading] = useState(false);
-  const [roadmapError, setRoadmapError] = useState("");
+  const roadmapOp = useApiOperation<Roadmap>();
 
   /* ---- Evidence state ---- */
-  const [evidenceLedger, setEvidenceLedger] = useState<EvidenceLedger | null>(null);
-  const [evidenceVerify, setEvidenceVerify] = useState<EvidenceVerifyResult | null>(null);
-  const [evidenceLoading, setEvidenceLoading] = useState(false);
-  const [evidenceError, setEvidenceError] = useState("");
-  const [verifyLoading, setVerifyLoading] = useState(false);
+  const evidenceCreateOp = useApiOperation<EvidenceLedger>();
+  const evidenceVerifyOp = useApiOperation<EvidenceVerifyResult>();
 
   /* ---- Export state ---- */
   const [exportLoading, setExportLoading] = useState<string | null>(null);
+  // Exports are client-side blob downloads, not proxy calls, so they keep
+  // their own plain flag; a (rare) failure still surfaces on the scan tab's
+  // error line via the merged `scanError` below, as it did before.
+  const [exportError, setExportError] = useState("");
 
   /*
    * Active surface. Held in React rather than left to Radix's uncontrolled
@@ -85,33 +91,36 @@ export function useScannerState() {
    */
   const [tab, setTab] = useState<TabId>("scan");
 
+  /* ---- Derived read-outs (the shape the panels consume) ---- */
+
+  const scanResult = pathScanOp.data ?? repoScanOp.data;
+  const evidenceLedger = evidenceCreateOp.data;
+
   /*
    * Operator access fallback: `/v1/scan/*`, `/v1/roadmap/generate` and
    * `/v1/evidence/create` are public-compute via the same-origin proxy (the
    * server key is attached), so they work for anonymous visitors. If the proxy
    * ever refuses one — e.g. a deployment configured without a server key in
-   * production — we surface an operator prompt instead of a bare error.
+   * production — the operation surfaces an operator prompt instead of a bare
+   * error. The prompt is per operation now; this merged read keeps the single
+   * field the panels compare against.
    */
-  const [operatorEndpoint, setOperatorEndpoint] = useState<string | null>(null);
-
-  function reportError(err: unknown, setError: (message: string) => void) {
-    if (err instanceof OperatorKeyRequiredError) {
-      setOperatorEndpoint(err.endpoint);
-      setError("");
-      return;
-    }
-    setError(err instanceof Error ? err.message : String(err));
-  }
+  const operatorEndpoint =
+    pathScanOp.operatorEndpoint ??
+    repoScanOp.operatorEndpoint ??
+    riskOp.operatorEndpoint ??
+    complianceOp.operatorEndpoint ??
+    roadmapOp.operatorEndpoint ??
+    evidenceCreateOp.operatorEndpoint ??
+    evidenceVerifyOp.operatorEndpoint;
 
   /* ---- API calls ---- */
 
   async function runScan() {
     if (!target.trim()) return;
-    setScanLoading(true);
-    setScanError("");
-    setOperatorEndpoint(null);
-    setScanResult(null);
-    try {
+    repoScanOp.setData(null);
+    setExportError("");
+    await pathScanOp.run(async () => {
       const data = await apiPostJson<{
         target: string;
         scanType: string;
@@ -123,34 +132,27 @@ export function useScannerState() {
         includeManifests: scanManifest,
       });
       const findings = data.findings.map((finding) => normalizeFinding(finding, target.trim()));
-      setScanResult({
+      return {
         ...data,
         findings,
         summary: summarizeFindings(findings),
         origin: "path",
-      });
-    } catch (err) {
-      reportError(err, setScanError);
-    } finally {
-      setScanLoading(false);
-    }
+      } satisfies ScanResult;
+    });
   }
 
   /** Scan a public GitHub repository without a local checkout. */
   async function runRepoScan() {
     if (!repoInput.trim()) return;
-    setRepoLoading(true);
-    setRepoError("");
-    setOperatorEndpoint(null);
-    setScanResult(null);
-    try {
+    pathScanOp.setData(null);
+    await repoScanOp.run(async () => {
       const data = await scanRepository<ScanFinding>({
         repo: repoInput.trim(),
         scanType: "full",
       });
       const label = data.repo;
       const findings = data.findings.map((finding) => normalizeFinding(finding, label));
-      setScanResult({
+      return {
         target: label,
         scanType: data.scanType,
         timestamp: data.timestamp,
@@ -158,38 +160,26 @@ export function useScannerState() {
         summary: summarizeFindings(findings),
         origin: "repo",
         filesScanned: data.filesScanned,
-      });
-    } catch (err) {
-      reportError(err, setRepoError);
-    } finally {
-      setRepoLoading(false);
-    }
+      } satisfies ScanResult;
+    });
   }
 
   async function fetchRiskScores() {
     if (!scanResult) return;
-    setRiskLoading(true);
-    setRiskError("");
-    try {
+    await riskOp.run(async () => {
       const data = await apiPostJson<{ findings: ScoredFinding[] }>("/v1/risk/score", {
         findings: scanResult.findings,
       });
-      setRiskScores(Array.isArray(data.findings) ? data.findings : []);
-    } catch (err) {
-      reportError(err, setRiskError);
-    } finally {
-      setRiskLoading(false);
-    }
+      return Array.isArray(data.findings) ? data.findings : [];
+    });
   }
 
   async function fetchCompliance() {
     if (!scanResult) return;
-    setComplianceLoading(true);
-    setComplianceError("");
-    try {
+    await complianceOp.run(async () => {
       const data = await apiPostJson<{
         framework: string;
-        results: ComplianceFinding[];
+        results: ComplianceReport["results"];
         compliant: number;
         nonCompliant: number;
         total: number;
@@ -197,24 +187,17 @@ export function useScannerState() {
         findings: scanResult.findings,
         framework: complianceFramework,
       });
-      setComplianceReport({
+      return {
         ...data,
         // The evaluate endpoint returns counts only; percentage derived here.
         scorePercent: data.total > 0 ? Math.round((data.compliant / data.total) * 100) : 100,
-      });
-    } catch (err) {
-      reportError(err, setComplianceError);
-    } finally {
-      setComplianceLoading(false);
-    }
+      };
+    });
   }
 
   async function fetchRoadmap() {
     if (!scanResult) return;
-    setRoadmapLoading(true);
-    setRoadmapError("");
-    setOperatorEndpoint(null);
-    try {
+    await roadmapOp.run(async () => {
       const rate = Number(roadmapDailyRate);
       const body: { findings: ScanFinding[]; dailyRate?: number } = {
         findings: scanResult.findings,
@@ -222,25 +205,20 @@ export function useScannerState() {
       if (roadmapDailyRate.trim() !== "" && Number.isFinite(rate) && rate > 0) {
         body.dailyRate = rate;
       }
-      const data = await apiPostJson<{ phases: RoadmapPhase[]; summary: RoadmapSummary }>(
+      return apiPostJson<{ phases: RoadmapPhase[]; summary: RoadmapSummary }>(
         "/v1/roadmap/generate",
         body,
       );
-      setRoadmap(data);
-    } catch (err) {
-      reportError(err, setRoadmapError);
-    } finally {
-      setRoadmapLoading(false);
-    }
+    });
   }
 
   async function createEvidence() {
     if (!scanResult) return;
-    setEvidenceLoading(true);
-    setEvidenceError("");
-    setOperatorEndpoint(null);
-    setEvidenceVerify(null);
-    try {
+    // Creating a record invalidates a previous verification result — and the
+    // verify operation's error, which previously lived in the shared
+    // evidence-error string.
+    evidenceVerifyOp.clear();
+    await evidenceCreateOp.run(async () => {
       const scanResultHash = await sha256Hex(JSON.stringify(scanResult.findings));
       const data = await apiPostJson<{ ledger: EvidenceLedger }>("/v1/evidence/create", {
         scanResultHash,
@@ -248,28 +226,18 @@ export function useScannerState() {
         findingsCount: scanResult.findings.length,
         riskSummary: scanResult.summary,
       });
-      setEvidenceLedger(data.ledger);
-    } catch (err) {
-      reportError(err, setEvidenceError);
-    } finally {
-      setEvidenceLoading(false);
-    }
+      return data.ledger;
+    });
   }
 
   async function verifyLedger() {
     if (!evidenceLedger) return;
-    setVerifyLoading(true);
-    setEvidenceError("");
-    try {
+    await evidenceVerifyOp.run(async () => {
       const data = await apiPostJson<EvidenceVerifyResult>("/v1/evidence/verify", {
         ledger: evidenceLedger,
       });
-      setEvidenceVerify(data);
-    } catch (err) {
-      reportError(err, setEvidenceError);
-    } finally {
-      setVerifyLoading(false);
-    }
+      return data;
+    });
   }
 
   async function exportCbom() {
@@ -282,7 +250,7 @@ export function useScannerState() {
         "application/json",
       );
     } catch (err) {
-      reportError(err, setScanError);
+      setExportError(err instanceof Error ? err.message : String(err));
     } finally {
       setExportLoading(null);
     }
@@ -298,7 +266,7 @@ export function useScannerState() {
         "application/sarif+json",
       );
     } catch (err) {
-      reportError(err, setScanError);
+      setExportError(err instanceof Error ? err.message : String(err));
     } finally {
       setExportLoading(null);
     }
@@ -325,31 +293,35 @@ export function useScannerState() {
     setScanSource,
     scanManifest,
     setScanManifest,
-    scanLoading,
+    scanLoading: pathScanOp.loading,
     scanResult,
-    scanError,
+    // Path-scan failures and export failures used to share one error string;
+    // both still surface on this line.
+    scanError: pathScanOp.error || exportError,
     repoInput,
     setRepoInput,
-    repoLoading,
-    repoError,
-    riskScores,
-    riskLoading,
-    riskError,
+    repoLoading: repoScanOp.loading,
+    repoError: repoScanOp.error,
+    riskScores: riskOp.data ?? [],
+    riskLoading: riskOp.loading,
+    riskError: riskOp.error,
     complianceFramework,
     setComplianceFramework,
-    complianceReport,
-    complianceLoading,
-    complianceError,
+    complianceReport: complianceOp.data,
+    complianceLoading: complianceOp.loading,
+    complianceError: complianceOp.error,
     roadmapDailyRate,
     setRoadmapDailyRate,
-    roadmap,
-    roadmapLoading,
-    roadmapError,
+    roadmap: roadmapOp.data,
+    roadmapLoading: roadmapOp.loading,
+    roadmapError: roadmapOp.error,
     evidenceLedger,
-    evidenceVerify,
-    evidenceLoading,
-    evidenceError,
-    verifyLoading,
+    evidenceVerify: evidenceVerifyOp.data,
+    evidenceLoading: evidenceCreateOp.loading,
+    // Create and verify previously shared one error string; the merged read
+    // keeps the single field the panel renders.
+    evidenceError: evidenceCreateOp.error || evidenceVerifyOp.error,
+    verifyLoading: evidenceVerifyOp.loading,
     exportLoading,
     tab,
     setTab,
