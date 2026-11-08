@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal, ScrollProgress } from "@/components/scroll-effects.client";
 import { VideoFrame } from "@/components/ui/video-frame";
+import { HorizontalTour } from "@/components/motion/horizontal-tour.client";
+import { MagneticButton } from "@/components/motion/magnetic-button.client";
 import { ArrowRightIcon } from "@/app/icons";
 
 export const metadata: Metadata = {
@@ -11,6 +13,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/demo" },
 };
 
+/* Clip copy is owned here (server) and passed verbatim into the tour — the
+   client component is presentation-only. */
 const TOUR = [
   {
     src: "/media/02-scan.mp4",
@@ -70,9 +74,11 @@ export default function DemoPage() {
           />
           <div className="relative mx-auto max-w-[88rem] px-5 pb-16 pt-16 sm:px-8 sm:pt-24 lg:px-12 lg:pb-24 lg:pt-28">
             <Eyebrow>Product demo</Eyebrow>
+            {/* text-display-md carries the clamp scale, line-height, and
+                tracking as tokens (globals.css @theme) — no one-off clamp. */}
             <h1
               id="demo-heading"
-              className="mt-6 max-w-4xl text-[clamp(2.6rem,6vw,5.6rem)] font-semibold leading-[0.9] tracking-[-0.06em] text-night-ink"
+              className="mt-6 max-w-4xl text-display-md font-semibold text-night-ink"
             >
               See Q-Trust run, <span className="text-quantum-soft">end to end.</span>
             </h1>
@@ -117,45 +123,8 @@ export default function DemoPage() {
           </div>
         </section>
 
-        {/* Feature tour */}
-        <section className="border-t border-night-edge bg-canvas text-foreground" aria-labelledby="tour-heading">
-          <div className="mx-auto max-w-[88rem] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
-            <Reveal>
-              <div className="mb-10 max-w-2xl">
-                <p className="text-micro font-bold uppercase tracking-[0.28em] text-muted-foreground">
-                  Feature tour
-                </p>
-                <h2
-                  id="tour-heading"
-                  className="mt-5 text-3xl font-semibold tracking-[-0.05em] sm:text-4xl"
-                >
-                  One system for the whole migration.
-                </h2>
-              </div>
-            </Reveal>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {TOUR.map((clip, index) => (
-                <Reveal key={clip.src} delay={index * 60}>
-                  <article className="flex h-full flex-col">
-                    <VideoFrame
-                      src={clip.src}
-                      title={clip.title}
-                      className="aspect-video"
-                    >
-                      {clip.title}
-                    </VideoFrame>
-                    <h3 className="mt-4 text-lg font-semibold tracking-[-0.03em]">
-                      {clip.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {clip.copy}
-                    </p>
-                  </article>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Feature tour — pinned horizontal on desktop, plain grid otherwise. */}
+        <HorizontalTour clips={TOUR} heading={<>One system for the whole migration.</>} />
 
         {/* CTA */}
         <section className="bg-night text-night-ink" aria-labelledby="demo-cta-heading">
@@ -169,16 +138,18 @@ export default function DemoPage() {
                   Watch it once. <span className="text-night-ink-soft">Then run it on your own estate.</span>
                 </h2>
                 <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/scanner"
-                    className="group inline-flex items-center gap-3 rounded-full bg-quantum-soft px-6 py-3.5 text-sm font-semibold text-night transition hover:-translate-y-0.5 hover:bg-quantum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
-                  >
-                    Run a scan{" "}
-                    <ArrowRightIcon
-                      className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                      aria-hidden="true"
-                    />
-                  </Link>
+                  <MagneticButton>
+                    <Link
+                      href="/scanner"
+                      className="group inline-flex items-center gap-3 rounded-full bg-quantum-soft px-6 py-3.5 text-sm font-semibold text-night transition hover:-translate-y-0.5 hover:bg-quantum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
+                    >
+                      Run a scan{" "}
+                      <ArrowRightIcon
+                        className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </MagneticButton>
                   <Link
                     href="/dashboard"
                     className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/5"

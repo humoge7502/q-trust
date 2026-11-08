@@ -72,6 +72,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={fontVariables}>
       <head>
+        {/* No-JS reveal gate: marks JS availability before first paint so the
+            CSS reveal system (globals.css `html.js .reveal`) only hides content
+            when an observer will actually un-hide it. Without JavaScript every
+            Reveal-wrapped section renders fully visible. This is the app's ONLY
+            inline executable script — permitted by the production CSP's
+            script-src 'unsafe-inline', documented as TD-18 in next.config.mjs. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')",
+          }}
+        />
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         {/* X-Frame-Options is set as an HTTP header in next.config.mjs — it
             cannot be set via <meta> (browsers ignore and warn on it). */}

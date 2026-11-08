@@ -9,8 +9,10 @@ const badgeVariants = cva(
       variant: {
         default: "bg-qtrust-600 text-white",
         secondary: "bg-neutral-surface text-muted-foreground",
-        destructive: "bg-rose-50 text-rose-700",
-        outline: "border border-slate-300 text-slate-700",
+        // danger/neutral are the semantic state tokens from globals.css —
+        // rose-50/rose-700 and slate-300/slate-700 were the same intent, raw.
+        destructive: "bg-danger-surface text-danger",
+        outline: "border border-neutral-border text-neutral",
       },
     },
     defaultVariants: {

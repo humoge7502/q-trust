@@ -5,8 +5,10 @@
  *
  * The marketing layer's animation division of labour:
  *   - CSS + IntersectionObserver (`scroll-effects.client.tsx`) owns entrance
- *     reveals — zero JS cost, works without JavaScript, already reduced-motion
- *     safe. It stays.
+ *     reveals — zero JS cost and reduced-motion safe. The hidden state is
+ *     gated on the `html.js` class set by the one-line inline bootstrap in
+ *     `app/layout.tsx`, so without JavaScript content renders fully visible
+ *     (no-JS is the safe default, not a blank page). It stays.
  *   - GSAP + ScrollTrigger owns what CSS cannot express: scrub-linked and
  *     pinned scroll storytelling. Components opt in per effect.
  *   - Lenis (`motion/smooth-scroll.client.tsx`) owns scroll smoothing on
