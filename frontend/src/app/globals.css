@@ -432,6 +432,12 @@ html.js .reveal-visible {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
+  /* Contain the oversized orbit: the 3x-card rotating square below stays a
+     child of this card-sized host, so its bounding box can never register
+     as horizontal overflow on narrow viewports (e2e mobile-layout). `clip`
+     beats `hidden` — it creates no scroll container. */
+  overflow: hidden;
+  overflow: clip;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
 }
