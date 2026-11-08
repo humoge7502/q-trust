@@ -1,0 +1,29 @@
+# Promote current main to Vercel production. The operator network
+# TLS-blocks vercel.com, so this runs from a GitHub runner (clean network)
+# using the VERCEL_TOKEN repo secret. The org/project IDs below are not
+# secrets — they identify the q-trust project (frontend/.vercel/project.json
+# on the operator machine carries the same values).
+name: Vercel Promote
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.2.2 — SHA-pinned per repo policy (no mutable tags).
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: main
+
+      - name: Deploy production build of main
+        working-directory: frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_XLDiYeDD8xouWWnj0eB3jw7d
+          VERCEL_PROJECT_ID: prj_jkH3WrmhwJ5PAruIrmSeSQuGzvH6
+        run: |
+          npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
