@@ -273,7 +273,8 @@ async function checkSite() {
     try {
       const res = await request(`${SITE}${page}`, { timeoutMs: 40_000 });
       const hasTitle = /<title[^>]*>\s*[^<\s]/i.test(res.text);
-      return { page, status: res.status, hasTitle, ms: res.ms };
+      // Keep the landing page's HTML for the build-freshness check below.
+      return { page, status: res.status, hasTitle, ms: res.ms, html: page === "/" ? res.text : undefined };
     } catch (error) {
       return { page, status: 0, hasTitle: false, error: error.message };
     }
@@ -285,6 +286,22 @@ async function checkSite() {
     badPages.length
       ? badPages.map((r) => `${r.page} -> ${r.status}${r.hasTitle ? "" : " no-title"}`).join("; ")
       : `${pageResults.length}/${pageResults.length} pages 200 with a title`,
+  );
+
+  // Build freshness — a healthy-but-stale deployment passes every check above,
+  // so pin the landing page to the current design-system build markers
+  // (Lattice v2). Update these two strings whenever the landing theme changes,
+  // otherwise an out-of-date Vercel deployment can pass the canary.
+  const home = pageResults.find((r) => r.page === "/");
+  const homeHtml = home?.html ?? "";
+  const hasCurrentMarker = homeHtml.includes("bg-night");
+  const hasRetiredMarker = homeHtml.includes("qtrust-hero");
+  record(
+    "production serves the current build",
+    hasCurrentMarker && !hasRetiredMarker,
+    homeHtml
+      ? `bg-night=${hasCurrentMarker} retired qtrust-hero=${hasRetiredMarker}`
+      : "homepage HTML unavailable",
   );
 
   // Sweep every sitemap URL (bounded) so a broken public route is caught even
