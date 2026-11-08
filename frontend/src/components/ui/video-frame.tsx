@@ -23,10 +23,10 @@ export function VideoFrame({
 }) {
   return (
     <figure
-      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-lg shadow-black/30 ${className}`}
+      className={`group relative overflow-hidden rounded-2xl border border-night-edge bg-night-raised shadow-lg shadow-black/30 ${className}`}
     >
       <video
-        className="h-full w-full bg-slate-900"
+        className="h-full w-full bg-night-raised"
         src={src}
         poster={poster}
         title={title}
@@ -35,7 +35,7 @@ export function VideoFrame({
         playsInline
       />
       {children ? (
-        <figcaption className="border-t border-white/10 bg-slate-950/80 px-4 py-2.5 text-xs text-slate-300">
+        <figcaption className="border-t border-night-edge bg-night/80 px-4 py-2.5 text-xs text-night-ink-soft">
           {children}
         </figcaption>
       ) : null}
