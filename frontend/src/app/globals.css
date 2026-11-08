@@ -123,6 +123,9 @@
   --text-display-lg: clamp(2.25rem, 4.5vw, 4rem);
   --text-display-lg--line-height: 0.95;
   --text-display-lg--letter-spacing: -0.055em;
+  --text-display-md: clamp(2.6rem, 6vw, 5.6rem);
+  --text-display-md--line-height: 0.9;
+  --text-display-md--letter-spacing: -0.06em;
 
   /* shadcn/ui design tokens (audit Critical #4). GPU/analytics panels use
      bg-card, text-foreground, border-border, etc. — without these the
@@ -305,7 +308,11 @@ html, body {
   animation: signal-slide 32s linear infinite;
 }
 
-.reveal {
+/* The hidden state is gated on `html.js` — the class is set by the one-line
+   inline bootstrap in layout.tsx (the only inline script in the app, allowed
+   under the TD-18 CSP note in next.config.mjs). Without JavaScript the
+   reveals never hide: content renders fully visible, in DOM order. */
+html.js .reveal {
   opacity: 0;
   transform: translateY(28px) scale(0.985);
   filter: blur(4px);
@@ -313,10 +320,27 @@ html, body {
   transition-delay: var(--reveal-delay, 0ms);
 }
 
-.reveal-visible {
+/* Reveal variants (see scroll-effects.client.tsx). These must sit ABOVE the
+   .reveal-visible rule in source order — equal specificity, later wins — so
+   "visible" always beats the variant's hidden state. */
+html.js .reveal-rise {
+  transform: translateY(28px);
+  filter: none;
+}
+html.js .reveal-scale {
+  transform: scale(0.94);
+  filter: none;
+}
+html.js .reveal-slide-left {
+  transform: translateX(36px);
+  filter: none;
+}
+
+.reveal-visible,
+html.js .reveal-visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
+  transform: none;
+  filter: none;
 }
 
 /* tx-status state swaps: 200ms fade/translate bridge (retriggered via React key).
@@ -345,10 +369,253 @@ html, body {
   to { transform: translateX(-50%); }
 }
 
+/* ══ flagship motion layer ══════════════════════════════════════════════
+   Compositor-only motion primitives for the marketing layer; each class is
+   rendered by a component in ui/ or motion/ that owns the markup. Rules of
+   the layer: animate transform/opacity/filter only, decorative surfaces are
+   aria-hidden + pointer-events-none, and every animation below has an
+   explicit prefers-reduced-motion override so the static state is always
+   well-formed (the global kill-switch alone can leave a wrong resting look
+   for masked/rotated layers). */
+
+/* — SpotlightCard (ui/spotlight-card.tsx): pointer-following radial glow and
+   a matching 1px border glow. The component writes --spot-x/--spot-y via ref,
+   so pointer movement never re-renders. Visibility is gated to fine pointers
+   by media query; reduced motion needs no special state because following a
+   pointer is not an animation and the fades are collapsed by the
+   kill-switch. */
+.spotlight-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 500ms var(--ease-brand);
+  background: radial-gradient(
+    circle var(--spot-radius, 320px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in oklab, var(--color-quantum-soft) 14%, transparent),
+    transparent 70%
+  );
+}
+
+.spotlight-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* Same gradient as the glow, masked to a 1px ring: padding makes the ring
+     band, and the content-box-exclude mask removes everything inside it. */
+  padding: 1px;
+  background: radial-gradient(
+    circle 220px at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in oklab, var(--color-quantum-soft) 60%, transparent),
+    transparent 70%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 500ms var(--ease-brand);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spotlight-card:hover .spotlight-glow,
+  .spotlight-card:hover .spotlight-ring {
+    opacity: 1;
+  }
+}
+
+/* — BorderBeam (ui/border-beam.tsx): a quantum streak orbiting a card
+   border. The masked layer renders only the 1px ring; the oversized rotating
+   child sweeps a conic gradient across it — its bright arc IS the beam
+   streak, whose angular span comes in as --beam-arc from the component.
+   Reduced motion: static quantum hairline, no rotation. */
+.border-beam {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.border-beam-orbit {
+  position: absolute;
+  /* Oversized square centred on the card so rotation keeps every corner of
+     the ring covered; the parent mask clips the render back to the ring. */
+  inset: -100%;
+  animation: border-beam-spin 4s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent calc(360deg - var(--beam-arc, 27deg)),
+    var(--color-quantum-dim) calc(360deg - 6deg),
+    var(--color-quantum) calc(360deg - 2deg),
+    var(--color-quantum-soft) 360deg
+  );
+}
+
+@keyframes border-beam-spin {
+  to { transform: rotate(1turn); }
+}
+
+/* — ShimmerText (ui/shimmer-text.tsx): gradient sweep clipped to the text.
+   Base/accent resolve through overridable vars so light surfaces can pass
+   darker inks. The keyframes hold the final position, so the loop reads as a
+   periodic sweep with a pause rather than a conveyor belt. */
+.shimmer-text {
+  background: linear-gradient(
+    110deg,
+    var(--shimmer-base, var(--color-night-ink)) 40%,
+    var(--shimmer-accent, var(--color-quantum-soft)) 50%,
+    var(--shimmer-base, var(--color-night-ink)) 60%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: text-shimmer 9s var(--ease-brand) infinite;
+}
+
+@keyframes text-shimmer {
+  0% { background-position: 200% 0; }
+  45% { background-position: -200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* — Aurora (ui/aurora.tsx): slow pre-soft colour fields drifting behind a
+   section. Fixed-size blobs; border-radius + blur carry the softness, and
+   the radial gradient's transparent falloff is the edge mask. */
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  animation: aurora-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.aurora-blob-a {
+  width: 42rem;
+  height: 42rem;
+  top: -18%;
+  left: 4%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-quantum-dim) 30%, transparent), transparent 70%);
+}
+
+.aurora-blob-b {
+  width: 38rem;
+  height: 38rem;
+  bottom: -22%;
+  right: 6%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-qtrust-700) 34%, transparent), transparent 70%);
+  animation-delay: -9s;
+}
+
+.aurora-blob-c {
+  width: 30rem;
+  height: 30rem;
+  top: 22%;
+  right: 32%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-qtrust-500) 12%, transparent), transparent 72%);
+  animation-delay: -17s;
+}
+
+@keyframes aurora-drift {
+  from { transform: translate3d(-4%, 3%, 0) scale(1); }
+  to { transform: translate3d(6%, -5%, 0) scale(1.08); }
+}
+
+/* — SignalStrip (landing page): edge fade mask, pause on hover, and the
+   second counter-directional row (aria-hidden duplicate). */
+.signal-fade {
+  mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
+}
+
+.signal-track-reverse {
+  animation: signal-slide 48s linear infinite reverse;
+}
+
+.signal-strip:hover .signal-track,
+.signal-strip:hover .signal-track-reverse {
+  animation-play-state: paused;
+}
+
+/* — HorizontalTour (motion/horizontal-tour.client.tsx): the pinned
+   horizontal presentation for the /demo feature tour. `tour-live` is added
+   by the component only when the GSAP matchMedia condition matched
+   (desktop + motion allowed), so no-JS, mobile, and reduced-motion visitors
+   keep the plain CSS grid below. */
+.tour-live .tour-track {
+  display: flex;
+  width: max-content;
+  align-items: stretch;
+  will-change: transform;
+}
+
+.tour-live .tour-slide {
+  width: min(42rem, 86vw);
+  flex-shrink: 0;
+}
+
+.tour-live .tour-viewport {
+  overflow-x: clip;
+}
+
+.tour-hud {
+  display: none;
+}
+
+.tour-live .tour-hud {
+  display: flex;
+}
+
+.tour-progress-track {
+  width: 12rem;
+  height: 1px;
+  background: var(--color-night-edge);
+  overflow: hidden;
+}
+
+.tour-progress-fill {
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--color-quantum), var(--color-quantum-soft));
+}
+
+/* Reduced-motion overrides for the flagship layer: each animated surface
+   lands on a well-formed static state. */
+@media (prefers-reduced-motion: reduce) {
+  .border-beam-orbit {
+    animation: none;
+    opacity: 0;
+  }
+  .border-beam {
+    background: linear-gradient(90deg, transparent, var(--color-quantum-soft), transparent);
+  }
+  .shimmer-text {
+    animation: none;
+  }
+  .aurora-blob {
+    animation: none;
+  }
+  .signal-track-reverse {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .hero-enter, .signal-track, .hero-orb-two { animation: none; }
-  .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+  /* Must out-rank `html.js .reveal(-rise|-scale|-slide-left)`, or reduced-motion
+     users would keep hidden elements until the observer fires. */
+  html.js .reveal,
+  html.js .reveal-rise,
+  html.js .reveal-scale,
+  html.js .reveal-slide-left {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
 }
 
 /* Per-tab result badge.

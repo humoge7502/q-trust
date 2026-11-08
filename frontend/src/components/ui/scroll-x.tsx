@@ -27,7 +27,7 @@ export function ScrollX({ label, className, children, ...props }: ScrollXProps) 
       role="region"
       aria-label={label}
       className={cn(
-        "scrollbar-thin overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "scrollbar-thin overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum focus-visible:ring-offset-2 focus-visible:ring-offset-white",
         className,
       )}
       {...props}

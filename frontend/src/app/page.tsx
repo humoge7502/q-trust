@@ -19,6 +19,13 @@ import { SmoothScroll } from "@/components/motion/smooth-scroll.client";
 import { LatticeField } from "@/components/motion/lattice-field.client";
 import { WorkflowStory } from "@/components/motion/workflow-story.client";
 import { CountUp } from "@/components/ui/count-up.client";
+import { REGISTRY_CONTRACTS, SCANNER_COVERAGE, VERIFICATION_MODE } from "@/lib/public-stats";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
+import { BentoCard, BentoGrid } from "@/components/ui/bento";
+import { BorderBeam } from "@/components/ui/border-beam";
+import { ShimmerText } from "@/components/ui/shimmer-text";
+import { Aurora } from "@/components/ui/aurora";
+import { MagneticButton } from "@/components/motion/magnetic-button.client";
 import demoRecords from "@/lib/demo-records.json";
 
 /**
@@ -57,7 +64,8 @@ function Hero() {
         <div className="grid js-hero items-end gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(25rem,0.75fr)] lg:gap-20">
           <div className="hero-enter">
             <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-quantum-soft">
-              <span className="h-px w-10 bg-quantum-soft" aria-hidden="true" /> Q-Trust protocol
+              <span className="h-px w-10 bg-quantum-soft" aria-hidden="true" />{" "}
+              <ShimmerText>Q-Trust protocol</ShimmerText>
             </div>
             <h1
               id="hero-heading"
@@ -111,95 +119,106 @@ function Hero() {
 
 function SignalStrip() {
   const signals = ["NIST FIPS 203 / 204 / 205", "CycloneDX CBOM", "EIP-712 gasless", "Base L2", "ML-KEM / ML-DSA / SLH-DSA", "Public verification"];
-  // A11y: the marquee duplicates the list for a seamless loop. The duplicate
-  // is aria-hidden so screen readers announce each capability once, not twice.
-  // Reduced-motion users get a static strip via the CSS kill-switch.
-  return (
-    <div className="overflow-hidden border-b border-white/10 bg-night-raised py-4" aria-label="Q-Trust capabilities">
-      <div className="signal-track flex min-w-max items-center gap-8 text-[10px] font-semibold uppercase tracking-[0.24em] text-night-ink-soft">
-        {signals.map((signal) => (
-          <span key={signal} className="inline-flex items-center gap-8">
-            <span className="text-quantum-soft" aria-hidden="true">
-              <svg width="7" height="7" viewBox="0 0 7 7" aria-hidden="true">
-                <rect x="1.1" y="1.1" width="4.8" height="4.8" transform="rotate(45 3.5 3.5)" fill="currentColor" />
-              </svg>
-            </span>
-            {signal}
-          </span>
-        ))}
-        <span aria-hidden="true" className="flex min-w-max items-center gap-8">
-          {signals.map((signal) => (
-            <span key={`dup-${signal}`} className="inline-flex items-center gap-8">
-              <span className="text-quantum-soft">
-                <svg width="7" height="7" viewBox="0 0 7 7" aria-hidden="true">
-                  <rect x="1.1" y="1.1" width="4.8" height="4.8" transform="rotate(45 3.5 3.5)" fill="currentColor" />
-                </svg>
-              </span>
-              {signal}
-            </span>
-          ))}
+  const diamond = (
+    <span className="text-quantum-soft" aria-hidden="true">
+      <svg width="7" height="7" viewBox="0 0 7 7" aria-hidden="true">
+        <rect x="1.1" y="1.1" width="4.8" height="4.8" transform="rotate(45 3.5 3.5)" fill="currentColor" />
+      </svg>
+    </span>
+  );
+  // A11y: the marquee loops seamlessly, so each row renders the list twice.
+  // The primary row's duplicate is aria-hidden so screen readers announce
+  // each capability once; the entire second (counter-directional, slower) row
+  // is a decorative echo and is aria-hidden as a whole. Both rows pause on
+  // hover (globals.css) and reduced-motion users get a static strip.
+  const row = (keyPrefix: string) => (
+    <>
+      {signals.map((signal) => (
+        <span key={`${keyPrefix}-${signal}`} className="inline-flex items-center gap-8">
+          {diamond}
+          {signal}
         </span>
+      ))}
+    </>
+  );
+  return (
+    <div className="signal-strip overflow-hidden border-b border-white/10 bg-night-raised py-4" aria-label="Q-Trust capabilities">
+      <div className="signal-fade">
+        <div className="signal-track flex min-w-max items-center gap-8 text-[10px] font-semibold uppercase tracking-[0.24em] text-night-ink-soft">
+          {row("live")}
+          <span aria-hidden="true" className="flex min-w-max items-center gap-8">
+            {row("dup")}
+          </span>
+        </div>
+        <div aria-hidden="true" className="signal-track-reverse mt-4 flex min-w-max items-center gap-8 text-[10px] font-semibold uppercase tracking-[0.24em] text-night-ink-soft">
+          {row("echo")}
+          {row("echo-dup")}
+        </div>
       </div>
     </div>
   );
 }
 
 function WhySection() {
+  // Bento rebuild (B3): the section's existing copy, restructured verbatim —
+  // the coordination intro becomes the wide lead card, and the three
+  // capability cards keep their number / icon / copy / "Outcome" footer. All
+  // cards sit on the night panel system with a pointer-following spotlight;
+  // the Reveal stagger comes from `data-reveal-group` on the grid.
   const reasons = [
-    { number: "01", title: "Inventory the invisible", copy: "Find cryptography wherever it hides: source code, packages, binaries, network endpoints, and configuration.", icon: BeakerIcon },
-    { number: "02", title: "Make risk actionable", copy: "Move beyond a scary report. Rank assets by algorithm, reachability, sensitivity, and migration impact.", icon: ChartBarIcon },
-    { number: "03", title: "Carry proof forward", copy: "Give security, vendors, procurement, and auditors the same record without exposing the underlying evidence.", icon: ShieldCheckIcon },
+    { number: "01", title: "Inventory the invisible", copy: "Find cryptography wherever it hides: source code, packages, binaries, network endpoints, and configuration.", icon: BeakerIcon, span: "" },
+    { number: "02", title: "Make risk actionable", copy: "Move beyond a scary report. Rank assets by algorithm, reachability, sensitivity, and migration impact.", icon: ChartBarIcon, span: "" },
+    { number: "03", title: "Carry proof forward", copy: "Give security, vendors, procurement, and auditors the same record without exposing the underlying evidence.", icon: ShieldCheckIcon, span: "md:col-span-2 lg:col-span-2" },
   ];
+  const outcomeFooter = (
+    <>
+      <div className="mb-4 text-label font-bold uppercase tracking-[0.2em] text-night-ink-soft transition group-hover:text-night-ink">
+        Outcome / visible by design
+      </div>
+      <span
+        className="block h-px w-full origin-left scale-x-[0.06] bg-quantum-soft transition-transform duration-500 group-hover:scale-x-100"
+        aria-hidden="true"
+      />
+    </>
+  );
   return (
     <section id="why" className="bg-canvas text-foreground" aria-labelledby="why-heading">
       <div className="mx-auto max-w-[88rem] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36">
-        <div className="grid gap-14 lg:grid-cols-[0.62fr_1.38fr] lg:gap-24">
-          <Reveal>
-            <div className="lg:sticky lg:top-28">
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-muted-foreground">Why Q-Trust</p>
-              <h2 id="why-heading" className="mt-6 max-w-md text-4xl font-semibold leading-[0.93] tracking-[-0.06em] sm:text-5xl lg:text-6xl">
-                The hard part is coordination.
-              </h2>
-              <p className="mt-7 max-w-md text-sm leading-7 text-muted-foreground">
-                A migration program is only as credible as the chain of evidence behind it. Q-Trust
-                makes every handoff observable, comparable, and independently checkable.
-              </p>
-              <Link
-                href="/scanner"
-                className="mt-9 inline-flex items-center gap-2 text-sm font-semibold underline decoration-border underline-offset-8 transition hover:decoration-foreground"
+        <BentoGrid data-reveal-group>
+          <Reveal variant="rise" className="md:col-span-2 lg:col-span-2">
+            <SpotlightCard className="group h-full rounded-2xl">
+              <BentoCard
+                titleAs="h2"
+                titleClassName="text-3xl sm:text-4xl lg:text-5xl lg:leading-[0.98] tracking-[-0.05em]"
+                eyebrow="Why Q-Trust"
+                title={<>The hard part is coordination.</>}
+                body="A migration program is only as credible as the chain of evidence behind it. Q-Trust makes every handoff observable, comparable, and independently checkable."
               >
-                See the scanner <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
+                <BorderBeam size={140} />
+                <Link
+                  href="/scanner"
+                  className="inline-flex items-center gap-2 text-sm font-semibold underline decoration-night-edge underline-offset-8 transition hover:decoration-quantum-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft focus-visible:ring-offset-2 focus-visible:ring-offset-night-raised"
+                >
+                  See the scanner <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </BentoCard>
+            </SpotlightCard>
           </Reveal>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {reasons.map((reason, index) => (
-              <Reveal key={reason.number} delay={index * 100}>
-                <article className="group flex min-h-[23rem] flex-col justify-between border-t border-border pt-5 transition hover:border-foreground">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-muted-foreground">{reason.number}</span>
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-canvas-raised text-foreground transition group-hover:-translate-y-1 group-hover:bg-foreground group-hover:text-quantum">
-                        <reason.icon className="h-5 w-5" aria-hidden="true" />
-                      </span>
-                    </div>
-                    <h3 className="mt-16 text-2xl font-semibold tracking-[-0.045em]">{reason.title}</h3>
-                    <p className="mt-4 text-sm leading-6 text-muted-foreground">{reason.copy}</p>
-                  </div>
-                  <div>
-                    <div className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground transition group-hover:text-foreground">
-                      Outcome / visible by design
-                    </div>
-                    <span
-                      className="block h-px w-full origin-left scale-x-[0.06] bg-foreground transition-[transform,background-color] duration-500 group-hover:scale-x-100 group-hover:bg-foreground"
-                      aria-hidden="true"
-                    />
-                  </div>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </div>
+          {reasons.map((reason) => (
+            <Reveal key={reason.number} variant="rise" className={reason.span}>
+              <SpotlightCard className="group h-full rounded-2xl">
+                <BentoCard
+                  eyebrow={reason.number}
+                  icon={reason.icon}
+                  title={reason.title}
+                  body={reason.copy}
+                >
+                  {outcomeFooter}
+                </BentoCard>
+              </SpotlightCard>
+            </Reveal>
+          ))}
+        </BentoGrid>
       </div>
     </section>
   );
@@ -240,12 +259,15 @@ function ProductSection() {
 }
 
 function ProofSection() {
+  // Values come from lib/public-stats.ts — the same claims the public stats
+  // band used to re-state with its own literals. This section is the canonical
+  // presentation; the band below owns only the live-system signals.
   const stats: Array<{ label: string; value: ReactNode; copy: string }> = [
-    { label: "Registry contracts", value: <CountUp to={11} />, copy: "Shared state for assets, vendors, migrations, and audits." },
+    { label: "Registry contracts", value: <CountUp to={REGISTRY_CONTRACTS} />, copy: "Shared state for assets, vendors, migrations, and audits." },
     // The plus is a sibling span so the number counts up while the suffix
     // stays put.
-    { label: "Scanner coverage", value: <span><CountUp to={12} />+</span>, copy: "Source languages plus manifests, binaries, network, and config." },
-    { label: "Verification mode", value: "Open", copy: "No wallet or platform account needed to inspect a record." },
+    { label: "Scanner coverage", value: <span><CountUp to={SCANNER_COVERAGE} />+</span>, copy: "Source languages plus manifests, binaries, network, and config." },
+    { label: "Verification mode", value: VERIFICATION_MODE, copy: "No wallet or platform account needed to inspect a record." },
   ];
   return (
     <section className="bg-quantum-soft text-night" aria-labelledby="proof-heading">
@@ -293,28 +315,35 @@ function ProofSection() {
 }
 
 function ClosingSection() {
+  // Finale restage (B6/B7/B8): the closing section moves onto the night canvas
+  // so the aurora field and the shimmer headline read as instrument light. All
+  // copy is unchanged; only the surface and CTA treatments follow the dark
+  // tokens (same pattern as the hero).
   return (
-    <section className="bg-canvas text-foreground" aria-labelledby="closing-heading">
-      <div className="mx-auto max-w-[88rem] px-5 py-24 sm:px-8 sm:py-36 lg:px-12">
+    <section className="relative border-t border-white/10 bg-night text-night-ink" aria-labelledby="closing-heading">
+      <Aurora />
+      <div className="relative z-10 mx-auto max-w-[88rem] px-5 py-24 sm:px-8 sm:py-36 lg:px-12">
         <Reveal>
-          <div className="flex flex-col justify-between gap-10 border-t border-border pt-7 lg:flex-row lg:items-end">
+          <div className="flex flex-col justify-between gap-10 border-t border-white/15 pt-7 lg:flex-row lg:items-end">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-muted-foreground">Ready when you are</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-quantum-soft">Ready when you are</p>
               <h2 id="closing-heading" className="mt-6 max-w-4xl text-5xl font-semibold leading-[0.88] tracking-[-0.07em] sm:text-8xl">
                 Start with what<br />
-                <span className="text-qtrust-700">you can prove.</span>
+                <ShimmerText>you can prove.</ShimmerText>
               </h2>
             </div>
             <div className="flex flex-wrap gap-3 lg:pb-2">
-              <Link
-                href="/dashboard"
-                className="group inline-flex items-center gap-3 rounded-full bg-night px-6 py-3.5 text-sm font-semibold text-night-ink transition hover:-translate-y-0.5 hover:bg-night-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-night"
-              >
-                Launch Q-Trust <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-              </Link>
+              <MagneticButton>
+                <Link
+                  href="/dashboard"
+                  className="group inline-flex items-center gap-3 rounded-full bg-quantum-soft px-6 py-3.5 text-sm font-semibold text-night transition hover:-translate-y-0.5 hover:bg-quantum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft focus-visible:ring-offset-2 focus-visible:ring-offset-night"
+                >
+                  Launch Q-Trust <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                </Link>
+              </MagneticButton>
               <Link
                 href="/scanner"
-                className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-night"
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-sm font-semibold text-night-ink transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum-soft"
               >
                 Run a scan
               </Link>
