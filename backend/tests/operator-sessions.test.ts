@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createSession,
@@ -6,6 +7,51 @@ import {
   revokeSessionsForKey,
   validateSession,
 } from "../src/services/operator-sessions.js";
+
+/**
+ * Operator-key fingerprint derivation (hardening).
+ *
+ * The fingerprint is persisted (Redis index, logs, responses) and derives
+ * from the raw API key, so it must never be a bare fast hash — CodeQL
+ * js/insufficient-password-hash guards exactly that. These tests pin the
+ * contract: HMAC under the configured secret when present, deterministic
+ * scrypt fallback otherwise, and never plain SHA-256.
+ */
+describe("operator key fingerprint derivation", () => {
+  const originalEnv = process.env;
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it("is deterministic, 16 hex chars, and key-distinct (scrypt fallback)", () => {
+    delete process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET;
+    const a1 = keyFingerprint("fp-key-a");
+    const a2 = keyFingerprint("fp-key-a");
+    const b = keyFingerprint("fp-key-b");
+    expect(a1).toMatch(/^[0-9a-f]{16}$/);
+    expect(a1).toBe(a2);
+    expect(a1).not.toBe(b);
+  });
+
+  it("mixes the configured secret into the derivation (HMAC path)", () => {
+    process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET = "pepper-one";
+    const withOne = keyFingerprint("fp-key-hmac");
+    process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET = "pepper-two";
+    const withTwo = keyFingerprint("fp-key-hmac");
+    expect(withOne).toMatch(/^[0-9a-f]{16}$/);
+    expect(withOne).not.toBe(withTwo);
+  });
+
+  it("never equals a bare sha256 truncation of the key", () => {
+    delete process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET;
+    const bareSha = createHash("sha256")
+      .update("fp-key-scrypt", "utf8")
+      .digest("hex")
+      .slice(0, 16);
+    expect(keyFingerprint("fp-key-scrypt")).not.toBe(bareSha);
+  });
+});
 
 /**
  * Operator session store (unit).

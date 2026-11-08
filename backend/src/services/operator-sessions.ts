@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes, scryptSync } from "node:crypto";
 import { Redis } from "ioredis";
 import { operatorSessionTtlSeconds } from "../config.js";
 
@@ -47,14 +47,52 @@ export function sha256Hex(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
+// ── Operator-key fingerprints (brute-force hardening) ────────────────────────
+// The fingerprint is derived from the RAW API KEY (a password-class secret)
+// and is persisted in Redis index sets, route responses and audit logs, so
+// the derivation must not be a bare fast hash: SHA-256(key) in a leaked store
+// would be brute-forceable if the operator key is low-entropy. Two modes:
+//
+//   1. QTRUST_OPERATOR_FINGERPRINT_SECRET set — HMAC-SHA256 under that
+//      secret (fast; per-request cheap). Recovering a key from a leaked
+//      fingerprint requires the secret itself.
+//   2. No secret — scrypt (adaptive KDF) over a fixed documented salt:
+//      deterministic and replica-stable for the shared Redis index, and
+//      brute-force-resistant even unpeppered. Memoized per value because
+//      scryptSync blocks the event loop (~50ms/call) and static-auth
+//      computes the fingerprint on every request. Production logs a one-
+//      time warning recommending the secret (mode 1).
+
+const FINGERPRINT_FALLBACK_SALT = "qtrust:operator-key-fingerprint:v1";
+const fingerprintCache = new Map<string, string>();
+let warnedMissingSecret = false;
+
 /**
- * First 16 hex chars of sha256(value): a stable, non-reversible identifier
- * for the per-key revoke index, route responses and audit logs. 16 hex chars
- * (64 bits) is enough to make collision and brute-force reconstruction of
- * the underlying credential impractical while never persisting the secret.
+ * First 16 hex chars of the keyed digest of `value`: a stable,
+ * non-reversible identifier for the per-key revoke index, route responses
+ * and audit logs. 16 hex chars (64 bits) is enough to make collision and
+ * reconstruction of the underlying credential impractical while never
+ * persisting the secret.
  */
 export function keyFingerprint(value: string): string {
-  return sha256Hex(value).slice(0, 16);
+  const secret = process.env.QTRUST_OPERATOR_FINGERPRINT_SECRET;
+  if (secret) {
+    return createHmac("sha256", secret).update(value, "utf8").digest("hex").slice(0, 16);
+  }
+  if (isProduction() && !warnedMissingSecret) {
+    warnedMissingSecret = true;
+    console.warn(
+      "[operator-sessions] QTRUST_OPERATOR_FINGERPRINT_SECRET is not set — " +
+        "operator-key fingerprints fall back to scrypt (slower). Set the " +
+        "secret to use the HMAC path.",
+    );
+  }
+  let fp = fingerprintCache.get(value);
+  if (fp === undefined) {
+    fp = scryptSync(value, FINGERPRINT_FALLBACK_SALT, 32).toString("hex").slice(0, 16);
+    fingerprintCache.set(value, fp);
+  }
+  return fp;
 }
 
 const TOKEN_PREFIX = "qtrust:opsess:";
@@ -329,8 +367,9 @@ export async function revokeSession(token: string): Promise<boolean> {
 
 /**
  * Revoke every live session minted by the key with fingerprint
- * `keyFingerprint` (sha256(key) hex, first 16 chars — as returned by
- * keyFingerprint()). Returns the number of sessions actually revoked.
+ * `keyFingerprint` (keyed/scrypt fingerprint of the raw key, first 16 chars —
+ * as returned by keyFingerprint()). Returns the number of sessions actually
+ * revoked.
  */
 export async function revokeSessionsForKey(keyFingerprint: string): Promise<number> {
   const redis = getRedis();
