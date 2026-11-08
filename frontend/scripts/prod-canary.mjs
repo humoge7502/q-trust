@@ -289,19 +289,18 @@ async function checkSite() {
   );
 
   // Build freshness — a healthy-but-stale deployment passes every check above,
-  // so pin the landing page to the current design-system build markers
-  // (Lattice v2). Update these two strings whenever the landing theme changes,
-  // otherwise an out-of-date Vercel deployment can pass the canary.
+  // so pin the landing page to the current design-system build marker
+  // (bg-night, the Lattice v2 theme root). Update this string whenever the
+  // landing theme changes, otherwise an out-of-date Vercel deployment can
+  // pass the canary. Note: qtrust-hero is NOT a discriminator — it survives
+  // as an active styling hook on the hero band in the current build.
   const home = pageResults.find((r) => r.page === "/");
   const homeHtml = home?.html ?? "";
   const hasCurrentMarker = homeHtml.includes("bg-night");
-  const hasRetiredMarker = homeHtml.includes("qtrust-hero");
   record(
     "production serves the current build",
-    hasCurrentMarker && !hasRetiredMarker,
-    homeHtml
-      ? `bg-night=${hasCurrentMarker} retired qtrust-hero=${hasRetiredMarker}`
-      : "homepage HTML unavailable",
+    hasCurrentMarker,
+    homeHtml ? `bg-night=${hasCurrentMarker}` : "homepage HTML unavailable",
   );
 
   // Sweep every sitemap URL (bounded) so a broken public route is caught even
