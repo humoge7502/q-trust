@@ -1,0 +1,40 @@
+name: Crypto Gate Selftest
+
+# X1 CI crypto gate selftest. Deliberately workflow_dispatch ONLY — this is
+# NOT wired into PR CI. It exercises the composite action at the repo root
+# (uses: ./) against a small in-repo fixture (inspector/tests) exactly the way
+# a consuming repository would run it, with advisory-only: true so a tripped
+# gate cannot fail the run. The action installs qtrust-inspector from PyPI,
+# so this validates the shipped package + action wiring, not repo HEAD code.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    name: Composite action selftest (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Q-Trust Crypto Gate (local composite action)
+        uses: ./
+        with:
+          path: inspector/tests
+          threshold: high
+          advisory-only: true
+          upload-cbom: true
+
+      - name: Verify emitted outputs
+        if: always()
+        run: |
+          set -e
+          test -f qtrust-findings.json || { echo "::error::qtrust-findings.json missing"; exit 1; }
+          test -f qtrust-cbom.json || { echo "::error::qtrust-cbom.json missing"; exit 1; }
+          test -f qtrust-cbom.sarif.json || { echo "::error::qtrust-cbom.sarif.json missing"; exit 1; }
+          test -f qtrust-advisory.md || { echo "::error::qtrust-advisory.md missing"; exit 1; }
+          head -n 12 qtrust-advisory.md

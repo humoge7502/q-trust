@@ -1,0 +1,142 @@
+name: "Q-Trust Crypto Gate"
+description: >-
+  Post-quantum cryptography CI gate. Scans a source tree with
+  qtrust-inspector, emits CycloneDX 1.7 CBOM + SARIF 2.1 artifacts, enforces
+  (or advises on) a criticality threshold via `scan-source --ci-gate`, and
+  posts one advisory PR comment rendered from the findings JSON.
+author: "Q-Trust"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  path:
+    description: >-
+      Source directory to scan, relative to the caller's workspace. Run
+      actions/checkout first; a missing path fails the scan loudly (exit 2).
+    required: false
+    default: "."
+  threshold:
+    description: >-
+      Blocking criticality threshold: critical|high|medium. A finding trips
+      the gate when its criticality is at or above it (high also fails on
+      critical; medium also fails on high and critical).
+    required: false
+    default: "high"
+  advisory-only:
+    description: >-
+      When true, a tripped gate is reported but never fails the job
+      (informational advisory only).
+    required: false
+    default: "false"
+  upload-cbom:
+    description: >-
+      When true, upload the CycloneDX 1.7 CBOM artifact alongside the
+      findings and SARIF artifacts.
+    required: false
+    default: "true"
+  python-version:
+    description: "Python version for the scan environment."
+    required: false
+    default: "3.12"
+  github-token:
+    description: >-
+      Token used to post the pull_request advisory comment. Defaults to the
+      workflow's github.token when empty.
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install qtrust-inspector
+      shell: bash
+      run: pip install --upgrade qtrust-inspector
+
+    - name: Scan source (findings JSON + CycloneDX CBOM)
+      shell: bash
+      env:
+        QTRUST_PATH: ${{ inputs.path }}
+      run: |
+        crypto-inspector scan-source "$QTRUST_PATH" \
+          --output qtrust-findings.json \
+          --cyclonedx qtrust-cbom.json
+
+    - name: Scan source (SARIF 2.1)
+      shell: bash
+      env:
+        QTRUST_PATH: ${{ inputs.path }}
+      # scan-source --format sarif REQUIRES --output and consumes it for the
+      # SARIF file itself (no JSON scan result is written in that mode), so
+      # SARIF must come from this second run, not the one above.
+      run: |
+        crypto-inspector scan-source "$QTRUST_PATH" \
+          --format sarif \
+          --output qtrust-cbom.sarif.json
+
+    - name: Render advisory comment body
+      shell: bash
+      env:
+        QTRUST_ACTION_PATH: ${{ github.action_path }}
+        QTRUST_THRESHOLD: ${{ inputs.threshold }}
+      # The renderer always exits 0 (advisory is informational); it reads the
+      # findings JSON produced above and writes the PR comment body.
+      run: |
+        python "$QTRUST_ACTION_PATH/scripts/ci_gate_advisory.py" \
+          qtrust-findings.json \
+          --threshold "$QTRUST_THRESHOLD" \
+          --output qtrust-advisory.md
+
+    - name: CI gate (criticality threshold)
+      id: gate
+      shell: bash
+      # Advisory mode: a tripped gate is surfaced as a failed step outcome
+      # but does not fail the job. Outputs are already written by the scan
+      # steps above (the CLI writes outputs before the gate exits 1).
+      continue-on-error: ${{ inputs.advisory-only == 'true' }}
+      env:
+        QTRUST_PATH: ${{ inputs.path }}
+        QTRUST_THRESHOLD: ${{ inputs.threshold }}
+      run: |
+        crypto-inspector scan-source "$QTRUST_PATH" --ci-gate "$QTRUST_THRESHOLD"
+
+    - name: Upload findings artifact
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: qtrust-findings
+        path: qtrust-findings.json
+        if-no-files-found: warn
+
+    - name: Upload SARIF artifact
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: qtrust-sarif
+        path: qtrust-cbom.sarif.json
+        if-no-files-found: warn
+
+    - name: Upload CBOM artifact
+      if: always() && inputs.upload-cbom == 'true'
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: qtrust-cbom
+        path: qtrust-cbom.json
+        if-no-files-found: warn
+
+    - name: Post advisory PR comment
+      # Alpha limitation: the comment is posted anew on every run — there is
+      # no deduplication or update of a previous advisory comment.
+      if: always() && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token || github.token }}
+        GH_REPO: ${{ github.repository }}
+        QTRUST_PR: ${{ github.event.pull_request.number }}
+      run: |
+        gh pr comment "$QTRUST_PR" --body-file qtrust-advisory.md
