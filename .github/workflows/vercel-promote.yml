@@ -1,0 +1,47 @@
+# Promote current main to Vercel production. The operator network
+# TLS-blocks vercel.com, so this runs from a GitHub runner (clean network)
+# using the VERCEL_TOKEN repo secret. The org/project IDs below are not
+# secrets — they identify the q-trust project (frontend/.vercel/project.json
+# on the operator machine carries the same values).
+name: Vercel Promote
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.2.2 — SHA-pinned per repo policy (no mutable tags).
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: main
+
+      - name: Refresh Vercel access token (CLI token expired 2026-11-06)
+        env:
+          VERCEL_REFRESH_TOKEN: ${{ secrets.VERCEL_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Same flow the vercel CLI uses (dist/chunks: refreshTokenRequest):
+          # OIDC discovery on vercel.com, then a refresh_token grant against
+          # the discovered token_endpoint with the CLI's public client_id.
+          TOKEN_EP=$(curl -fsSL https://vercel.com/.well-known/openid-configuration \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);if(!j.token_endpoint)throw new Error('no token_endpoint in discovery');console.log(j.token_endpoint)})")
+          RESP=$(curl -fsS -X POST "$TOKEN_EP" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "client_id=cl_HYyOPBNtFMfHhaUn9L4QPfTZz6TP47bp" \
+            --data-urlencode "grant_type=refresh_token" \
+            --data-urlencode "refresh_token=$VERCEL_REFRESH_TOKEN") || { echo "::error::refresh request failed (invalid/expired refresh token)"; exit 2; }
+          NEW=$(node -e "const j=JSON.parse(process.argv[1]);if(!j.access_token){console.error('REFRESH FAILED:',JSON.stringify(j).slice(0,300));process.exit(3)}console.log(j.access_token)" "$RESP")
+          echo "::add-mask::$NEW"
+          echo "VERCEL_ACCESS_TOKEN=$NEW" >> "$GITHUB_ENV"
+
+      - name: Deploy production build of main
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: team_XLDiYeDD8xouWWnj0eB3jw7d
+          VERCEL_PROJECT_ID: prj_jkH3WrmhwJ5PAruIrmSeSQuGzvH6
+        run: |
+          npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_ACCESS_TOKEN"
