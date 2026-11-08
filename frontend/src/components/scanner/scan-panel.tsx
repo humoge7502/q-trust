@@ -279,7 +279,7 @@ export function ScanPanel({ state }: { state: ScannerState }) {
               placeholder="/workspace/projects/backend/src"
               spellCheck={false}
               autoComplete="off"
-              className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-2 font-mono text-sm text-night-ink placeholder:text-night-ink-faint focus:outline-none"
+              className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-2 font-mono text-sm text-night-ink placeholder:text-night-ink-soft focus:outline-none"
             />
             <Button
               onClick={() => void runScan()}

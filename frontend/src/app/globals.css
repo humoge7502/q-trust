@@ -7,16 +7,23 @@
   --color-qtrust-300: #5eead4;
   --color-qtrust-400: #2dd4bf;
   --color-qtrust-500: #14b8a6; /* accents only */
-  --color-qtrust-600: #0a675f; /* interactive fills — WCAG AA 6.3:1 on white */
+  --color-qtrust-600: #0a635c; /* interactive fills — white-on-fill 7.11:1 (AAA), 7.11:1 as text on white */
   --color-qtrust-700: #096159;
   --color-qtrust-800: #134e4a;
   --color-qtrust-900: #042f2e;
-  /* Semantic risk levels (AA-checked foregrounds) — replaces raw red-500/orange bypass */
-  --color-risk-critical: #b91c1c;
-  --color-risk-high: #c2410c;
-  --color-risk-medium: #a16207;
-  --color-risk-low: #15803d;
-  --color-risk-none: #64748b;
+  /* Semantic risk scale (AAA-checked foregrounds) — replaces raw red-500/orange bypass.
+     F-14 pass 2026-11-09: every value holds ≥7:1 (WCAG AAA) against every surface
+     it co-occurs with (white, --color-canvas #f6f7f5). Same-hue, minimal-delta:
+       risk-critical #991b1b on white = 8.31:1, on canvas = 7.73:1
+       risk-high     #8f2f10 on white = 8.13:1, on canvas = 7.57:1
+       risk-medium   #74450f on white = 8.07:1, on canvas = 7.51:1
+       risk-low      #156132 on white = 7.53:1, on canvas = 7.01:1
+       risk-none     #465267 on white = 7.89:1, on canvas = 7.34:1 */
+  --color-risk-critical: #991b1b;
+  --color-risk-high: #8f2f10;
+  --color-risk-medium: #74450f;
+  --color-risk-low: #156132;
+  --color-risk-none: #465267;
 
   /* Semantic state palette — the app layer's STATUS vocabulary.
      Before this existed, "success" rendered as `emerald-50/700` in the
@@ -29,25 +36,31 @@
 
      Each foreground below is checked against its OWN surface (not just
      against white), which is the mistake the old pairs made:
-       success  #15803d on #f0fdf4 = 4.79:1
-       danger   #b91c1c on #fef2f2 = 5.98:1
-       warning  #a16207 on #fffbeb = 4.74:1
-       info     #1d4ed8 on #eff6ff = 6.23:1
-       neutral  #475569 on #f1f5f9 = 6.82:1
-     The `-border` values are decorative separators and carry no text. */
-  --color-success: #15803d;
+       success  #156132 on #f0fdf4 = 7.20:1
+       danger   #991b1b on #fef2f2 = 7.60:1
+       warning  #74450f on #fffbeb = 7.79:1
+       info     #1e40af on #eff6ff = 8.01:1
+       neutral  #465267 on #f1f5f9 = 7.20:1
+     All five also hold ≥7:1 on white and --color-canvas (F-14 AAA pass,
+     2026-11-09). The `-border` values are decorative separators and carry no
+     text. */
+  --color-success: #156132;
   --color-success-surface: #f0fdf4;
   --color-success-border: #bbf7d0;
-  --color-danger: #b91c1c;
+  --color-danger: #991b1b;
   --color-danger-surface: #fef2f2;
   --color-danger-border: #fecaca;
-  --color-warning: #a16207;
+  /* Hover-deep for the destructive fill (button.tsx): danger now equals the
+     destructive fill itself, so hover needs one darker step. White-on-fill
+     10.02:1. */
+  --color-danger-deep: #7f1d1d;
+  --color-warning: #74450f;
   --color-warning-surface: #fffbeb;
   --color-warning-border: #fde68a;
-  --color-info: #1d4ed8;
+  --color-info: #1e40af;
   --color-info-surface: #eff6ff;
   --color-info-border: #bfdbfe;
-  --color-neutral: #475569;
+  --color-neutral: #465267;
   --color-neutral-surface: #f1f5f9;
   --color-neutral-border: #e2e8f0;
 
@@ -143,19 +156,20 @@
      4.5:1 AA minimum. That is the same "check the pair, not just the colour"
      mistake the status palette below was written to avoid, and it is invisible
      until a populated surface is actually audited.
-     Measured: #475569 on #f1f5f9 = 6.92:1, on --color-canvas = 7.02:1,
-     on white = 7.58:1 — AA at every surface this token is used on. */
-  --color-muted-foreground: #475569;
+     Measured (F-14 AAA pass, 2026-11-09): #465267 on #f1f5f9 = 7.20:1,
+     on --color-canvas = 7.34:1, on white = 7.89:1 — AAA at every surface
+     this token is used on. */
+  --color-muted-foreground: #465267;
   --color-border: #e2e8f0;
   --color-input: #e2e8f0;
   --color-ring: #14b8a6;
-  --color-primary: #0a675f;
+  --color-primary: #0a635c;
   --color-primary-foreground: #ffffff;
   --color-secondary: #f1f5f9;
   --color-secondary-foreground: #0f172a;
   --color-accent: #f0fdfa;
   --color-accent-foreground: #0f172a;
-  --color-destructive: #dc2626;
+  --color-destructive: #991b1b;
   --color-destructive-foreground: #ffffff;
   --color-popover: #ffffff;
   --color-popover-foreground: #0f172a;
