@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { apiPostJson, OperatorKeyRequiredError } from "@/lib/api";
+import { useApiOperation } from "@/hooks/use-api-operation";
 import { OperatorAccessInline } from "@/components/operator-access";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ErrorState } from "@/components/ui/state";
@@ -64,17 +65,15 @@ const DEMO_CBOM = JSON.stringify(
 
 export default function AnomalyPanel() {
   const [cbomText, setCbomText] = useState<string>(DEMO_CBOM);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [operatorEndpoint, setOperatorEndpoint] = useState<string | null>(null);
-  const [result, setResult] = useState<AnomalyResponse | null>(null);
+  // F-13: the scoring call's loading / error / operator-key prompt / result
+  // cycle is owned by the shared hook instead of four hand-rolled states.
+  const anomalyOp = useApiOperation<AnomalyResponse>();
+  const { loading, error, operatorEndpoint, data: result } = anomalyOp;
 
-  const run = async () => {
-    setLoading(true);
-    setError(null);
-    setOperatorEndpoint(null);
-    setResult(null);
-    try {
+  const run = () => {
+    // A fresh scoring run drops the previous verdict up front, as before.
+    anomalyOp.clear();
+    return anomalyOp.run(async () => {
       let cbom: unknown;
       try {
         cbom = JSON.parse(cbomText);
@@ -82,8 +81,10 @@ export default function AnomalyPanel() {
         throw new Error("CBOM is not valid JSON");
       }
       try {
-        setResult(await apiPostJson<AnomalyResponse>("/v1/gpu/anomaly/score", { cbom }));
+        return await apiPostJson<AnomalyResponse>("/v1/gpu/anomaly/score", { cbom });
       } catch (e) {
+        // Re-throw the operator error untouched so the hook routes it to the
+        // operator prompt instead of the error text.
         if (e instanceof OperatorKeyRequiredError) throw e;
         if (e instanceof Error && e.message.startsWith("API 409")) {
           throw new Error(
@@ -92,15 +93,7 @@ export default function AnomalyPanel() {
         }
         throw e;
       }
-    } catch (e) {
-      if (e instanceof OperatorKeyRequiredError) {
-        setOperatorEndpoint(e.endpoint);
-      } else {
-        setError(e instanceof Error ? e.message : String(e));
-      }
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
